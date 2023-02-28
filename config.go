@@ -3,24 +3,37 @@ package taproot
 import (
 	"errors"
 	"github.com/spf13/viper"
+	ffclient "github.com/thomaspoignant/go-feature-flag"
 	"net"
 )
 
 type ServerConfig struct {
-	ServerName string
-	Port       int
 
+	/* METRICS */
 	UseMetricsServer bool
 	MetricsPort      int
 
+	/* ACADIA SECURITY POLICIES */
 	ListenForPolicyChanges bool
 	SecurityPolicyDir      string
 
+	/* STATIC FILE SERVING */
 	StaticFilePath      string
 	StaticFileDirectory string
 
-	ScriptFilePath string
+	/* SCRIPTS AND GOLDFUSION */
+	ScriptFilePath     string
+	UseScripts         bool
+	GfFilePath         string // Where are Goldfusion files stored?
+	UseGfFiles         bool   // Use Goldfusion file templates?
+	GfCompiledFilePath string // A subdirectory under the ScriptFilePath where Taproot will put compiled GF files
 
+	/* FEATURE FLAGS */
+	Flags ffclient.Config // Configuration data for feature flag management
+
+	/* SERVER INFO */
+	ServerName       string
+	Port             int
 	TLS              TLSConfig
 	Timeouts         TimeoutConfig
 	Session          SessionConfig

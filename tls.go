@@ -47,10 +47,19 @@ func (srv *Server) generateSelfSignedTlsCert() (*tls.Config, error) {
 	t := &tls.Config{}
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
-		return nil, nil
+		return nil, err
+	}
+
+	// We need to generate a random serial number to prevent browsers from
+	// complaining
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+
+	if err != nil {
+		return nil, err
 	}
 	certTemplate := x509.Certificate{
-		SerialNumber: big.NewInt(1),
+		SerialNumber: serialNumber,
 		Issuer:       pkix.Name{},
 		Subject: pkix.Name{
 			Organization: []string{"Taproot Test"},

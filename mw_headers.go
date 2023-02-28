@@ -1,6 +1,10 @@
 package taproot
 
-import "net/http"
+import (
+	"golang.org/x/net/context"
+	"highgrav/taproot/v1/common"
+	"net/http"
+)
 
 func (srv *Server) HandleAddCorsEverywhereHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -9,13 +13,17 @@ func (srv *Server) HandleAddCorsEverywhereHeaders(next http.Handler) http.Handle
 	})
 }
 
+// This middleware injects multiple security headers.
 func (srv *Server) HandleAddSecureHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cspNonce := common.CreateRandString(10)
+		cspDetails := "object-src 'none'; script-src 'nonce-" + cspNonce + "' 'unsafe-inline' 'unsafe-eval' 'strict-dynamic' https: http:; base-uri 'none';"
 		w.Header().Set("X-XSS-Protection", "1 mode=block")
 		w.Header().Set("X-Frame-Options", "deny")
-		w.Header().Set("Content-Security-Policy", "default-src 'self'")
+		w.Header().Set("Content-Security-Policy", cspDetails)
 		w.Header().Set("Strict-Transport-Security", "max-age=63072000; includesubdomains;")
-		next.ServeHTTP(w, r)
+		ctx := context.WithValue(r.Context(), CONTEXT_CSP_NONCE_KEY_NAME, cspNonce)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 

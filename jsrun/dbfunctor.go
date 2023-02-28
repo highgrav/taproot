@@ -20,6 +20,21 @@ You can dump a list of values using db.print(...).
 func InjectJSDBFunctor(dbs map[string]*sql.DB, vm *goja.Runtime) {
 	obj := vm.NewObject()
 
+	dbList := func(args ...goja.Value) *JSCallReturnValue {
+		retval := &JSCallReturnValue{}
+		retval.OK = true
+		retval.ResultCode = 200
+		keys := make([]string, len(dbs))
+
+		i := 0
+		for k := range dbs {
+			keys[i] = k
+			i++
+		}
+		retval.Results = map[string]interface{}{"dsns": keys}
+		return retval
+	}
+
 	dbQuery := func(args ...goja.Value) *JSCallReturnValue {
 		retval := &JSCallReturnValue{}
 		if len(args) < 2 {
@@ -59,11 +74,11 @@ func InjectJSDBFunctor(dbs map[string]*sql.DB, vm *goja.Runtime) {
 			return retval
 		}
 
-		var stmt = args[0].String()
+		var stmt = args[1].String()
 		var sqlArgs []any = make([]any, 0)
 		var sqlJsArgs []goja.Value
-		if len(args) > 1 {
-			sqlJsArgs = args[2:]
+		if len(args) > 2 {
+			sqlJsArgs = args[3:]
 		}
 		// We're only going to support a subset of possible value types here
 		var errorsList []string
@@ -118,5 +133,7 @@ func InjectJSDBFunctor(dbs map[string]*sql.DB, vm *goja.Runtime) {
 
 	obj.Set("query", dbQuery)
 	obj.Set("print", fc)
+	obj.Set("dsns", dbList)
+	obj.Set("isLoaded", true)
 	vm.Set("db", obj)
 }

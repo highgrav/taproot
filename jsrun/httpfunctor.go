@@ -23,5 +23,7 @@ func InjectJSHttpFunctor(w http.ResponseWriter, r *http.Request, vm *goja.Runtim
 
 	obj.Set("write", writeToHttp)
 	obj.Set("responseCode", writeRespCode)
+	obj.Set("isLoaded", true)
 	vm.Set("http", obj)
+
 }

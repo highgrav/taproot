@@ -1,4 +1,4 @@
-package pages
+package naive
 
 import (
 	html "golang.org/x/net/html"

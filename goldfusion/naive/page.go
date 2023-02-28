@@ -1,4 +1,4 @@
-package pages
+package naive
 
 type Page struct {
 }

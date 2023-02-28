@@ -1,22 +1,25 @@
 package taproot
 
 import (
-	"context"
-	"highgrav/taproot/v1/common"
+	"fmt"
+	"github.com/felixge/httpsnoop"
+	"github.com/google/deck"
 	"net/http"
 )
 
 func (srv *Server) HandleLogging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// time, remote address, method, url, correlation ID, username
-		var corrId string = common.CreateRandString(32)
+		corrId := ""
 
-		// Save the correlation ID to context so we can propagate it
-		ctx := context.WithValue(r.Context(), CONTEXT_CORRELATION_KEY_NAME, corrId)
+		if r.Context().Value(CONTEXT_CORRELATION_KEY_NAME) != nil {
+			corrId = r.Context().Value(CONTEXT_CORRELATION_KEY_NAME).(string)
+		}
 
-		next.ServeHTTP(w, r.WithContext(ctx))
+		deck.Info(fmt.Sprintf("CALL\t%s\t%s\t\n", corrId, r.URL))
+
+		metrics := httpsnoop.CaptureMetrics(next, w, r)
 
 		// Everything below here will be executed on the way back up the chain
-		// TODO ...
+		deck.Info(fmt.Sprintf("RET\t%s\t%d\t\n", corrId, metrics.Code))
 	})
 }

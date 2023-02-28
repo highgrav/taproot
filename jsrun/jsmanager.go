@@ -146,6 +146,17 @@ func (jsm *JSManager) CompileOne(script string) error {
 	return nil
 }
 
+func (jsm *JSManager) CompileOneAs(key string, script string) error {
+	comp, err := goja.Compile(key, script, false)
+	if err != nil {
+		deck.Error("Error compiling JSScript " + script + ": " + err.Error())
+		return err
+	}
+	deck.Info(fmt.Sprintf("Loaded JSScript '%s'\n", key))
+	jsm.compiledScripts[key] = comp
+	return nil
+}
+
 func (jsm *JSManager) watchDirAndRecompile() {
 	dirList := []string{jsm.fileDir}
 

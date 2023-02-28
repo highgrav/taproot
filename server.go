@@ -46,8 +46,12 @@ func New(userStore authn.IUserStore, cfg ServerConfig) *Server {
 	s := &Server{}
 	s.Config = cfg
 	s.users = userStore
+	s.DBs = make(map[string]*sql.DB)
 	s.Middleware = make([]MiddlewareFunc, 0)
 	s.jsinjections = make([]jsrun.InjectorFunc, 0)
+
+	// Set up our feature flags
+
 	// Set up our security policy authorizer
 	sa, err := authz.New(cfg.SecurityPolicyDir)
 	if err != nil {
@@ -63,6 +67,14 @@ func New(userStore authn.IUserStore, cfg ServerConfig) *Server {
 		os.Exit(-1)
 	}
 	s.js = js
+
+	if s.Config.UseGfFiles {
+		err = s.compileGoldfusionFiles(s.Config.GfFilePath, s.Config.GfCompiledFilePath)
+		if err != nil {
+			deck.Fatal(err.Error())
+			os.Exit(-1)
+		}
+	}
 
 	s.Router = httprouter.New()
 	s.Router.SaveMatchedRoutePath = true // necessary to get the matched path back for Acacia authz
