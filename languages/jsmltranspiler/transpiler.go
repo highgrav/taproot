@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"highgrav/taproot/v1/common"
+	"highgrav/taproot/v1/languages/jsmlparser"
 	"strings"
 )
 
@@ -52,26 +53,39 @@ func (tr *Transpiler) mode() transpMode {
 }
 
 func escapeTextForWriting(str string) string {
-	var chars = map[string]bool{
-		"\"": true,
-		"'":  true,
-	}
+	ignoreRunes := []rune{'\r', '\t'}
+	escapeFromRunes := []rune{'\n', '\'', '"'}
+	escapeToStrings := []string{"\\n", "\\'", "\\\""}
+	return escapeText(str, ignoreRunes, escapeFromRunes, escapeToStrings)
+}
 
-	var escapeStr = ""
+func escapeText(str string, ignoreRunes []rune, escapeFromRunes []rune, escapeToStrings []string) string {
 
-	str = strings.Replace(str, "\r", " ", -1)
-	str = strings.Replace(str, "\n", " ", -1)
-	for i := 0; i < len(str); i++ {
-		var char = string(str[i])
+	rs := common.NewRuneString(str)
+	sb := common.NewRuneStringBuilder()
 
-		if chars[char] == true {
-			escapeStr += "\\" + char
-		} else {
-			escapeStr += char
+	for x := int32(0); x < rs.Length; x++ {
+		c := rs.Get(x)
+		isTouched := false
+		for _, v := range ignoreRunes {
+			if c == v {
+				isTouched = true
+			}
+		}
+		if !isTouched {
+			for i, v := range escapeFromRunes {
+				if c == v {
+					sb.WriteString(escapeToStrings[i])
+					isTouched = true
+				}
+			}
+		}
+		if !isTouched {
+			sb.WriteRune(c)
 		}
 	}
 
-	return escapeStr
+	return sb.String()
 }
 
 func isTagSemantic(node jsmlparser.ParseNode) bool {
@@ -101,5 +115,10 @@ func extractNodes(children []jsmlparser.ParseNode, desiredTypes []jsmlparser.Par
 			remainder = append(remainder, v)
 		}
 	}
+
+	if len(extracted)+len(remainder) != len(children) {
+		panic(fmt.Sprintf("%d + %d != %d", len(extracted), len(remainder), len(children)))
+	}
+
 	return extracted, remainder
 }

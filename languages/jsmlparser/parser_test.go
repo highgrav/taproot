@@ -1,6 +1,7 @@
 package jsmlparser
 
 import (
+	"highgrav/taproot/v1/languages/jsmltranspiler"
 	"highgrav/taproot/v1/languages/lexer"
 	"testing"
 )

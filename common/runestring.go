@@ -1,5 +1,35 @@
 package common
 
+type RuneStringBuilder struct {
+	runes []rune
+}
+
+func NewRuneStringBuilder() RuneStringBuilder {
+	return RuneStringBuilder{
+		runes: make([]rune, 0),
+	}
+}
+
+func (rs *RuneStringBuilder) WriteRune(r rune) {
+	rs.runes = append(rs.runes, r)
+}
+
+func (rs *RuneStringBuilder) WriteRunes(runes []rune) {
+	for _, r := range runes {
+		rs.runes = append(rs.runes, r)
+	}
+}
+
+func (rs *RuneStringBuilder) WriteString(str string) {
+	for _, c := range []rune(str) {
+		rs.runes = append(rs.runes, c)
+	}
+}
+
+func (rs RuneStringBuilder) String() string {
+	return string(rs.runes)
+}
+
 type RuneString struct {
 	Runes      []rune
 	Length     int32

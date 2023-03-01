@@ -127,7 +127,6 @@ func (parse *Parser) Parse() error {
 	depth := 0
 	err := parse.parseElement(parse.tree)
 	for err == nil {
-		fmt.Println(depth)
 		depth++
 		err = parse.parseElement(parse.tree)
 	}

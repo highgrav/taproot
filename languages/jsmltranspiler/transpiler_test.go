@@ -10,9 +10,12 @@ import (
 func TestParse(t *testing.T) {
 	const input string = `
 <html>
-	<head display=true></head>
+	<head display=true>
 	<meta header="foobar" size=123/>
+	<title>Hello, world!</title>
 	<!DATA ... >
+</head>
+
 	<!--
 		This is a comment
 	-->
@@ -46,10 +49,13 @@ func TestParse(t *testing.T) {
 		t.Error(err)
 	}
 	tr := NewWithNode(parse.Tree(), true)
-	fmt.Println(tr.ToString())
+	/*
+		fmt.Println(tr.ToString())
+	*/
 
 	err = tr.ToJS()
 	if err != nil {
 		t.Error(err)
 	}
+	fmt.Println(tr.output.String())
 }

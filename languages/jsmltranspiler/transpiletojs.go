@@ -2,6 +2,7 @@ package jsmltranspiler
 
 import (
 	"errors"
+	"fmt"
 	"highgrav/taproot/v1/languages/jsmlparser"
 	"strings"
 )
@@ -15,12 +16,18 @@ func (tr *Transpiler) ToJS() error {
 
 func (tr *Transpiler) dispatchToJS(node jsmlparser.ParseNode) error {
 	switch node.NodeType {
+	case jsmlparser.NODE_DOCUMENT:
+		for _, n := range node.Children {
+			err := tr.dispatchToJS(n)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	case jsmlparser.NODE_ERROR:
 		return errors.New(node.Data)
-	case jsmlparser.NODE_DOCUMENT:
 	case jsmlparser.NODE_EOF:
 		// Nothing to do here
-		return nil
 	case jsmlparser.NODE_NOP:
 		if node.NodeName == "comment" {
 			// dispatch to comment in case we want to keep them
@@ -29,16 +36,9 @@ func (tr *Transpiler) dispatchToJS(node jsmlparser.ParseNode) error {
 			return nil
 		}
 	case jsmlparser.NODE_OUTPUT:
+		return tr.dispatchOutput(node)
 	case jsmlparser.NODE_STRING:
-		if tr.mode() == transpModeDirectOutput {
-			// We're outputting code, so just dump it directly to the output
-			tr.output.Write([]byte(node.Data))
-		} else {
-			// We're writing HTML, so wrap each line in out.write() statements
-			res := "out.write(\"" + escapeTextForWriting(node.Data) + "\");\n"
-			tr.output.Write([]byte(res))
-		}
-		return nil
+		return tr.dispatchOutput(node)
 	case jsmlparser.NODE_TAG:
 		return tr.dispatchTag(node)
 	case jsmlparser.NODE_SELF_CLOSE_TAG:
@@ -59,30 +59,37 @@ func (tr *Transpiler) dispatchToJS(node jsmlparser.ParseNode) error {
 
 	case jsmlparser.NODE_INTERPOLATED_VALUE:
 		return tr.dispatchInterpolatedValue(node)
-
 	default:
+		// ???
 	}
-	for _, n := range node.Children {
-		err := tr.dispatchToJS(n)
-		if err != nil {
-			return err
-		}
-	}
-	if node.NodeType == jsmlparser.NODE_TAG {
-		return tr.dispatchTag(node)
+	return nil
+}
+
+func (tr *Transpiler) dispatchOutput(node jsmlparser.ParseNode) error {
+	if tr.mode() == transpModeDirectOutput {
+		// We're outputting code, so just dump it directly to the output
+		tr.output.Write([]byte(node.Data))
+	} else {
+		// We're writing HTML, so wrap each line in out.write() statements
+		res := "out.write(\"" + escapeTextForWriting(node.Data) + "\");\n"
+		tr.output.Write([]byte(res))
 	}
 	return nil
 }
 
 func (tr *Transpiler) dispatchInterpolatedValue(node jsmlparser.ParseNode) error {
+	fmt.Println("dispatchInterpolatedValue")
 	return nil
 }
 
 func (tr *Transpiler) dispatchSpecialOtherTag(node jsmlparser.ParseNode) error {
+	fmt.Println("dispatchSpecialOtherTag")
 	return nil
 }
 
+// TODO -- looks good
 func (tr *Transpiler) dispatchCloseTag(node jsmlparser.ParseNode) error {
+	fmt.Println("dispatchCloseTag")
 	if isTagSemantic(node) {
 		return tr.dispatchSemanticCloseTag(node)
 	} else {
@@ -91,14 +98,22 @@ func (tr *Transpiler) dispatchCloseTag(node jsmlparser.ParseNode) error {
 }
 
 func (tr *Transpiler) dispatchSemanticCloseTag(node jsmlparser.ParseNode) error {
+	fmt.Println("dispatchSemanticCloseTag")
+
 	return nil
 }
 
+// TODO -- looks good
 func (tr *Transpiler) dispatchNonSemanticCloseTag(node jsmlparser.ParseNode) error {
+	fmt.Println("dispatchNonSemanticCloseTag")
+	ret := "out.write(\"" + escapeTextForWriting(node.Data) + "\");\n"
+	tr.output.Write([]byte(ret))
 	return nil
 }
 
+// TODO -- looks good
 func (tr *Transpiler) dispatchTag(node jsmlparser.ParseNode) error {
+	fmt.Println("dispatchTag")
 	if isTagSemantic(node) {
 		return tr.dispatchSemanticTag(node)
 	} else {
@@ -107,19 +122,64 @@ func (tr *Transpiler) dispatchTag(node jsmlparser.ParseNode) error {
 }
 
 func (tr *Transpiler) dispatchSemanticTag(node jsmlparser.ParseNode) error {
+	fmt.Println("dispatchSemanticTag")
 	if node.IsSelfClosingTag {
+		// handle attributes
+		attrs, body := extractNodes(node.Children, []jsmlparser.ParserNodeType{jsmlparser.NODE_ATTRIBUTE})
+		for _, attr := range attrs {
+			fmt.Println(attr.Data)
+		}
+
+		if len(body) != 0 {
+			return tr.throwError(node, "found non-attribute nodes on a self-closing tag")
+		}
+
 		return nil
 	} else {
+		attrs, body := extractNodes(node.Children, []jsmlparser.ParserNodeType{jsmlparser.NODE_ATTRIBUTE})
+		for _, attr := range attrs {
+			fmt.Println(attr.Data)
+		}
+
+		for _, item := range body {
+			fmt.Println(item.NodeType)
+		}
 		return nil
 	}
 }
 
+// TODO -- Looks good
 func (tr *Transpiler) dispatchNonSemanticTag(node jsmlparser.ParseNode) error {
-	if node.IsSelfClosingTag {
-		return nil
-	} else {
-		return nil
+	fmt.Println("dispatchNonSemanticTag")
+	ret := ""
+	ret += "<" + node.Data
+
+	attrs, body := extractNodes(node.Children, []jsmlparser.ParserNodeType{jsmlparser.NODE_ATTRIBUTE})
+
+	for _, attr := range attrs {
+		if len(attr.Children) == 0 {
+			// TODO -- handle special variables (@-vars)
+			ret += " " + attr.NodeName + " "
+		} else {
+			ret += " " + attr.NodeName + "=" + attr.Children[0].Data + " "
+		}
 	}
+
+	if node.IsSelfClosingTag {
+		ret += "/>"
+		tr.output.Write([]byte("out.write(\"" + escapeTextForWriting(ret) + "\");\n"))
+	} else {
+		ret += ">"
+		tr.output.Write([]byte("out.write(\"" + escapeTextForWriting(ret) + "\");\n"))
+
+		for _, itm := range body {
+			err := tr.dispatchToJS(itm)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 /////////////////////////////////////////////

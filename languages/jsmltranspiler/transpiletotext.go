@@ -1,5 +1,7 @@
 package jsmltranspiler
 
+import "highgrav/taproot/v1/languages/jsmlparser"
+
 /* Writes a parse tree back out to something that should look like the original input. */
 func (tr *Transpiler) ToString() string {
 	return tr.dispatchToString(*tr.tree)
@@ -32,7 +34,7 @@ func (tf *Transpiler) dispatchToString(node jsmlparser.ParseNode) string {
 		if isTagSemantic(node) {
 			ret += " /*" + node.NodeName + "*/ "
 		} else {
-			ret += " http.write(\"" + node.NodeName + "\");"
+			ret += node.NodeName
 		}
 	case jsmlparser.NODE_SPECIAL_OTHER:
 		ret += node.Data
