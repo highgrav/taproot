@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/deck"
-	"highgrav/taproot/v1/goldfusion/naive"
+	"highgrav/taproot/v1/languages/naive"
 	"os"
 	"path/filepath"
 	"strings"

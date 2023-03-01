@@ -29,6 +29,7 @@ func (mem WorkgroupMembership) RemoveWorkgroupByName(domainId, workgroupName str
 }
 
 type User struct {
+	RealmID                string              `json:"realmId"`
 	UserID                 string              `json:"userId"`
 	Username               string              `json:"username"`
 	DisplayName            string              `json:"displayName"`

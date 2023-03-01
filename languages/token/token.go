@@ -1,5 +1,7 @@
 package token
 
+import "fmt"
+
 type TokenType string
 
 const (
@@ -12,8 +14,6 @@ const (
 	TOKEN_ID                   TokenType = "id"
 	TOKEN_STRING               TokenType = "string"
 	TOKEN_NUMBER               TokenType = "number"
-	TOKEN_TRUE                 TokenType = "true"
-	TOKEN_FALSE                TokenType = "false"
 	TOKEN_ASSIGN               TokenType = "assign"
 	TOKEN_TEXT                 TokenType = "text"
 	TOKEN_EOF                  TokenType = "eof"
@@ -24,10 +24,33 @@ const (
 )
 
 type Token struct {
-	tokenStartAt int
-	Type         TokenType
-	Literal      string
-	Message      string
+	CharPos int
+	LinePos int
+	Type    TokenType
+	Literal string
+	Message string
+}
+
+func (pn Token) Dump() string {
+	return fmt.Sprintf("Type: %s, Message: %s, Literal: %s", pn.Type, pn.Message, pn.Literal)
+}
+
+func (pn Token) IsNotOfType(types []TokenType) bool {
+	for _, v := range types {
+		if pn.Type == v {
+			return false
+		}
+	}
+	return true
+}
+
+func (pn Token) IsOfType(types []TokenType) bool {
+	for _, v := range types {
+		if pn.Type == v {
+			return true
+		}
+	}
+	return false
 }
 
 func New(tokenType TokenType, ch rune) Token {

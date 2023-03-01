@@ -69,7 +69,7 @@ func New(userStore authn.IUserStore, cfg ServerConfig) *Server {
 	s.js = js
 
 	if s.Config.UseGfFiles {
-		err = s.compileGoldfusionFiles(s.Config.GfFilePath, s.Config.GfCompiledFilePath)
+		err = s.compileGofusionFiles(s.Config.GfFilePath, s.Config.GfCompiledFilePath)
 		if err != nil {
 			deck.Fatal(err.Error())
 			os.Exit(-1)

@@ -1,4 +1,4 @@
-package lexer
+package common
 
 type RuneString struct {
 	Runes      []rune
@@ -42,4 +42,17 @@ func (s *RuneString) Peek() rune {
 		return s.Get(s.CurrentPos)
 	}
 	return rune(0x0)
+}
+
+// Gets the line number and line position of a character
+func (s *RuneString) GetLineAndPos(charPos int32) (int, int) {
+	lineCount := 0
+	lastLineCount := 0
+	for x := int32(0); x < charPos; x++ {
+		if s.Get(x) == '\n' {
+			lineCount++
+			lastLineCount = int(x)
+		}
+	}
+	return lineCount + 1, int(charPos) - lastLineCount
 }

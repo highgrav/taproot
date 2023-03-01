@@ -75,12 +75,14 @@ for(x = 10; x >= 0; x--) {
 func TestReadDoc(t *testing.T) {
 	const input string = `
 <html>
-	<head></head>
+	<head display=true></head>
+	<meta header="foobar" size=123/>
+	<!DATA ... >
 	<!--
 		This is a comment
 	-->
 	<body style="font-size:10em;">
-		<h1>Test</h1>
+		<h1>🥇🥇 GoldFusion Test 🥇🥇</h1>
 		This is a test
 		<ul id="myUL">
 		<go>
@@ -95,6 +97,8 @@ func TestReadDoc(t *testing.T) {
 		</ul>
 	</body>
 </html>
+<![CDATA[<hello> this is mission control]]>
+<url is-good = "yes"/>
 	`
 	l := New(input)
 	toks, err := l.Lex()

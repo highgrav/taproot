@@ -2,8 +2,8 @@ package lexer
 
 import (
 	"errors"
-	"fmt"
-	"highgrav/taproot/v1/goldfusion/token"
+	"highgrav/taproot/v1/common"
+	"highgrav/taproot/v1/languages/token"
 )
 
 const (
@@ -43,7 +43,7 @@ func isWhitespace(ch rune) bool {
 }
 
 type Lexer struct {
-	input        *RuneString
+	input        *common.RuneString
 	position     int32
 	readPosition int32
 	totalLines   int32
@@ -52,7 +52,7 @@ type Lexer struct {
 
 func New(script string) *Lexer {
 	l := &Lexer{
-		input:        NewRuneString(script),
+		input:        common.NewRuneString(script),
 		position:     0,
 		readPosition: 0,
 		totalLines:   0,
@@ -89,7 +89,6 @@ func (lex *Lexer) readChar() {
 func (lex *Lexer) readIdentifier() string {
 	pos := lex.position
 	for (isIDLetter(lex.ch) && lex.ch != rune(0x0)) || (isNumber(lex.ch) && lex.position != pos) {
-		fmt.Printf("-")
 		lex.readChar()
 	}
 	return string(lex.input.Runes[pos:lex.position])
@@ -147,6 +146,7 @@ func (lex *Lexer) readTag() []token.Token {
 		return []token.Token{token.Token{
 			Type:    token.TOKEN_TEXT,
 			Literal: string(lex.ch),
+			CharPos: int(lex.position),
 		}}
 	}
 }
@@ -159,6 +159,7 @@ func (lex *Lexer) readOpenTag() []token.Token {
 				Type:    token.TOKEN_ERROR,
 				Literal: string(lex.ch),
 				Message: "attempted to read opening tag but got unexpected prefix",
+				CharPos: int(lex.position),
 			},
 		}
 	}
@@ -173,6 +174,7 @@ func (lex *Lexer) readOpenTag() []token.Token {
 		Type:    token.TOKEN_START_OPEN_TAG,
 		Literal: lit,
 		Message: "",
+		CharPos: int(lex.position),
 	})
 
 	// walk through the string until we see an ending character
@@ -189,12 +191,14 @@ func (lex *Lexer) readOpenTag() []token.Token {
 				Type:    token.TOKEN_NUMBER,
 				Literal: lex.readNumber(),
 				Message: "",
+				CharPos: int(lex.position),
 			})
 		} else if lex.ch == '=' {
 			tokens = append(tokens, token.Token{
 				Type:    token.TOKEN_ASSIGN,
 				Literal: string(lex.ch),
 				Message: "",
+				CharPos: int(lex.position),
 			})
 			lex.readChar()
 		} else if isWhitespace(lex.ch) {
@@ -205,6 +209,7 @@ func (lex *Lexer) readOpenTag() []token.Token {
 				Type:    token.TOKEN_ERROR,
 				Literal: string(lex.ch),
 				Message: "unexpected eof detected while parsing open tag",
+				CharPos: int(lex.position),
 			})
 			return tokens
 		} else {
@@ -212,6 +217,7 @@ func (lex *Lexer) readOpenTag() []token.Token {
 				Type:    token.TOKEN_ID,
 				Literal: lex.readIdentifier(),
 				Message: "",
+				CharPos: int(lex.position),
 			})
 		}
 		lex.advanceToNextNonWhitespaceChar()
@@ -223,6 +229,7 @@ func (lex *Lexer) readOpenTag() []token.Token {
 			Type:    token.TOKEN_END_OPEN_TAG,
 			Literal: lit,
 			Message: "",
+			CharPos: int(lex.position),
 		})
 		lex.readChar()
 	} else if lex.ch == '/' && lex.input.Get(lex.readPosition) == '>' {
@@ -233,6 +240,7 @@ func (lex *Lexer) readOpenTag() []token.Token {
 			Type:    token.TOKEN_END_SELF_CLOSING_TAG,
 			Literal: lit,
 			Message: "",
+			CharPos: int(lex.position),
 		})
 		lex.readChar()
 	} else {
@@ -241,6 +249,7 @@ func (lex *Lexer) readOpenTag() []token.Token {
 			Type:    token.TOKEN_ERROR,
 			Literal: lit,
 			Message: "attempted to close open tag but got unexpected suffix",
+			CharPos: int(lex.position),
 		})
 	}
 	return tokens
@@ -254,6 +263,7 @@ func (lex *Lexer) readCloseTag() []token.Token {
 				Type:    token.TOKEN_ERROR,
 				Literal: string(lex.ch + lex.input.Get(lex.readPosition)),
 				Message: "attempted to read closing tag but got unexpected prefix",
+				CharPos: int(lex.position),
 			},
 		}
 	}
@@ -268,6 +278,7 @@ func (lex *Lexer) readCloseTag() []token.Token {
 		token.Token{
 			Type:    token.TOKEN_CLOSE_TAG,
 			Literal: lit,
+			CharPos: int(lex.position),
 		},
 	}
 }
@@ -291,6 +302,7 @@ func (lex *Lexer) readOpenMarkup() []token.Token {
 				Type:    token.TOKEN_ERROR,
 				Literal: string(lex.ch),
 				Message: "attempted to read open markup tag but got unexpected prefix (expected <)",
+				CharPos: int(lex.position),
 			},
 		}
 	}
@@ -302,6 +314,7 @@ func (lex *Lexer) readOpenMarkup() []token.Token {
 				Type:    token.TOKEN_ERROR,
 				Literal: string(lex.ch),
 				Message: "attempted to read open markup tag but got unexpected prefix (expected <!)",
+				CharPos: int(lex.position),
 			},
 		}
 	}
@@ -331,28 +344,33 @@ func (lex *Lexer) readOpenMarkup() []token.Token {
 			Type:    token.TOKEN_SPECIAL_COMMENT,
 			Literal: str,
 			Message: "",
+			CharPos: int(lex.position),
 		})
 		return tokens
 	} else if lex.input.MatchesFrom(lex.position, "[CDATA[") {
+		// With CDATA, we strip out the CDATA prefix and suffix, so it looks like a pure output
+		lex.readChar()
+		lex.readChar()
+		lex.readChar()
+		lex.readChar()
+		lex.readChar()
+		lex.readChar()
+		lex.readChar()
+		str = str[:len(str)-2] // remove the <!
 		for !lex.input.MatchesFrom(lex.position, "]]>") {
 			str = str + string(lex.ch)
 			lex.readChar()
 		}
-		// read out ]]>
-		lex.readChar() // ]
-		str = str + string(lex.ch)
 
 		lex.readChar() // ]
-		str = str + string(lex.ch)
-
+		lex.readChar() // ]
 		lex.readChar() // >
-		str = str + string(lex.ch)
-
 		lex.readChar()
 		tokens = append(tokens, token.Token{
 			Type:    token.TOKEN_SPECIAL_CDATA,
 			Literal: str,
 			Message: "",
+			CharPos: int(lex.position),
 		})
 		return tokens
 	} else {
@@ -364,6 +382,7 @@ func (lex *Lexer) readOpenMarkup() []token.Token {
 					Type:    token.TOKEN_ERROR,
 					Literal: str,
 					Message: "unexpected eof while reading open markup tag",
+					CharPos: int(lex.position),
 				})
 				return tokens
 			}
@@ -376,6 +395,7 @@ func (lex *Lexer) readOpenMarkup() []token.Token {
 			Type:    token.TOKEN_SPECIAL_OTHER,
 			Literal: str,
 			Message: "",
+			CharPos: int(lex.position),
 		})
 		return tokens
 	}
@@ -390,6 +410,7 @@ func (lex *Lexer) readText() []token.Token {
 	return []token.Token{token.Token{
 		Type:    token.TOKEN_TEXT,
 		Literal: str,
+		CharPos: int(lex.position),
 	}}
 }
 
@@ -398,35 +419,32 @@ func (lex *Lexer) readString() []token.Token {
 	return []token.Token{token.Token{
 		Type:    token.TOKEN_STRING,
 		Literal: str,
+		CharPos: int(lex.position),
 	}}
 }
 
 func (lex *Lexer) NextToken() []token.Token {
 	var toks []token.Token
 	if lex.ch == rune(0x0) {
-		fmt.Printf("%d: EOF (%s)\n", lex.position, string(lex.ch))
 		t := token.Token{}
 		t.Type = token.TOKEN_EOF
+		t.CharPos = int(lex.position)
 		return []token.Token{t}
 	} else if lex.ch == ATOM_LT {
 
 		// check to see if the next character is a letter; if so, read tag, otherwise assume text
 		if isLetter(lex.input.Get(lex.readPosition)) || lex.input.Get(lex.readPosition) == ATOM_SLASH || lex.input.Get(lex.readPosition) == ATOM_BANG {
 			// read as tag
-			fmt.Printf("%d: ReadTag (%s)\n", lex.position, string(lex.ch))
 			toks = lex.readTag()
 		} else {
 			// read as text
-			fmt.Printf("%d: ReadText (%s)\n", lex.position, string(lex.ch))
 			toks = lex.readText()
 		}
 	} else if lex.ch == ATOM_SQUOTE || lex.ch == ATOM_DQOUT {
 		// read string
-		fmt.Printf("%d: ReadString (%s)\n", lex.position, string(lex.ch))
 		toks = lex.readString()
 	} else {
 		// read text
-		fmt.Printf("%d: ReadText (%s)\n", lex.position, string(lex.ch))
 		toks = lex.readText()
 	}
 	return toks
