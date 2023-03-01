@@ -1,4 +1,4 @@
-package gfparser
+package jsmlparser
 
 const (
 	TAG_GO             string = "go"

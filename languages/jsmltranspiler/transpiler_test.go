@@ -1,8 +1,8 @@
-package gftranspiler
+package jsmltranspiler
 
 import (
 	"fmt"
-	"highgrav/taproot/v1/languages/gfparser"
+	"highgrav/taproot/v1/languages/jsmlparser"
 	"highgrav/taproot/v1/languages/lexer"
 	"testing"
 )
@@ -16,17 +16,17 @@ func TestParse(t *testing.T) {
 	<!--
 		This is a comment
 	-->
-	<body style="font-size:10em;">
+	<body @@csp_nonce style="font-size:10em;">
 		<h1>🥇🥇 GoldFusion Test 🥇🥇</h1>
 		This is a test
 		<ul id="myUL">
 		<go>
 			var total = 0;
 			for(var x = 0; x < 10; x++){
-				<go.out><li></go.out>
+				<li>
 				<go.val>x</go.val>
 				total++;
-				<go.out></li></go.out>
+				</li>
 			}
 		</go>
 		</ul>
@@ -40,11 +40,16 @@ func TestParse(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	parse := gfparser.New(&toks, input)
+	parse := jsmlparser.New(&toks, input)
 	err = parse.Parse()
 	if err != nil {
 		t.Error(err)
 	}
-	tr := New(parse.Tree())
+	tr := NewWithNode(parse.Tree(), true)
 	fmt.Println(tr.ToString())
+
+	err = tr.ToJS()
+	if err != nil {
+		t.Error(err)
+	}
 }

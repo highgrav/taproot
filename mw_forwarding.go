@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// TODO --tomasen/realip is probably a better option here
 func (srv *Server) HandleForwarding(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var ip string = r.RemoteAddr

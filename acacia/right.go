@@ -1,4 +1,4 @@
-package authz
+package acacia
 
 type Right struct {
 	Resource string            `json:"rscId"`

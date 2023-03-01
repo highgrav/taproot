@@ -32,6 +32,13 @@ type ServerConfig struct {
 	Flags ffclient.Config // Configuration data for feature flag management
 
 	/* SERVER INFO */
+	HttpServer     HttpConfig
+	RedirectServer HttpConfig
+	MetricsServer  HttpConfig
+	AdminServer    HttpConfig
+}
+
+type HttpConfig struct {
 	ServerName       string
 	Port             int
 	TLS              TLSConfig

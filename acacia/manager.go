@@ -1,4 +1,4 @@
-package authz
+package acacia
 
 import "quamina.net/go/quamina"
 

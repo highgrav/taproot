@@ -1,7 +1,6 @@
-package gfparser
+package jsmlparser
 
 import (
-	"highgrav/taproot/v1/languages/gftranspiler"
 	"highgrav/taproot/v1/languages/lexer"
 	"testing"
 )
@@ -44,6 +43,6 @@ func TestParse(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	tr := gftranspiler.New(parse.tree)
+	tr := jsmltranspiler.NewWithNode(parse.tree, true)
 	tr.ToString()
 }

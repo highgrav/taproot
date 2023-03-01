@@ -7,10 +7,11 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/google/deck"
 	"github.com/google/deck/backends/logger"
+	"github.com/jpillora/ipfilter"
 	"github.com/julienschmidt/httprouter"
 	"golang.org/x/time/rate"
+	"highgrav/taproot/v1/acacia"
 	"highgrav/taproot/v1/authn"
-	"highgrav/taproot/v1/authz"
 	"highgrav/taproot/v1/jsrun"
 	"net"
 	"net/http"
@@ -32,11 +33,13 @@ type Server struct {
 	jsinjections      []jsrun.InjectorFunc
 	state             serverStateManager
 	users             authn.IUserStore
-	authz             *authz.PolicyManager
+	authz             *acacia.PolicyManager
 	globalRateLimiter *rate.Limiter
 	ipRateLimiter     map[string]*rate.Limiter
-	redirectServer    http.Server // Port 80 Server to redirect to https, if not using TLS
-	metricsServer     http.Server
+	ipFilter          *ipfilter.IPFilter
+	redirectServer    *http.Server // Port 80 Server to redirect to https, if not using TLS
+	metricsServer     *http.Server
+	adminServer       *http.Server
 }
 
 func New(userStore authn.IUserStore, cfg ServerConfig) *Server {
@@ -50,10 +53,15 @@ func New(userStore authn.IUserStore, cfg ServerConfig) *Server {
 	s.Middleware = make([]MiddlewareFunc, 0)
 	s.jsinjections = make([]jsrun.InjectorFunc, 0)
 
+	// Set up IP filter
+	// TODO
+	s.ipFilter = ipfilter.New(ipfilter.Options{})
+
 	// Set up our feature flags
+	// TODO
 
 	// Set up our security policy authorizer
-	sa, err := authz.New(cfg.SecurityPolicyDir)
+	sa, err := acacia.New(cfg.SecurityPolicyDir)
 	if err != nil {
 		deck.Fatal(err.Error())
 		os.Exit(-1)
@@ -69,7 +77,7 @@ func New(userStore authn.IUserStore, cfg ServerConfig) *Server {
 	s.js = js
 
 	if s.Config.UseGfFiles {
-		err = s.compileGofusionFiles(s.Config.GfFilePath, s.Config.GfCompiledFilePath)
+		err = s.compileJSMLFiles(s.Config.GfFilePath, s.Config.GfCompiledFilePath)
 		if err != nil {
 			deck.Fatal(err.Error())
 			os.Exit(-1)
@@ -79,11 +87,11 @@ func New(userStore authn.IUserStore, cfg ServerConfig) *Server {
 	s.Router = httprouter.New()
 	s.Router.SaveMatchedRoutePath = true // necessary to get the matched path back for Acacia authz
 	s.Server = &http.Server{
-		Addr:         fmt.Sprintf("%s:%d", cfg.ServerName, cfg.Port),
+		Addr:         fmt.Sprintf("%s:%d", cfg.HttpServer.ServerName, cfg.HttpServer.Port),
 		Handler:      s.Router,
-		IdleTimeout:  time.Duration(cfg.Timeouts.Idle) * time.Second,
-		ReadTimeout:  time.Duration(cfg.Timeouts.Read) * time.Second,
-		WriteTimeout: time.Duration(cfg.Timeouts.Write) * time.Second,
+		IdleTimeout:  time.Duration(cfg.HttpServer.Timeouts.Idle) * time.Second,
+		ReadTimeout:  time.Duration(cfg.HttpServer.Timeouts.Read) * time.Second,
+		WriteTimeout: time.Duration(cfg.HttpServer.Timeouts.Write) * time.Second,
 	}
 
 	return s
@@ -125,18 +133,18 @@ func (srv *Server) ListenAndServeTLS(certFile, keyFile string) error {
 	srv.Server.Handler = srv.bindRoutes()
 	srv.state.setState(SERVER_STATE_INITIALIZING)
 
-	if srv.Config.TLS.UseSelfSignedCert && !srv.Config.TLS.UseACME {
+	if srv.Config.HttpServer.TLS.UseSelfSignedCert && !srv.Config.HttpServer.TLS.UseACME {
 		deck.Info("Generating self-signed certificate for serving...")
 		c, err := srv.generateSelfSignedTlsCert()
 		if err != nil {
 			return err
 		}
 		srv.Server.TLSConfig = c
-		deck.Info("Serving self-signed TLS on port ", srv.Config.Port)
+		deck.Info("Serving self-signed TLS on port ", srv.Config.HttpServer.Port)
 		return srv.Server.ListenAndServeTLS(certFile, keyFile)
 	}
 
-	if srv.Config.TLS.UseACME {
+	if srv.Config.HttpServer.TLS.UseACME {
 
 	} else {
 		// Ignore ACME, use the provided key files
@@ -161,7 +169,7 @@ func (srv *Server) ServeTLS(l net.Listener, certFile, keyFile string) error {
 	srv.Server.Handler = srv.bindRoutes()
 	srv.state.setState(SERVER_STATE_INITIALIZING)
 
-	if srv.Config.TLS.UseSelfSignedCert && !srv.Config.TLS.UseACME {
+	if srv.Config.HttpServer.TLS.UseSelfSignedCert && !srv.Config.HttpServer.TLS.UseACME {
 		deck.Info("Generating self-signed certificate for serving...")
 		c, err := srv.generateSelfSignedTlsCert()
 		fmt.Printf("Cert count: %d\n", len(srv.Server.TLSConfig.Certificates))
@@ -174,7 +182,7 @@ func (srv *Server) ServeTLS(l net.Listener, certFile, keyFile string) error {
 		return srv.Server.ServeTLS(l, "", "")
 	}
 
-	if srv.Config.TLS.UseACME {
+	if srv.Config.HttpServer.TLS.UseACME {
 
 	} else {
 		// Ignore ACME, use the provided key files

@@ -1,4 +1,4 @@
-package gfparser
+package jsmlparser
 
 import "fmt"
 

@@ -1,4 +1,4 @@
-package authz
+package acacia
 
 type policyFileWatcher struct {
 	policyManager *PolicyManager

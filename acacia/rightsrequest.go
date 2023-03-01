@@ -1,4 +1,4 @@
-package authz
+package acacia
 
 type RightsRequest struct {
 	HttpRequest      HttpRequest      `json:"http"`

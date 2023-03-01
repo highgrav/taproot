@@ -11,7 +11,7 @@ import (
 )
 
 // This simply compiles all the files at startup.
-func (srv *Server) compileGoldfusionFiles(srcDirName, dstDirName string) error {
+func (srv *Server) compileJSMLFiles(srcDirName, dstDirName string) error {
 	var retainedError error = nil
 
 	fileOutDir := filepath.Join(srv.Config.ScriptFilePath, dstDirName)
@@ -25,16 +25,16 @@ func (srv *Server) compileGoldfusionFiles(srcDirName, dstDirName string) error {
 	}
 
 	// get scripts
-	scripts, err := filepath.Glob(filepath.Join(srcDirName, "*.gf"))
+	scripts, err := filepath.Glob(filepath.Join(srcDirName, "*.jsml"))
 	if err != nil {
-		deck.Error("Error reading GF files: " + err.Error())
+		deck.Error("Error reading JSML files: " + err.Error())
 		os.Exit(-310)
 	}
 	for _, script := range scripts {
 		gfSrc, err := os.ReadFile(script)
 
 		if err != nil {
-			deck.Error("Error reading GF JSScript " + script + ": " + err.Error())
+			deck.Error("Error reading JSML JSScript " + script + ": " + err.Error())
 			if retainedError == nil {
 				retainedError = err
 			} else {
@@ -43,9 +43,10 @@ func (srv *Server) compileGoldfusionFiles(srcDirName, dstDirName string) error {
 			continue
 		}
 
+		// TODO -- update from naive parser
 		jsSrc, err := naive.ParseGoldfusionToJS(string(gfSrc))
 		if err != nil {
-			deck.Error("Error compiling GF to JSScript " + script + ": " + err.Error())
+			deck.Error("Error compiling JSML to JSScript " + script + ": " + err.Error())
 			if retainedError == nil {
 				retainedError = err
 			} else {
@@ -70,4 +71,8 @@ func (srv *Server) compileGoldfusionFiles(srcDirName, dstDirName string) error {
 		newFile.Close()
 	}
 	return retainedError
+}
+
+func (srv *Server) monitorJSMLDirectories() {
+	// TODO
 }

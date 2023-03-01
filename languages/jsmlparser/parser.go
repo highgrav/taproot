@@ -1,4 +1,4 @@
-package gfparser
+package jsmlparser
 
 import (
 	"errors"
@@ -35,15 +35,19 @@ type ParseNode struct {
 	Data             string
 	IsSelfClosingTag bool
 	Children         []ParseNode
+	Parent           *ParseNode
+	Token            token.Token
 }
 
-func newNode(nType ParserNodeType, name string, data string) ParseNode {
+func newNode(nType ParserNodeType, name string, data string, parent *ParseNode, tok token.Token) ParseNode {
 	return ParseNode{
 		NodeType:         nType,
 		NodeName:         name,
 		Data:             data,
 		IsSelfClosingTag: false,
 		Children:         make([]ParseNode, 0),
+		Parent:           parent,
+		Token:            tok,
 	}
 }
 
@@ -117,6 +121,8 @@ func (parse *Parser) Parse() error {
 		NodeName: "",
 		Data:     "",
 		Children: make([]ParseNode, 0),
+		Parent:   nil,
+		Token:    parse.current(),
 	}
 	depth := 0
 	err := parse.parseElement(parse.tree)
@@ -148,7 +154,7 @@ func (parse *Parser) parseElement(node *ParseNode) error {
 	case token.TOKEN_SPECIAL_OTHER:
 		return parse.parseSpecialOtherTag(node)
 	case token.TOKEN_EOF:
-		node.Children = append(node.Children, newNode(NODE_EOF, "", ""))
+		node.Children = append(node.Children, newNode(NODE_EOF, "", "", node, parse.current()))
 		return ErrorEOF
 	case token.TOKEN_START_OPEN_TAG:
 		if parse.current().Literal == "go" || strings.HasPrefix(parse.current().Literal, "go.") {
@@ -176,17 +182,19 @@ func (parse *Parser) parseSemanticTag(node *ParseNode) error {
 func (parse *Parser) parseTag(node *ParseNode, isSemantic bool) error {
 	// parse tag start -- if we don't see a start to an open tag, we've got an error.
 	if parse.current().Type != token.TOKEN_START_OPEN_TAG {
-		pn := newNode(NODE_ERROR, "error", parse.current().Literal)
+		pn := newNode(NODE_ERROR, "error", parse.current().Literal, node, parse.current())
 		node.Children = append(node.Children, pn)
 		return parse.throwError("tried to parse open tag on type " + string(parse.current().Type))
 	}
-	tagNode := newNode(NODE_TAG, string(parse.current().Literal[1:]), string(parse.current().Literal[1:]))
+	tagNode := newNode(NODE_TAG, string(parse.current().Literal[1:]), string(parse.current().Literal[1:]), node, parse.current())
 
 	// parse attributes -- we should see either an ID or and ID ASSIGN [ID,STRING,NUMBER]
 	isInAssignment := false
 	attrNode := ParseNode{
 		NodeType: NODE_ATTRIBUTE,
 		Children: make([]ParseNode, 0),
+		Token:    parse.current(),
+		Parent:   node,
 	}
 	parse.next()
 	for parse.current().IsOfType([]token.TokenType{token.TOKEN_ID, token.TOKEN_STRING, token.TOKEN_ASSIGN, token.TOKEN_NUMBER}) {
@@ -196,6 +204,8 @@ func (parse *Parser) parseTag(node *ParseNode, isSemantic bool) error {
 				attrNode = ParseNode{
 					NodeType: NODE_ATTRIBUTE,
 					Children: make([]ParseNode, 0),
+					Token:    parse.current(),
+					Parent:   &tagNode,
 				}
 			}
 			attrNode.NodeName = parse.current().Literal
@@ -205,7 +215,7 @@ func (parse *Parser) parseTag(node *ParseNode, isSemantic bool) error {
 			node.Children = append(node.Children, tagNode)
 			return parse.throwError("unexpected token while parsing tag header (should be ID)")
 		} else if isInAssignment && parse.current().IsOfType([]token.TokenType{token.TOKEN_STRING, token.TOKEN_NUMBER, token.TOKEN_ID}) {
-			valnode := newNode(NODE_NOP, string(parse.current().Type), parse.current().Literal)
+			valnode := newNode(NODE_NOP, string(parse.current().Type), parse.current().Literal, nil, parse.current())
 			switch parse.current().Type {
 			case token.TOKEN_ID:
 				if strings.HasPrefix(parse.current().Literal, "@") {
@@ -221,6 +231,7 @@ func (parse *Parser) parseTag(node *ParseNode, isSemantic bool) error {
 				node.Children = append(node.Children, tagNode)
 				return parse.throwError("unexpected rval for attribute (should be ID, string, or number)")
 			}
+			valnode.Parent = &attrNode
 			attrNode.Children = append(attrNode.Children, valnode)
 			isInAssignment = false
 		} else if parse.current().Type == token.TOKEN_ASSIGN {
@@ -234,7 +245,7 @@ func (parse *Parser) parseTag(node *ParseNode, isSemantic bool) error {
 	if attrNode.NodeName != "" {
 		tagNode.Children = append(tagNode.Children, attrNode)
 	}
-	attrNode = newNode(NODE_NOP, "", "")
+	attrNode = newNode(NODE_NOP, "", "", nil, parse.current())
 
 	// parse self-closing tag and return
 	if parse.current().Type == token.TOKEN_END_SELF_CLOSING_TAG {
@@ -249,16 +260,18 @@ func (parse *Parser) parseTag(node *ParseNode, isSemantic bool) error {
 		}
 	} else if parse.current().Type == token.TOKEN_EOF {
 		node.Children = append(node.Children, tagNode)
-		pn := newNode(NODE_EOF, "", "")
+		pn := newNode(NODE_EOF, "", "", node, parse.current())
 		node.Children = append(node.Children, pn)
 		return ErrorEOF
 	} else if parse.current().Type == token.TOKEN_ERROR {
-		pn := newNode(NODE_ERROR, "error", parse.current().Literal)
+		pn := newNode(NODE_ERROR, "error", parse.current().Literal, node, parse.current())
+		tagNode.Parent = node
 		node.Children = append(node.Children, tagNode)
 		node.Children = append(node.Children, pn)
 		return parse.throwError("")
 	} else {
-		pn := newNode(NODE_ERROR, "error", parse.current().Literal)
+		pn := newNode(NODE_ERROR, "error", parse.current().Literal, node, parse.current())
+		tagNode.Parent = node
 		node.Children = append(node.Children, tagNode)
 		node.Children = append(node.Children, pn)
 		return parse.throwError("failed to find close tag, instead got " + string(parse.current().Type))
@@ -280,18 +293,23 @@ func (parse *Parser) parseTag(node *ParseNode, isSemantic bool) error {
 
 	if parse.current().Type == token.TOKEN_CLOSE_TAG {
 		// SPECIAL CASE -- only return if the close tag matches the current top-level tag
-		parse.parseCloseTag(&tagNode)
+		err := parse.parseCloseTag(&tagNode)
+		if err != nil {
+			pn := newNode(NODE_ERROR, "error", parse.current().Literal, node, parse.current())
+			node.Children = append(node.Children, pn)
+			return parse.throwError("")
+		}
 		node.Children = append(node.Children, tagNode)
 		return nil
 
 	} else if parse.current().Type == token.TOKEN_ERROR {
 		node.Children = append(node.Children, tagNode)
-		pn := newNode(NODE_ERROR, "error", parse.current().Literal)
+		pn := newNode(NODE_ERROR, "error", parse.current().Literal, node, parse.current())
 		node.Children = append(node.Children, pn)
 		return parse.throwError("")
 	} else if parse.current().Type == token.TOKEN_EOF {
 		node.Children = append(node.Children, tagNode)
-		node.Children = append(node.Children, newNode(NODE_EOF, "", ""))
+		node.Children = append(node.Children, newNode(NODE_EOF, "", "", node, parse.current()))
 		return ErrorEOF
 	}
 	return parse.throwError("unknown syntax error, fallthrough while parsing tag recursion")
@@ -304,6 +322,8 @@ func (parse *Parser) parseString(node *ParseNode) error {
 		NodeName: "output",
 		Data:     parse.current().Literal,
 		Children: make([]ParseNode, 0),
+		Token:    parse.current(),
+		Parent:   node,
 	}
 	node.Children = append(node.Children, pt)
 	return nil
@@ -315,6 +335,8 @@ func (parse *Parser) parseText(node *ParseNode) error {
 		NodeName: "output",
 		Data:     parse.current().Literal,
 		Children: make([]ParseNode, 0),
+		Parent:   node,
+		Token:    parse.current(),
 	}
 	node.Children = append(node.Children, pt)
 	return nil
@@ -323,9 +345,11 @@ func (parse *Parser) parseText(node *ParseNode) error {
 func (parse *Parser) parseSpecialComment(node *ParseNode) error {
 	pt := ParseNode{
 		NodeType: NODE_NOP,
-		NodeName: "output",
+		NodeName: "comment",
 		Data:     parse.current().Literal,
 		Children: make([]ParseNode, 0),
+		Parent:   node,
+		Token:    parse.current(),
 	}
 	node.Children = append(node.Children, pt)
 	return nil
@@ -334,9 +358,11 @@ func (parse *Parser) parseSpecialComment(node *ParseNode) error {
 func (parse *Parser) parseSpecialCData(node *ParseNode) error {
 	pt := ParseNode{
 		NodeType: NODE_OUTPUT,
-		NodeName: "output",
+		NodeName: "cdata",
 		Data:     parse.current().Literal,
 		Children: make([]ParseNode, 0),
+		Parent:   node,
+		Token:    parse.current(),
 	}
 	node.Children = append(node.Children, pt)
 	return nil
@@ -348,6 +374,8 @@ func (parse *Parser) parseSpecialOtherTag(node *ParseNode) error {
 		NodeName: "special",
 		Data:     parse.current().Literal,
 		Children: make([]ParseNode, 0),
+		Parent:   node,
+		Token:    parse.current(),
 	}
 	node.Children = append(node.Children, pt)
 	return nil
@@ -359,6 +387,8 @@ func (parse *Parser) parseCloseTag(node *ParseNode) error {
 		NodeName: parse.current().Literal,
 		Data:     parse.current().Literal,
 		Children: make([]ParseNode, 0),
+		Parent:   node,
+		Token:    parse.current(),
 	}
 	node.Children = append(node.Children, pt)
 	return nil

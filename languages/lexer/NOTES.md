@@ -1,5 +1,5 @@
 
-Lexing GF files is straightforward, since GF itself doesn't currently do any interpretive heavy lifting; like Babel, it 
+Lexing JSML files is straightforward, since GF itself doesn't currently do any interpretive heavy lifting; like Babel, it 
 simply transpiles to JavaScript. Therefore, our primary concern is knowing the following:
 
 - Are we generating text that should be output as-is (HTML)?

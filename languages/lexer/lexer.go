@@ -292,7 +292,10 @@ func (lex *Lexer) readCloseTag() []token.Token {
 //	Element <!ELEMENT ... >
 //	Attlist <!ATTLIST ... >
 //
-// Open markup is ignored right now, and shoved into a generic "open markup" token
+// Comments have the entire comment, including '<!--' and '-->', included in its data payload.
+// CData have only the data, not the '<![DATA[' and ']]>' pair, included
+// Open markup is ignored right now, and shoved into a generic "open markup" token that contains the entire body;
+// these tags are not parsed in the same way as "normal" HTML and GF tags.
 func (lex *Lexer) readOpenMarkup() []token.Token {
 	tokens := make([]token.Token, 0)
 	if lex.ch != '<' {
@@ -328,7 +331,7 @@ func (lex *Lexer) readOpenMarkup() []token.Token {
 			str = str + string(lex.ch)
 			lex.readChar()
 		}
-
+		str = str + string(lex.ch)
 		// read out -->
 		lex.readChar() // -
 		str = str + string(lex.ch)
