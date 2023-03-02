@@ -69,6 +69,7 @@ func (tr *Transpiler) dispatchToJS(node jsmlparser.ParseNode) error {
 func (tr *Transpiler) dispatchOutput(node jsmlparser.ParseNode) error {
 	if tr.mode() == transpModeDirectOutput {
 		// We're outputting code, so just dump it directly to the output
+
 		tr.output.Write([]byte(node.Data))
 	} else if tr.mode() == transpModeHTMLOutput {
 		// We're writing HTML, so wrap each line in out.write() statements

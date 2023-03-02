@@ -28,6 +28,7 @@ func TestParse(t *testing.T) {
 			for(var x = 0; x < 10; x++){
 				<li>
 				<go.out>Current value:</go.out> <go.val>x</go.val>
+				out.write("OK");
 				total++;
 				</li>
 			}

@@ -2,6 +2,7 @@ package lexer
 
 import (
 	"errors"
+	"fmt"
 	"highgrav/taproot/v1/common"
 	"highgrav/taproot/v1/languages/token"
 )
@@ -64,6 +65,53 @@ func New(script string) *Lexer {
 	return l
 }
 
+func (lex *Lexer) Lex() ([]token.Token, error) {
+	var tokens []token.Token = make([]token.Token, 0)
+
+	toks := lex.NextToken()
+	for true {
+		for _, tok := range toks {
+			if tok.Type == token.TOKEN_EOF {
+				tokens = append(tokens, tok)
+				return tokens, nil
+			}
+			if tok.Type == token.TOKEN_ERROR {
+				tokens = append(tokens, tok)
+				return tokens, errors.New(tok.Message)
+			}
+			tokens = append(tokens, tok)
+		}
+		toks = lex.NextToken()
+	}
+	return tokens, nil
+}
+
+func (lex *Lexer) NextToken() []token.Token {
+	var toks []token.Token
+	if lex.ch == rune(0x0) {
+		t := token.Token{}
+		t.Type = token.TOKEN_EOF
+		t.CharPos = int(lex.position)
+		return []token.Token{t}
+	} else if lex.ch == ATOM_LT {
+		// check to see if the next character is a letter; if so, read tag, otherwise assume text
+		if isLetter(lex.input.Get(lex.readPosition)) || lex.input.Get(lex.readPosition) == ATOM_SLASH || lex.input.Get(lex.readPosition) == ATOM_BANG {
+			// read as tag
+			toks = lex.readTag()
+		} else {
+			// read as text
+			toks = lex.readText()
+		}
+	} else if lex.ch == ATOM_SQUOTE || lex.ch == ATOM_DQOUT {
+		// read string
+		toks = lex.readString()
+	} else {
+		// read text
+		toks = lex.readText()
+	}
+	return toks
+}
+
 func (lex *Lexer) Peek() (rune, bool) {
 	if (lex.readPosition) >= lex.input.Length {
 		return rune(0x0), false
@@ -117,9 +165,9 @@ func (lex *Lexer) readDelimitedString(delimiter rune) string {
 		}
 		lex.readChar()
 	}
-
 	// TODO -- escaped characters?
-	return string(lex.input.Runes[pos:lex.readPosition])
+	lex.readChar()
+	return string(lex.input.Runes[pos:lex.position])
 }
 
 func (lex *Lexer) readTextToDelimiter(delimiters []rune) string {
@@ -158,7 +206,7 @@ func (lex *Lexer) readOpenTag() []token.Token {
 			token.Token{
 				Type:    token.TOKEN_ERROR,
 				Literal: string(lex.ch),
-				Message: "attempted to read opening tag but got unexpected prefix",
+				Message: fmt.Sprintf("attempted to read opening tag but got unexpected prefix at char %d", lex.position),
 				CharPos: int(lex.position),
 			},
 		}
@@ -178,14 +226,13 @@ func (lex *Lexer) readOpenTag() []token.Token {
 	})
 
 	// walk through the string until we see an ending character
-	for lex.ch != '/' && lex.ch != '>' {
+	for lex.ch != '/' && lex.ch != '>' && lex.ch != '<' {
 		if lex.ch == '"' || lex.ch == '\'' {
 			ttoks := lex.readString()
 			for _, t := range ttoks {
 				tokens = append(tokens, t)
 			}
-			// note that we need to advance past the end quote
-			lex.readChar()
+
 		} else if isNumber(lex.ch) {
 			tokens = append(tokens, token.Token{
 				Type:    token.TOKEN_NUMBER,
@@ -208,7 +255,7 @@ func (lex *Lexer) readOpenTag() []token.Token {
 			tokens = append(tokens, token.Token{
 				Type:    token.TOKEN_ERROR,
 				Literal: string(lex.ch),
-				Message: "unexpected eof detected while parsing open tag",
+				Message: fmt.Sprintf("unexpected eof detected while parsing open tag at char %d", lex.position),
 				CharPos: int(lex.position),
 			})
 			return tokens
@@ -221,6 +268,17 @@ func (lex *Lexer) readOpenTag() []token.Token {
 			})
 		}
 		lex.advanceToNextNonWhitespaceChar()
+	}
+
+	if lex.ch == '<' {
+		return []token.Token{
+			token.Token{
+				Type:    token.TOKEN_ERROR,
+				Literal: string(lex.ch),
+				Message: fmt.Sprintf("attempted to read opening tag but got unexpected '<' at char %d", lex.position),
+				CharPos: int(lex.position),
+			},
+		}
 	}
 
 	if lex.ch == '>' {
@@ -248,7 +306,7 @@ func (lex *Lexer) readOpenTag() []token.Token {
 		tokens = append(tokens, token.Token{
 			Type:    token.TOKEN_ERROR,
 			Literal: lit,
-			Message: "attempted to close open tag but got unexpected suffix",
+			Message: fmt.Sprintf("attempted to close opening tag but got unexpected suffix at char %d", lex.position),
 			CharPos: int(lex.position),
 		})
 	}
@@ -262,7 +320,7 @@ func (lex *Lexer) readCloseTag() []token.Token {
 			token.Token{
 				Type:    token.TOKEN_ERROR,
 				Literal: string(lex.ch + lex.input.Get(lex.readPosition)),
-				Message: "attempted to read closing tag but got unexpected prefix",
+				Message: fmt.Sprintf("attempted to read closing tag but got unexpected prefix at char %d", lex.position),
 				CharPos: int(lex.position),
 			},
 		}
@@ -304,7 +362,7 @@ func (lex *Lexer) readOpenMarkup() []token.Token {
 			token.Token{
 				Type:    token.TOKEN_ERROR,
 				Literal: string(lex.ch),
-				Message: "attempted to read open markup tag but got unexpected prefix (expected <)",
+				Message: fmt.Sprintf("attempted to read opening tag but got unexpected prefix (expected '<') at char %d", lex.position),
 				CharPos: int(lex.position),
 			},
 		}
@@ -316,7 +374,7 @@ func (lex *Lexer) readOpenMarkup() []token.Token {
 			token.Token{
 				Type:    token.TOKEN_ERROR,
 				Literal: string(lex.ch),
-				Message: "attempted to read open markup tag but got unexpected prefix (expected <!)",
+				Message: fmt.Sprintf("attempted to read open markup tag but got unexpected prefix (expected <!) at char %d", lex.position),
 				CharPos: int(lex.position),
 			},
 		}
@@ -384,7 +442,7 @@ func (lex *Lexer) readOpenMarkup() []token.Token {
 				tokens = append(tokens, token.Token{
 					Type:    token.TOKEN_ERROR,
 					Literal: str,
-					Message: "unexpected eof while reading open markup tag",
+					Message: fmt.Sprintf("unexpected eof while reading open markup tag at char %d", lex.position),
 					CharPos: int(lex.position),
 				})
 				return tokens
@@ -424,51 +482,4 @@ func (lex *Lexer) readString() []token.Token {
 		Literal: str,
 		CharPos: int(lex.position),
 	}}
-}
-
-func (lex *Lexer) NextToken() []token.Token {
-	var toks []token.Token
-	if lex.ch == rune(0x0) {
-		t := token.Token{}
-		t.Type = token.TOKEN_EOF
-		t.CharPos = int(lex.position)
-		return []token.Token{t}
-	} else if lex.ch == ATOM_LT {
-		// check to see if the next character is a letter; if so, read tag, otherwise assume text
-		if isLetter(lex.input.Get(lex.readPosition)) || lex.input.Get(lex.readPosition) == ATOM_SLASH || lex.input.Get(lex.readPosition) == ATOM_BANG {
-			// read as tag
-			toks = lex.readTag()
-		} else {
-			// read as text
-			toks = lex.readText()
-		}
-	} else if lex.ch == ATOM_SQUOTE || lex.ch == ATOM_DQOUT {
-		// read string
-		toks = lex.readString()
-	} else {
-		// read text
-		toks = lex.readText()
-	}
-	return toks
-}
-
-func (lex *Lexer) Lex() ([]token.Token, error) {
-	var tokens []token.Token = make([]token.Token, 0)
-
-	toks := lex.NextToken()
-	for true {
-		for _, tok := range toks {
-			if tok.Type == token.TOKEN_EOF {
-				tokens = append(tokens, tok)
-				return tokens, nil
-			}
-			if tok.Type == token.TOKEN_ERROR {
-				tokens = append(tokens, tok)
-				return tokens, errors.New(tok.Message)
-			}
-			tokens = append(tokens, tok)
-		}
-		toks = lex.NextToken()
-	}
-	return tokens, nil
 }
