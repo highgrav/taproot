@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"highgrav/taproot/v1/languages/jsmlparser"
 	"highgrav/taproot/v1/languages/lexer"
+	"os"
 	"testing"
 )
 
@@ -19,24 +20,27 @@ func TestParse(t *testing.T) {
 	<!--
 		This is a comment
 	-->
-	<body @@csp_nonce style="font-size:10em;">
+	<body @@csp_nonce style="font-size:1em;">
 		<h1>🥇🥇 GoldFusion Test 🥇🥇</h1>
 		This is a test
-		<ul id="myUL">
+		<ul id="myUL" style="color:red">
 		<go>
 			var total = 0;
 			for(var x = 0; x < 10; x++){
 				<li>
-				<go.val>x</go.val>
+				<go.out>Current value:</go.out> <go.val>x</go.val>
 				total++;
 				</li>
 			}
 		</go>
 		</ul>
+		<p>
+			<![CDATA[0123456789]]>
+		</p>
+		<url is-good="yes"/>
 	</body>
 </html>
-<![CDATA[0123456789]]>
-<url is-good = "yes"/>
+
 	`
 	lex := lexer.New(input)
 	toks, err := lex.Lex()
@@ -49,13 +53,11 @@ func TestParse(t *testing.T) {
 		t.Error(err)
 	}
 	tr := NewWithNode(parse.Tree(), true)
-	/*
-		fmt.Println(tr.ToString())
-	*/
 
 	err = tr.ToJS()
 	if err != nil {
 		t.Error(err)
 	}
 	fmt.Println(tr.output.String())
+	os.WriteFile("/tmp/test.js", []byte(tr.output.String()), 777)
 }

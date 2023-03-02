@@ -22,7 +22,6 @@ type Transpiler struct {
 	output          strings.Builder
 	imports         map[string]Transpiler
 	script          string
-	writerPrefix    string
 	DisplayComments bool
 	// hidden state
 	modes []transpMode
@@ -30,8 +29,9 @@ type Transpiler struct {
 
 func NewWithNode(node *jsmlparser.ParseNode, displayComments bool) Transpiler {
 	return Transpiler{
-		tree:            node,
 		DisplayComments: displayComments,
+		tree:            node,
+		imports:         make(map[string]Transpiler),
 	}
 }
 

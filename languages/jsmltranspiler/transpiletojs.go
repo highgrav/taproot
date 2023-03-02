@@ -2,7 +2,6 @@ package jsmltranspiler
 
 import (
 	"errors"
-	"fmt"
 	"highgrav/taproot/v1/languages/jsmlparser"
 	"strings"
 )
@@ -125,7 +124,6 @@ func (tr *Transpiler) dispatchNonSemanticCloseTag(node jsmlparser.ParseNode) err
 
 // TODO -- looks good
 func (tr *Transpiler) dispatchTag(node jsmlparser.ParseNode) error {
-	fmt.Println("dispatchTag")
 	isTagSem := isTagSemantic(node)
 	if isTagSem {
 		return tr.dispatchSemanticTag(node)
@@ -139,7 +137,6 @@ func (tr *Transpiler) dispatchSemanticTag(node jsmlparser.ParseNode) error {
 		return tr.throwError(node, "tried to dispatch semantic tag for wrong tag type")
 	}
 
-	fmt.Printf(">>>>>>(%s): %s \n", node.NodeType, node.NodeName)
 	// handle <go/> and <go.out/> as special cases
 	if node.NodeType == jsmlparser.NODE_TAG && node.NodeName == "go" {
 		return tr.dispatchGoOpenTag(node)
