@@ -8,8 +8,9 @@ import (
 	"time"
 )
 
+// TODO -- HttpServer config
 func (srv *Server) HandleGlobalRateLimit(next http.Handler) http.Handler {
-	limiter := rate.NewLimiter(rate.Limit(srv.Config.GlobalRateLimits.RequestsPerSecond), srv.Config.GlobalRateLimits.BurstableRequests)
+	limiter := rate.NewLimiter(rate.Limit(srv.Config.HttpServer.GlobalRateLimits.RequestsPerSecond), srv.Config.HttpServer.GlobalRateLimits.BurstableRequests)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !limiter.Allow() {
@@ -37,7 +38,7 @@ func (srv *Server) HandleIPRateLimit(next http.Handler) http.Handler {
 			time.Sleep(time.Minute)
 			mu.Lock()
 			for ip, client := range clients {
-				if time.Since(client.lastSeen) > time.Second*time.Duration(srv.Config.IpRateLimits.SweepClientCacheInSeconds) {
+				if time.Since(client.lastSeen) > time.Second*time.Duration(srv.Config.HttpServer.IpRateLimits.SweepClientCacheInSeconds) {
 					delete(clients, ip)
 				}
 			}
@@ -58,7 +59,7 @@ func (srv *Server) HandleIPRateLimit(next http.Handler) http.Handler {
 				srv.ServerErrorResponse(w, r)
 				return
 			}
-			for _, exempt := range srv.Config.IpRateLimits.ExemptNets {
+			for _, exempt := range srv.Config.HttpServer.IpRateLimits.ExemptNets {
 				if exempt.Contains(ip) {
 					clients[ipstr] = &client{
 						lastSeen: time.Now(),
@@ -69,7 +70,7 @@ func (srv *Server) HandleIPRateLimit(next http.Handler) http.Handler {
 			}
 			if _, nowexists := clients[ipstr]; !nowexists {
 				clients[ipstr] = &client{
-					limiter:  rate.NewLimiter(rate.Limit(srv.Config.IpRateLimits.RequestsPerSecond), srv.Config.IpRateLimits.BurstableRequests),
+					limiter:  rate.NewLimiter(rate.Limit(srv.Config.HttpServer.IpRateLimits.RequestsPerSecond), srv.Config.HttpServer.IpRateLimits.BurstableRequests),
 					lastSeen: time.Now(),
 					exempted: false,
 				}

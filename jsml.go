@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/deck"
-	"highgrav/taproot/v1/languages/naive"
+	"highgrav/taproot/v1/languages/jsmltranspiler"
 	"os"
 	"path/filepath"
 	"strings"
@@ -44,7 +44,17 @@ func (srv *Server) compileJSMLFiles(srcDirName, dstDirName string) error {
 		}
 
 		// TODO -- update from naive parser
-		jsSrc, err := naive.ParseGoldfusionToJS(string(gfSrc))
+		trans, err := jsmltranspiler.NewAndTranspile(string(gfSrc), false)
+		if err != nil {
+			deck.Error("Error compiling JSML to JSScript " + script + ": " + err.Error())
+			if retainedError == nil {
+				retainedError = err
+			} else {
+				errors.Join(retainedError, err)
+			}
+			continue
+		}
+		err = trans.ToJS()
 		if err != nil {
 			deck.Error("Error compiling JSML to JSScript " + script + ": " + err.Error())
 			if retainedError == nil {
@@ -55,8 +65,10 @@ func (srv *Server) compileJSMLFiles(srcDirName, dstDirName string) error {
 			continue
 		}
 
+		jsSrc := trans.Builder().String()
+
 		// Output the compiled file
-		relativeFileName := strings.TrimSuffix(strings.TrimPrefix(script, srcDirName), ".gf") + ".js"
+		relativeFileName := strings.TrimSuffix(strings.TrimPrefix(script, srcDirName), ".jsml") + ".js"
 		// TODO -- this is fragile if the user puts './' prefixes in their config file
 		jsFileName := filepath.Join(srv.Config.ScriptFilePath, dstDirName, relativeFileName)
 		deck.Info(fmt.Sprintf("Transpiled GF %s, moving to %s\n", script, jsFileName))

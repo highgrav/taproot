@@ -9,8 +9,7 @@ import (
 )
 
 func TestParse(t *testing.T) {
-	const input string = `
-<html>
+	const input string = `<html lang="en">
 	<head display=true>
 	<meta header="foobar" size=123/>
 	<title>Hello, world!</title>
@@ -39,14 +38,19 @@ func TestParse(t *testing.T) {
 		</p>
 		<url is-good="yes"/>
 	</body>
-</html>
-
-	`
+</html>`
 	lex := lexer.New(input)
 	toks, err := lex.Lex()
 	if err != nil {
 		t.Error(err)
 	}
+
+	/*
+		for i, v := range toks {
+			fmt.Printf("%d: %s\n", i, v.Dump())
+		}
+	*/
+
 	parse := jsmlparser.New(&toks, input)
 	err = parse.Parse()
 	if err != nil {

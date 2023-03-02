@@ -11,6 +11,7 @@ func (tr *Transpiler) ToJS() error {
 	tr.modes = make([]transpMode, 1)
 	tr.modes = append(tr.modes, transpModeHTMLOutput)
 	return tr.dispatchToJS(*tr.tree)
+
 }
 
 func (tr *Transpiler) dispatchToJS(node jsmlparser.ParseNode) error {

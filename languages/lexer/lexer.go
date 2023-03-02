@@ -434,7 +434,6 @@ func (lex *Lexer) NextToken() []token.Token {
 		t.CharPos = int(lex.position)
 		return []token.Token{t}
 	} else if lex.ch == ATOM_LT {
-
 		// check to see if the next character is a letter; if so, read tag, otherwise assume text
 		if isLetter(lex.input.Get(lex.readPosition)) || lex.input.Get(lex.readPosition) == ATOM_SLASH || lex.input.Get(lex.readPosition) == ATOM_BANG {
 			// read as tag

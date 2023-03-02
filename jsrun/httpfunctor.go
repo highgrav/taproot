@@ -25,6 +25,9 @@ func InjectJSHttpFunctor(w http.ResponseWriter, r *http.Request, vm *goja.Runtim
 	obj.Set("responseCode", writeRespCode)
 	obj.Set("isLoaded", true)
 	vm.Set("http", obj)
-	// TODO -- We should have an "out.write()" alias that defaults to http.write() or whatever the preferred output
-	// TODO -- mode is (e.g., filesystem, pdf, etc.)
+
+	// The default output should always be accessible via out.write()
+	outObj := vm.NewObject()
+	outObj.Set("write", writeToHttp)
+	vm.Set("out", outObj)
 }

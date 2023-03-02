@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"highgrav/taproot/v1/common"
 	"highgrav/taproot/v1/languages/jsmlparser"
+	"highgrav/taproot/v1/languages/lexer"
 	"strings"
 )
 
@@ -27,12 +28,41 @@ type Transpiler struct {
 	modes []transpMode
 }
 
+func NewAndTranspile(script string, displayComments bool) (Transpiler, error) {
+	t := Transpiler{
+		DisplayComments: displayComments,
+		tree:            nil,
+		imports:         make(map[string]Transpiler),
+		script:          script,
+	}
+
+	lex := lexer.New(script)
+	toks, err := lex.Lex()
+	if err != nil {
+		return t, err
+	}
+
+	parse := jsmlparser.New(&toks, script)
+	err = parse.Parse()
+	if err != nil {
+		return t, err
+	}
+
+	t.tree = parse.Tree()
+
+	return t, nil
+}
+
 func NewWithNode(node *jsmlparser.ParseNode, displayComments bool) Transpiler {
 	return Transpiler{
 		DisplayComments: displayComments,
 		tree:            node,
 		imports:         make(map[string]Transpiler),
 	}
+}
+
+func (tr *Transpiler) Builder() *strings.Builder {
+	return &tr.output
 }
 
 func (tr *Transpiler) throwError(node jsmlparser.ParseNode, msg string) error {

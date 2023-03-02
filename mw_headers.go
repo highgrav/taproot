@@ -34,9 +34,10 @@ func (srv *Server) HandleAddJsonHeaders(next http.Handler) http.Handler {
 	})
 }
 
+// TODO -- does it make sense for us to nail CORS to the HtptpServer config only?
 func (srv *Server) HandleAddCorsTrustedHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if len(srv.Config.CorsDomains) == 0 {
+		if len(srv.Config.HttpServer.CorsDomains) == 0 {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -45,7 +46,7 @@ func (srv *Server) HandleAddCorsTrustedHeaders(next http.Handler) http.Handler {
 		w.Header().Add("Vary", "Access-Control-Request-Method")
 		origin := r.Header.Get("Origin")
 		if origin != "" && origin != "null" {
-			for _, v := range srv.Config.CorsDomains {
+			for _, v := range srv.Config.HttpServer.CorsDomains {
 				if origin == v && v != "null" {
 					w.Header().Set("Access-Control-Allow-Origin", v)
 

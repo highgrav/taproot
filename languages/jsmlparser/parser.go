@@ -74,8 +74,12 @@ func New(toks *[]token.Token, script string) *Parser {
 		script: script,
 		tokens: toks,
 		tree:   nil,
-		index:  0, // note that the index always points one ahead
+		index:  -1,
 	}
+}
+
+func (parse *Parser) Tokens() *[]token.Token {
+	return parse.tokens
 }
 
 func (parse *Parser) Tree() *ParseNode {
@@ -109,20 +113,20 @@ func (parse *Parser) next() token.Token {
 			Type: token.TOKEN_EOF,
 		}
 	}
-	tok := (*parse.tokens)[parse.index]
 	parse.index++
+	tok := (*parse.tokens)[parse.index]
 	return tok
 }
 
 func (parse *Parser) Parse() error {
-	parse.index = 0
+	parse.index = -1
 	parse.tree = &ParseNode{
 		NodeType: NODE_DOCUMENT,
 		NodeName: "",
 		Data:     "",
 		Children: make([]ParseNode, 0),
 		Parent:   nil,
-		Token:    parse.current(),
+		Token:    token.Token{},
 	}
 	depth := 0
 	err := parse.parseElement(parse.tree)
