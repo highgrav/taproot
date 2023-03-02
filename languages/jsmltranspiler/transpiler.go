@@ -11,9 +11,10 @@ import (
 type transpMode string
 
 const (
-	transpModeUnknown      transpMode = "unknown"
-	transpModeHTMLOutput   transpMode = "html"   // HTML (wrapped in http.write...)
-	transpModeDirectOutput transpMode = "direct" // JS, don't wrap
+	transpModeUnknown            transpMode = "unknown"
+	transpModeHTMLOutput         transpMode = "html"   // HTML (wrapped in http.write...)
+	transpModeDirectOutput       transpMode = "direct" // JS, don't wrap
+	transpModeInterpolatedOutput transpMode = "interp"
 )
 
 type Transpiler struct {
@@ -92,7 +93,8 @@ func isTagSemantic(node jsmlparser.ParseNode) bool {
 	if node.NodeType != jsmlparser.NODE_TAG && node.NodeType != jsmlparser.NODE_CLOSE_TAG {
 		return false
 	}
-	if node.NodeName == "<go>" || strings.HasPrefix(node.NodeName, "<go.") || node.NodeName == "</go>" || strings.HasPrefix(node.NodeName, "</go.") {
+	// TODO -- at least two of these conditions are unnecessary -- review jsmlparser
+	if node.NodeName == "go" || strings.HasPrefix(node.NodeName, "go.") || node.NodeName == "<go>" || strings.HasPrefix(node.NodeName, "<go.") || node.NodeName == "</go>" || strings.HasPrefix(node.NodeName, "</go.") {
 		return true
 	}
 	return false

@@ -58,7 +58,8 @@ func (tr *Transpiler) dispatchToJS(node jsmlparser.ParseNode) error {
 		return tr.throwError(node, "unexpected number outside tag")
 
 	case jsmlparser.NODE_INTERPOLATED_VALUE:
-		return tr.dispatchInterpolatedValue(node)
+		panic("!!!!")
+		//		return tr.dispatchInterpolatedValue(node)
 	default:
 		// ???
 	}
@@ -69,27 +70,29 @@ func (tr *Transpiler) dispatchOutput(node jsmlparser.ParseNode) error {
 	if tr.mode() == transpModeDirectOutput {
 		// We're outputting code, so just dump it directly to the output
 		tr.output.Write([]byte(node.Data))
-	} else {
+	} else if tr.mode() == transpModeHTMLOutput {
 		// We're writing HTML, so wrap each line in out.write() statements
 		res := "out.write(\"" + escapeTextForWriting(node.Data) + "\");\n"
+		tr.output.Write([]byte(res))
+	} else if tr.mode() == transpModeInterpolatedOutput {
+		res := "out.write(" + node.Data + ");\n"
 		tr.output.Write([]byte(res))
 	}
 	return nil
 }
 
 func (tr *Transpiler) dispatchInterpolatedValue(node jsmlparser.ParseNode) error {
-	fmt.Println("dispatchInterpolatedValue")
+
 	return nil
 }
 
 func (tr *Transpiler) dispatchSpecialOtherTag(node jsmlparser.ParseNode) error {
-	fmt.Println("dispatchSpecialOtherTag")
+
 	return nil
 }
 
 // TODO -- looks good
 func (tr *Transpiler) dispatchCloseTag(node jsmlparser.ParseNode) error {
-	fmt.Println("dispatchCloseTag")
 	if isTagSemantic(node) {
 		return tr.dispatchSemanticCloseTag(node)
 	} else {
@@ -98,14 +101,23 @@ func (tr *Transpiler) dispatchCloseTag(node jsmlparser.ParseNode) error {
 }
 
 func (tr *Transpiler) dispatchSemanticCloseTag(node jsmlparser.ParseNode) error {
-	fmt.Println("dispatchSemanticCloseTag")
+	if node.NodeType == jsmlparser.NODE_CLOSE_TAG && node.NodeName == "</go>" {
+		return tr.dispatchGoCloseTag(node)
+	} else if node.NodeType == jsmlparser.NODE_CLOSE_TAG && node.NodeName == "</go.out>" {
+		return tr.dispatchGoOutCloseTag(node)
+	} else if node.NodeType == jsmlparser.NODE_CLOSE_TAG && node.NodeName == "</go.val>" {
+		return tr.dispatchGoValCloseTag(node)
+	}
+	switch node.NodeName {
+	default:
+		return tr.throwError(node, "unknown close tag node type "+node.NodeName)
+	}
 
 	return nil
 }
 
 // TODO -- looks good
 func (tr *Transpiler) dispatchNonSemanticCloseTag(node jsmlparser.ParseNode) error {
-	fmt.Println("dispatchNonSemanticCloseTag")
 	ret := "out.write(\"" + escapeTextForWriting(node.Data) + "\");\n"
 	tr.output.Write([]byte(ret))
 	return nil
@@ -114,7 +126,8 @@ func (tr *Transpiler) dispatchNonSemanticCloseTag(node jsmlparser.ParseNode) err
 // TODO -- looks good
 func (tr *Transpiler) dispatchTag(node jsmlparser.ParseNode) error {
 	fmt.Println("dispatchTag")
-	if isTagSemantic(node) {
+	isTagSem := isTagSemantic(node)
+	if isTagSem {
 		return tr.dispatchSemanticTag(node)
 	} else {
 		return tr.dispatchNonSemanticTag(node)
@@ -122,35 +135,28 @@ func (tr *Transpiler) dispatchTag(node jsmlparser.ParseNode) error {
 }
 
 func (tr *Transpiler) dispatchSemanticTag(node jsmlparser.ParseNode) error {
-	fmt.Println("dispatchSemanticTag")
-	if node.IsSelfClosingTag {
-		// handle attributes
-		attrs, body := extractNodes(node.Children, []jsmlparser.ParserNodeType{jsmlparser.NODE_ATTRIBUTE})
-		for _, attr := range attrs {
-			fmt.Println(attr.Data)
-		}
+	if node.NodeType != jsmlparser.NODE_TAG {
+		return tr.throwError(node, "tried to dispatch semantic tag for wrong tag type")
+	}
 
-		if len(body) != 0 {
-			return tr.throwError(node, "found non-attribute nodes on a self-closing tag")
-		}
+	fmt.Printf(">>>>>>(%s): %s \n", node.NodeType, node.NodeName)
+	// handle <go/> and <go.out/> as special cases
+	if node.NodeType == jsmlparser.NODE_TAG && node.NodeName == "go" {
+		return tr.dispatchGoOpenTag(node)
+	} else if node.NodeType == jsmlparser.NODE_TAG && node.NodeName == "go.out" {
+		return tr.dispatchGoOutOpenTag(node)
+	} else if node.NodeType == jsmlparser.NODE_TAG && node.NodeName == "go.val" {
+		return tr.dispatchGoValOpenTag(node)
+	}
 
-		return nil
-	} else {
-		attrs, body := extractNodes(node.Children, []jsmlparser.ParserNodeType{jsmlparser.NODE_ATTRIBUTE})
-		for _, attr := range attrs {
-			fmt.Println(attr.Data)
-		}
-
-		for _, item := range body {
-			fmt.Println(item.NodeType)
-		}
-		return nil
+	switch node.NodeName {
+	default:
+		return tr.throwError(node, "uknown tag node type "+node.NodeName)
 	}
 }
 
 // TODO -- Looks good
 func (tr *Transpiler) dispatchNonSemanticTag(node jsmlparser.ParseNode) error {
-	fmt.Println("dispatchNonSemanticTag")
 	ret := ""
 	ret += "<" + node.Data
 
@@ -188,10 +194,15 @@ func (tr *Transpiler) dispatchNonSemanticTag(node jsmlparser.ParseNode) error {
 
 // <go>
 func (tr *Transpiler) dispatchGoOpenTag(node jsmlparser.ParseNode) error {
+	tr.modes = append(tr.modes, transpModeDirectOutput)
 	return nil
 }
 
 func (tr *Transpiler) dispatchGoCloseTag(node jsmlparser.ParseNode) error {
+	if tr.modes[len(tr.modes)-1] != transpModeDirectOutput {
+		return errors.New("attempted to close a <go/> tag while not writing raw output")
+	}
+	tr.modes = tr.modes[:len(tr.modes)-1]
 	return nil
 }
 
@@ -211,10 +222,21 @@ func (tr *Transpiler) dispatchGoOutCloseTag(node jsmlparser.ParseNode) error {
 
 // <go.val>
 func (tr *Transpiler) dispatchGoValOpenTag(node jsmlparser.ParseNode) error {
+	tr.modes = append(tr.modes, transpModeInterpolatedOutput)
+	for _, c := range node.Children {
+		err := tr.dispatchToJS(c)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 func (tr *Transpiler) dispatchGoValCloseTag(node jsmlparser.ParseNode) error {
+	if tr.modes[len(tr.modes)-1] != transpModeInterpolatedOutput {
+		return errors.New("attempted to close a <go.val/> tag while not processing output")
+	}
+	tr.modes = tr.modes[:len(tr.modes)-1]
 	return nil
 }
 
