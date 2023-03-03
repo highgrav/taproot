@@ -28,6 +28,7 @@ type Server struct {
 	Router     *httprouter.Router
 	Middleware []MiddlewareFunc // Used when adding a new route
 	DBs        map[string]*sql.DB
+	ExitServer chan bool
 
 	js                *jsrun.JSManager
 	jsinjections      []jsrun.InjectorFunc

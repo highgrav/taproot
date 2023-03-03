@@ -2,12 +2,14 @@ package taproot
 
 import (
 	"errors"
-	"github.com/spf13/viper"
 	ffclient "github.com/thomaspoignant/go-feature-flag"
 	"net"
 )
 
 type ServerConfig struct {
+	ConfigFilePath         string
+	IPFilterConfigFilePath string
+	FFlagsConfigFilePath   string
 
 	/* METRICS */
 	UseMetricsServer bool
@@ -83,14 +85,4 @@ func (c *TLSConfig) IsValid() (bool, error) {
 		return false, errors.New("Cannot use ACME and a self-signed cert!")
 	}
 	return true, nil
-}
-
-// LoadConfig() handles all the Viper setup and management
-func LoadConfig(cfgDirs []string) (ServerConfig, error) {
-	cfg := ServerConfig{}
-	viper.SetConfigName("taproot")
-	for _, v := range cfgDirs {
-		viper.AddConfigPath(v)
-	}
-	return cfg, nil
 }

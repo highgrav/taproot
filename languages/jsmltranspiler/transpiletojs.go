@@ -2,7 +2,6 @@ package jsmltranspiler
 
 import (
 	"errors"
-	"fmt"
 	"highgrav/taproot/v1/languages/jsmlparser"
 	"strings"
 )
@@ -264,7 +263,6 @@ func (tr *Transpiler) dispatchGoIncludeOpenTag(node jsmlparser.ParseNode) error 
 		return tr.throwError(node, "missing source ID for included script")
 	}
 	res, err := tr.getInclude(src, node)
-	fmt.Println(res)
 	if err != nil {
 		return err
 	}

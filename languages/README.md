@@ -1,16 +1,5 @@
+# Taproot DSLs
 
-# Goldfusion
-
-
-Gof is basically JavaScript with some syntactic sugar to let it emit HTML, similar to JSX.
-
-In general, gof files are parsed as HTML, with the text between tags interpreted as Javascript.
-
-- <go.out/> Anything within a <go.out/> tag is treated as text to be emitted, unless overridden within a <go/> tag.
-- <go/>: Anything within a <go/> tag is treated as JS.
-- <go.var/>: Anything within a <go.var/> tag is treated as a JS expression to output.
-
-
-#### TODO
-- Need to preparse prior to HTML tokenization, since tag-like strings in squots/dquots can be improperly parsed as HTML.
-
+Taproot makes use of some basic XMLish DSLs, specifically the Acacia Policy Language and the Javascript Markup Language. 
+Both Acacia and JSML use the same lexer logic (in the `./lexer` and `./token` directories), but separate parsers and 
+transpilers/managers (in the `./acacia*` and `./jsml*` directories).

@@ -3,6 +3,7 @@ package taproot
 import (
 	"errors"
 	"fmt"
+	"github.com/fsnotify/fsnotify"
 	"github.com/google/deck"
 	"highgrav/taproot/v1/common"
 	"highgrav/taproot/v1/languages/jsmltranspiler"
@@ -38,7 +39,6 @@ func (sa ScriptAccessor) GetJSScriptByID(id string) (string, error) {
 }
 
 // This simply compiles all the files at startup.
-// TODO -- this does have a potential issue with race conditions (including scripts compiled prior to included ones) if the JSML files haven't been transpiled
 func (srv *Server) compileJSMLFiles(srcDirName, dstDirName string) error {
 	var sa ScriptAccessor = ScriptAccessor{
 		srv: srv,
@@ -56,9 +56,19 @@ func (srv *Server) compileJSMLFiles(srcDirName, dstDirName string) error {
 	}
 
 	// get scripts
-	scripts, err := filepath.Glob(filepath.Join(srcDirName, "*.jsml"))
+	var scripts []string = make([]string, 0)
+
+	err = filepath.Walk(srcDirName, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if strings.HasSuffix(info.Name(), ".jsml") {
+			scripts = append(scripts, path)
+		}
+		return nil
+	})
 	if err != nil {
-		deck.Error("Error reading JSML files: " + err.Error())
+		deck.Error("Error finding JSML files: " + err.Error())
 		os.Exit(-310)
 	}
 	for _, script := range scripts {
@@ -101,7 +111,12 @@ func (srv *Server) compileJSMLFiles(srcDirName, dstDirName string) error {
 		relativeFileName := strings.TrimSuffix(strings.TrimPrefix(script, srcDirName), ".jsml") + ".js"
 		// TODO -- this is fragile if the user puts './' prefixes in their config file
 		jsFileName := filepath.Join(srv.Config.ScriptFilePath, dstDirName, relativeFileName)
-		deck.Info(fmt.Sprintf("Transpiled GF %s, moving to %s\n", script, jsFileName))
+		deck.Info(fmt.Sprintf("Transpiled JSML %s, moving to %s\n", script, filepath.Dir(jsFileName)))
+		// create directory path
+		err = os.MkdirAll(filepath.Dir(jsFileName), 0777) // TODO -- fileperm
+		if err != nil {
+			return err
+		}
 		newFile, err := os.OpenFile(jsFileName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 		if err != nil {
 			return err
@@ -115,6 +130,52 @@ func (srv *Server) compileJSMLFiles(srcDirName, dstDirName string) error {
 	return retainedError
 }
 
+// goroutine to start file monitoring
 func (srv *Server) monitorJSMLDirectories() {
 	// TODO
+	dirList := []string{srv.Config.JSMLFilePath}
+	subdirs, err := common.GetDirs(srv.Config.JSMLFilePath)
+	if err != nil {
+		deck.Error("JSML file monitoring cannot be started")
+		deck.Error(err.Error())
+		return
+	}
+	dirList = append(dirList, subdirs...)
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		deck.Error("JSML file monitoring cannot be started")
+		deck.Error(err.Error())
+		return
+	}
+	deck.Info("Watching JSML file directories")
+	for {
+		select {
+		case exitFlag := <-srv.ExitServer:
+			if exitFlag {
+				deck.Info("Shutting down JSML filewatcher")
+				return
+			}
+		case err := <-watcher.Errors:
+			deck.Error("Error in JSML filewatcher")
+			deck.Error(err.Error())
+			return
+		case event := <-watcher.Events:
+			if event.Op&fsnotify.Write == fsnotify.Write {
+				// recompile
+			}
+			if event.Op&fsnotify.Create == fsnotify.Create {
+				// if a directory, add a watcher
+				// if a file, compile it
+			}
+			if event.Op&fsnotify.Remove == fsnotify.Remove {
+				watcher.Remove(event.Name)
+				// delete the compiled JS file
+			}
+			if event.Op&fsnotify.Rename == fsnotify.Rename {
+				watcher.Remove(event.Name)
+				// rename the compiled JS file
+			}
+		}
+		return
+	}
 }
