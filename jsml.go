@@ -4,14 +4,45 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/deck"
+	"highgrav/taproot/v1/common"
 	"highgrav/taproot/v1/languages/jsmltranspiler"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
+type ScriptAccessor struct {
+	srv *Server
+}
+
+func (sa ScriptAccessor) GetJSMLScriptByID(id string) (string, error) {
+	// Make sure we're looking for a JSML file
+	if strings.HasSuffix(id, ".js") {
+		id = id + "ml"
+	}
+	basePath := sa.srv.Config.JSMLFilePath
+	// use the common.FindRelocatedFile() to try to locate the errant uncompiled JSML file
+	fileName, err := common.FindRelocatedFile(basePath, id)
+	if err != nil {
+		return "", nil
+	}
+	script, err := os.ReadFile(fileName)
+	if err != nil {
+		return "", err
+	}
+	return string(script), nil
+}
+
+func (sa ScriptAccessor) GetJSScriptByID(id string) (string, error) {
+	return sa.srv.js.GetScriptText(id)
+}
+
 // This simply compiles all the files at startup.
+// TODO -- this does have a potential issue with race conditions (including scripts compiled prior to included ones) if the JSML files haven't been transpiled
 func (srv *Server) compileJSMLFiles(srcDirName, dstDirName string) error {
+	var sa ScriptAccessor = ScriptAccessor{
+		srv: srv,
+	}
 	var retainedError error = nil
 
 	fileOutDir := filepath.Join(srv.Config.ScriptFilePath, dstDirName)
@@ -43,8 +74,7 @@ func (srv *Server) compileJSMLFiles(srcDirName, dstDirName string) error {
 			continue
 		}
 
-		// TODO -- update from naive parser
-		trans, err := jsmltranspiler.NewAndTranspile(string(gfSrc), false)
+		trans, err := jsmltranspiler.NewAndTranspile(sa, string(gfSrc), false)
 		if err != nil {
 			deck.Error("Error compiling JSML to JSScript " + script + ": " + err.Error())
 			if retainedError == nil {

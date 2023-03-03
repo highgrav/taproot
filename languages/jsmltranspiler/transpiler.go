@@ -9,6 +9,11 @@ import (
 	"strings"
 )
 
+type IScriptAccessor interface {
+	GetJSScriptByID(id string) (string, error)
+	GetJSMLScriptByID(id string) (string, error)
+}
+
 type transpMode string
 
 const (
@@ -19,21 +24,23 @@ const (
 )
 
 type Transpiler struct {
+	scriptAccessor  IScriptAccessor
 	tree            *jsmlparser.ParseNode
 	output          strings.Builder
-	imports         map[string]Transpiler
+	imports         map[string]string
 	script          string
 	DisplayComments bool
 	// hidden state
 	modes []transpMode
 }
 
-func NewAndTranspile(script string, displayComments bool) (Transpiler, error) {
+func NewAndTranspile(accessor IScriptAccessor, script string, displayComments bool) (Transpiler, error) {
 	t := Transpiler{
 		DisplayComments: displayComments,
 		tree:            nil,
-		imports:         make(map[string]Transpiler),
+		imports:         make(map[string]string),
 		script:          script,
+		scriptAccessor:  accessor,
 	}
 
 	lex := lexer.New(script)
@@ -49,15 +56,19 @@ func NewAndTranspile(script string, displayComments bool) (Transpiler, error) {
 	}
 
 	t.tree = parse.Tree()
-
+	err = t.ToJS()
+	if err != nil {
+		return t, err
+	}
 	return t, nil
 }
 
-func NewWithNode(node *jsmlparser.ParseNode, displayComments bool) Transpiler {
+func NewWithNode(accessor IScriptAccessor, node *jsmlparser.ParseNode, displayComments bool) Transpiler {
 	return Transpiler{
 		DisplayComments: displayComments,
 		tree:            node,
-		imports:         make(map[string]Transpiler),
+		imports:         make(map[string]string),
+		scriptAccessor:  accessor,
 	}
 }
 
@@ -153,4 +164,31 @@ func extractNodes(children []jsmlparser.ParseNode, desiredTypes []jsmlparser.Par
 	}
 
 	return extracted, remainder
+}
+
+func (tr *Transpiler) getInclude(id string, node jsmlparser.ParseNode) (string, error) {
+	for compiledScript, ok := tr.imports[id]; ok; {
+		return compiledScript, nil
+	}
+
+	// We probably have a delimited string coming in, so strip first and last chars
+	// TODO -- adding a function to convert a "safe" string to a "native" string might be a good idea
+	if id[0] == '"' || id[0] == '\'' {
+		id = id[1 : len(id)-1]
+	}
+	script, err := tr.scriptAccessor.GetJSMLScriptByID(id)
+	if err != nil {
+		newErr := tr.throwError(node, "could not access included script '"+id+"'")
+		newErr = errors.Join(newErr, err)
+		return "", newErr
+	}
+	compiledTr, err := NewAndTranspile(tr.scriptAccessor, script, tr.DisplayComments)
+	if err != nil {
+		newErr := tr.throwError(node, "failed to compile included script '"+id+"'")
+		newErr = errors.Join(newErr, err)
+		return "", newErr
+	}
+	res := compiledTr.Builder().String()
+	tr.imports[id] = res
+	return res, nil
 }

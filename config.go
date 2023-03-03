@@ -21,12 +21,12 @@ type ServerConfig struct {
 	StaticFilePath      string
 	StaticFileDirectory string
 
-	/* SCRIPTS AND GOLDFUSION */
-	ScriptFilePath     string
-	UseScripts         bool
-	GfFilePath         string // Where are Goldfusion files stored?
-	UseGfFiles         bool   // Use Goldfusion file templates?
-	GfCompiledFilePath string // A subdirectory under the ScriptFilePath where Taproot will put compiled GF files
+	/* SCRIPTS AND JSML */
+	ScriptFilePath       string
+	UseScripts           bool
+	JSMLFilePath         string // Where are JSML files stored?
+	UseJSMLFiles         bool   // Use JSML file templates?
+	JSMLCompiledFilePath string // A subdirectory under the ScriptFilePath where Taproot will put compiled JSML files
 
 	/* FEATURE FLAGS */
 	Flags ffclient.Config // Configuration data for feature flag management

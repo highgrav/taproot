@@ -21,7 +21,23 @@ type JSManager struct {
 	fileDir         string
 	fileDirs        []string
 	compileMu       sync.Mutex
+	scripts         map[string]string
 	compiledScripts map[string]*goja.Program
+}
+
+func (jsm *JSManager) GetScriptText(key string) (string, error) {
+	if strings.HasSuffix(key, "jsml") {
+		key = key[:len(key)-2]
+	}
+	fullKey := filepath.Join(jsm.fileDir, key)
+	script, ok := jsm.scripts[fullKey]
+	if !ok {
+		err := jsm.CompileOne(fullKey)
+		if err != nil {
+			return "", errors.New("could not locate script '" + key + "': " + err.Error())
+		}
+	}
+	return script, nil
 }
 
 func (jsm *JSManager) GetScript(key string) (*goja.Program, error) {
@@ -47,6 +63,7 @@ func New(dir string) (*JSManager, error) {
 	jsm.fileDir = dir
 	jsm.watchDir = make(chan bool)
 	jsm.compiledScripts = make(map[string]*goja.Program)
+	jsm.scripts = make(map[string]string)
 	err = jsm.CompileAll()
 	go jsm.watchDirAndRecompile()
 	if err != nil {
@@ -124,6 +141,7 @@ func (jsm *JSManager) compileDir(dirName string) error {
 		}
 		deck.Info(fmt.Sprintf("Loaded JSScript '%s'\n", script))
 		jsm.compiledScripts[script] = comp
+		jsm.scripts[script] = string(src) // TODO -- make sure this preserves unicode
 	}
 	return nil
 }
@@ -143,6 +161,7 @@ func (jsm *JSManager) CompileOne(script string) error {
 	}
 	deck.Info(fmt.Sprintf("Loaded JSScript '%s'\n", script))
 	jsm.compiledScripts[script] = comp
+	jsm.scripts[script] = string(src)
 	return nil
 }
 
@@ -154,6 +173,7 @@ func (jsm *JSManager) CompileOneAs(key string, script string) error {
 	}
 	deck.Info(fmt.Sprintf("Loaded JSScript '%s'\n", key))
 	jsm.compiledScripts[key] = comp
+	jsm.scripts[key] = string(script)
 	return nil
 }
 
@@ -237,6 +257,7 @@ func (jsm *JSManager) watchDirAndRecompile() {
 				_, ok := jsm.compiledScripts[event.Name]
 				if ok {
 					delete(jsm.compiledScripts, event.Name)
+					delete(jsm.scripts, event.Name)
 					deck.Info("Removed compiled script " + event.Name)
 				}
 
@@ -249,6 +270,7 @@ func (jsm *JSManager) watchDirAndRecompile() {
 				_, ok := jsm.compiledScripts[event.Name]
 				if ok {
 					delete(jsm.compiledScripts, event.Name)
+					delete(jsm.scripts, event.Name)
 					deck.Info("Removed compiled script " + event.Name)
 				}
 				// A rename fires off a create event also, so it'll handle

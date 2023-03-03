@@ -4,6 +4,7 @@ import (
 	"github.com/google/deck"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func GetDirs(dirName string) ([]string, error) {
@@ -30,4 +31,33 @@ func GetDirs(dirName string) ([]string, error) {
 	}
 
 	return ds, nil
+}
+
+func SliceDirectory(basePath string) []string {
+	elems := make([]string, 0)
+
+	res := filepath.Base(basePath)
+	basePath = strings.TrimSuffix(basePath, res)
+	elems = append([]string{res}, elems...)
+
+	for res != string(os.PathSeparator) && res != "." {
+		res = filepath.Base(basePath)
+		elems = append([]string{res}, elems...)
+		basePath = strings.TrimSuffix(basePath, res+string(os.PathSeparator))
+	}
+	return elems
+}
+
+// For use primarily to find the original source of compiled and moved JSML files.
+// Takes the base path to search, then
+func FindRelocatedFile(basePath string, relocatedPath string) (string, error) {
+	elems := SliceDirectory(relocatedPath)
+	for x := 0; x < len(elems); x++ {
+		fPath := basePath + string(os.PathSeparator) + strings.Join(elems[x:], string(os.PathSeparator))
+		_, err := os.Stat(fPath)
+		if err == nil {
+			return fPath, nil
+		}
+	}
+	return "", os.ErrNotExist
 }

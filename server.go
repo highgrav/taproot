@@ -76,8 +76,8 @@ func New(userStore authn.IUserStore, cfg ServerConfig) *Server {
 	}
 	s.js = js
 
-	if s.Config.UseGfFiles {
-		err = s.compileJSMLFiles(s.Config.GfFilePath, s.Config.GfCompiledFilePath)
+	if s.Config.UseJSMLFiles {
+		err = s.compileJSMLFiles(s.Config.JSMLFilePath, s.Config.JSMLCompiledFilePath)
 		if err != nil {
 			deck.Fatal(err.Error())
 			os.Exit(-1)

@@ -2,6 +2,7 @@ package jsmltranspiler
 
 import (
 	"errors"
+	"fmt"
 	"highgrav/taproot/v1/languages/jsmlparser"
 	"strings"
 )
@@ -110,6 +111,8 @@ func (tr *Transpiler) dispatchSemanticCloseTag(node jsmlparser.ParseNode) error 
 		return tr.dispatchGoValCloseTag(node)
 	}
 	switch node.NodeName {
+	case "</go.include>":
+		return tr.dispatchGoIncludeCloseTag(node)
 	default:
 		return tr.throwError(node, "unknown close tag node type "+node.NodeName)
 	}
@@ -149,8 +152,10 @@ func (tr *Transpiler) dispatchSemanticTag(node jsmlparser.ParseNode) error {
 	}
 
 	switch node.NodeName {
+	case "go.include":
+		return tr.dispatchGoIncludeOpenTag(node)
 	default:
-		return tr.throwError(node, "uknown tag node type "+node.NodeName)
+		return tr.throwError(node, "unknown tag node type "+node.NodeName)
 	}
 }
 
@@ -239,22 +244,57 @@ func (tr *Transpiler) dispatchGoValCloseTag(node jsmlparser.ParseNode) error {
 	return nil
 }
 
-// <go.query>
-func (tr *Transpiler) dispatchGoQueryOpenTag(node jsmlparser.ParseNode) error {
+// <go.include src="..." />
+// TODO --
+func (tr *Transpiler) dispatchGoIncludeOpenTag(node jsmlparser.ParseNode) error {
+	src := ""
+	params, _ := extractNodes(node.Children, []jsmlparser.ParserNodeType{jsmlparser.NODE_ATTRIBUTE})
+
+	for _, p := range params {
+		if strings.ToLower(p.NodeName) == "src" {
+			for _, v := range p.Children {
+				if v.NodeType == jsmlparser.NODE_STRING {
+					src = v.Data
+				}
+			}
+		}
+	}
+
+	if src == "" {
+		return tr.throwError(node, "missing source ID for included script")
+	}
+	res, err := tr.getInclude(src, node)
+	fmt.Println(res)
+	if err != nil {
+		return err
+	}
+	tr.output.Write([]byte(res))
 	return nil
 }
 
-func (tr *Transpiler) dispatchGoQueryCloseTag(node jsmlparser.ParseNode) error {
+func (tr *Transpiler) dispatchGoIncludeCloseTag(node jsmlparser.ParseNode) error {
+	// doesn't have any effect
 	return nil
+}
+
+///////////////////////////////////////////////////////////////
+
+// <go.query>
+func (tr *Transpiler) dispatchGoQueryOpenTag(node jsmlparser.ParseNode) error {
+	return errors.New("NOT IMPLEMENTED")
+}
+
+func (tr *Transpiler) dispatchGoQueryCloseTag(node jsmlparser.ParseNode) error {
+	return errors.New("NOT IMPLEMENTED")
 }
 
 // <go.loop>
 func (tr *Transpiler) dispatchGoLoopOpenTag(node jsmlparser.ParseNode) error {
-	return nil
+	return errors.New("NOT IMPLEMENTED")
 }
 
 func (tr *Transpiler) dispatchGoLoopCloseTag(node jsmlparser.ParseNode) error {
-	return nil
+	return errors.New("NOT IMPLEMENTED")
 }
 
 // <go.get>

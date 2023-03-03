@@ -8,6 +8,12 @@ import (
 	"testing"
 )
 
+type testScriptAccessor struct{}
+
+func (sa testScriptAccessor) GetJSScriptByID(id string) (string, error) {
+	return "<h1>THIS IS AN INCLUDE TEST</h1>", nil
+}
+
 func TestParse(t *testing.T) {
 	const input string = `<html lang="en">
 	<head display=true>
@@ -39,6 +45,7 @@ func TestParse(t *testing.T) {
 		</p>
 		<url is-good="yes"/>
 	</body>
+	<go.include src="foo"/>
 </html>`
 	lex := lexer.New(input)
 	toks, err := lex.Lex()
@@ -46,18 +53,16 @@ func TestParse(t *testing.T) {
 		t.Error(err)
 	}
 
-	/*
-		for i, v := range toks {
-			fmt.Printf("%d: %s\n", i, v.Dump())
-		}
-	*/
-
+	fmt.Println("Parsing...")
 	parse := jsmlparser.New(&toks, input)
 	err = parse.Parse()
 	if err != nil {
 		t.Error(err)
 	}
-	tr := NewWithNode(parse.Tree(), true)
+
+	fmt.Println("Transpiling...")
+	sa := testScriptAccessor{}
+	tr := NewWithNode(sa, parse.Tree(), true)
 
 	err = tr.ToJS()
 	if err != nil {
