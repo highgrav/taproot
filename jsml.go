@@ -13,7 +13,7 @@ import (
 )
 
 type ScriptAccessor struct {
-	srv *Server
+	srv *AppServer
 }
 
 func (sa ScriptAccessor) GetJSMLScriptByID(id string) (string, error) {
@@ -39,7 +39,7 @@ func (sa ScriptAccessor) GetJSScriptByID(id string) (string, error) {
 }
 
 // This simply compiles all the files at startup.
-func (srv *Server) compileJSMLFiles(srcDirName, dstDirName string) error {
+func (srv *AppServer) compileJSMLFiles(srcDirName, dstDirName string) error {
 	var sa ScriptAccessor = ScriptAccessor{
 		srv: srv,
 	}
@@ -131,7 +131,7 @@ func (srv *Server) compileJSMLFiles(srcDirName, dstDirName string) error {
 }
 
 // goroutine to start file monitoring
-func (srv *Server) monitorJSMLDirectories() {
+func (srv *AppServer) monitorJSMLDirectories() {
 	// TODO
 	dirList := []string{srv.Config.JSMLFilePath}
 	subdirs, err := common.GetDirs(srv.Config.JSMLFilePath)
@@ -150,7 +150,7 @@ func (srv *Server) monitorJSMLDirectories() {
 	deck.Info("Watching JSML file directories")
 	for {
 		select {
-		case exitFlag := <-srv.ExitServer:
+		case exitFlag := <-srv.ExitServerCh:
 			if exitFlag {
 				deck.Info("Shutting down JSML filewatcher")
 				return

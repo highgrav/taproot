@@ -9,7 +9,7 @@ import (
 )
 
 // TODO -- HttpServer config
-func (srv *Server) HandleGlobalRateLimit(next http.Handler) http.Handler {
+func (srv *AppServer) HandleGlobalRateLimit(next http.Handler) http.Handler {
 	limiter := rate.NewLimiter(rate.Limit(srv.Config.HttpServer.GlobalRateLimits.RequestsPerSecond), srv.Config.HttpServer.GlobalRateLimits.BurstableRequests)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +21,7 @@ func (srv *Server) HandleGlobalRateLimit(next http.Handler) http.Handler {
 	})
 }
 
-func (srv *Server) HandleIPRateLimit(next http.Handler) http.Handler {
+func (srv *AppServer) HandleIPRateLimit(next http.Handler) http.Handler {
 	type client struct {
 		limiter  *rate.Limiter
 		lastSeen time.Time

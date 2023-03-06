@@ -58,7 +58,7 @@ func injectHttpRequest(r *http.Request, vm *goja.Runtime) {
 }
 
 // An endpoint route that executes a compiled script
-func (svr *Server) HandleScript(scriptKey string) http.HandlerFunc {
+func (svr *AppServer) HandleScript(scriptKey string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		script, err := svr.js.GetScript(scriptKey)
 		if err != nil {
@@ -92,7 +92,7 @@ func (svr *Server) HandleScript(scriptKey string) http.HandlerFunc {
 	}
 }
 
-func addJSUtilFunctor(svr *Server, vm *goja.Runtime) {
+func addJSUtilFunctor(svr *AppServer, vm *goja.Runtime) {
 	obj := vm.NewObject()
 
 	printToStdout := func(val goja.Value) {

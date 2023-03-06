@@ -6,7 +6,7 @@ import (
 )
 
 // TODO --tomasen/realip is probably a better option here
-func (srv *Server) HandleForwarding(next http.Handler) http.Handler {
+func (srv *AppServer) HandleForwarding(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var ip string = r.RemoteAddr
 		xff := r.Header.Get("X-Forwarded-For")

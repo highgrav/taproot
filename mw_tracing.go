@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func (srv *Server) HandleTracing(next http.Handler) http.Handler {
+func (srv *AppServer) HandleTracing(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// time, remote address, method, url, correlation ID, username
 		var corrId string = common.CreateRandString(32)

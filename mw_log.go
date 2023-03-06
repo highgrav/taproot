@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func (srv *Server) HandleLogging(next http.Handler) http.Handler {
+func (srv *AppServer) HandleLogging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		corrId := ""
 

@@ -26,6 +26,10 @@ func (pm *PolicyManager) AddPolicy(policy string) {
 
 }
 
+func (pm *PolicyManager) Apply(request UserRightRequest) ([]Right, error) {
+	return []Right{}, nil
+}
+
 func New(dir string) (*PolicyManager, error) {
 	pm := &PolicyManager{}
 

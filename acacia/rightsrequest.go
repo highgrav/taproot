@@ -1,9 +1,10 @@
 package acacia
 
 type RightsRequest struct {
-	HttpRequest      HttpRequest      `json:"http"`
-	ContextRequest   ContextRequest   `json:"ctx"`
-	UserRightRequest UserRightRequest `json:"user""`
+	Http    HttpRequest      `json:"http"`
+	Query   QueryRequest     `json:"query"`
+	User    UserRightRequest `json:"user""`
+	Context map[string]any   `json:"ctx"`
 }
 
 type HttpRequest struct {
@@ -13,8 +14,8 @@ type HttpRequest struct {
 	TargetPath      string `json:"tgtPath"`
 }
 
-type ContextRequest struct {
-	PathParams map[string]string `json:"pathParams"`
+type QueryRequest struct {
+	PathParams map[string]string `json:"path"`
 	Query      map[string]string `json:"query"`
 	Body       map[string]string `json:"body"`
 	Context    map[string]any    `json:"context"`

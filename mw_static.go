@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func (srv *Server) HandleStaticFiles(next http.Handler) http.Handler {
+func (srv *AppServer) HandleStaticFiles(next http.Handler) http.Handler {
 
 	s, err := os.Stat(srv.Config.StaticFileDirectory)
 	if err != nil {

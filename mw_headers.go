@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func (srv *Server) HandleAddCorsEverywhereHeaders(next http.Handler) http.Handler {
+func (srv *AppServer) HandleAddCorsEverywhereHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		next.ServeHTTP(w, r)
@@ -14,7 +14,7 @@ func (srv *Server) HandleAddCorsEverywhereHeaders(next http.Handler) http.Handle
 }
 
 // This middleware injects multiple security headers.
-func (srv *Server) HandleAddSecureHeaders(next http.Handler) http.Handler {
+func (srv *AppServer) HandleAddSecureHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cspNonce := common.CreateRandString(10)
 		cspDetails := "object-src 'none'; script-src 'nonce-" + cspNonce + "' 'unsafe-inline' 'unsafe-eval' 'strict-dynamic' https: http:; base-uri 'none';"
@@ -27,7 +27,7 @@ func (srv *Server) HandleAddSecureHeaders(next http.Handler) http.Handler {
 	})
 }
 
-func (srv *Server) HandleAddJsonHeaders(next http.Handler) http.Handler {
+func (srv *AppServer) HandleAddJsonHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		next.ServeHTTP(w, r)
@@ -35,7 +35,7 @@ func (srv *Server) HandleAddJsonHeaders(next http.Handler) http.Handler {
 }
 
 // TODO -- does it make sense for us to nail CORS to the HtptpServer config only?
-func (srv *Server) HandleAddCorsTrustedHeaders(next http.Handler) http.Handler {
+func (srv *AppServer) HandleAddCorsTrustedHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if len(srv.Config.HttpServer.CorsDomains) == 0 {
 			next.ServeHTTP(w, r)

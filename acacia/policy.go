@@ -13,12 +13,14 @@ type Policy struct {
 	Routes   []string       `json:"paths"`
 	Rights   PolicyRights   `json:"rights"`
 	Logging  PolicyLogging  `json:"log"`
-	Match    any            `json:"match"`
+	Match    string         `json:"match"`
 }
 
 type PolicyManifest struct {
+	ID          string `json:"id"`
+	Priority    int    `json:"pri"`
 	Namespace   string `json:"ns"`
-	Version     string `json:"v"`
+	Version     string `json:"version"`
 	Name        string `json:"name"`
 	Description string `json:"desc"`
 }
@@ -29,9 +31,15 @@ type PolicyRights struct {
 }
 
 type PolicyLogging struct {
-	OnPermit []string `json:"permit"`
-	OnDeny   []string `json:"deny"`
-	OnAny    []string `json:"any"`
+	OnPermit []PolicyLog `json:"permit"`
+	OnDeny   []PolicyLog `json:"deny"`
+	OnAny    []PolicyLog `json:"any"`
+}
+
+type PolicyLog struct {
+	Source   string `json:"src"`
+	Priority string `json:"pri"`
+	Message  string `json:"msg"`
 }
 
 // Walk a directory and attempt to generate policies for every file.

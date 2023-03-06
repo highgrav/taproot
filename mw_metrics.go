@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-func (srv *Server) HandleMetrics(next http.Handler) http.Handler {
+func (srv *AppServer) HandleMetrics(next http.Handler) http.Handler {
 	type stats struct {
 		requests       *expvar.Int
 		responses      *expvar.Int

@@ -21,14 +21,19 @@ import (
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-type Server struct {
-	Session    *scs.SessionManager
-	Config     ServerConfig
-	Server     *http.Server // Main HTTP Server
-	Router     *httprouter.Router
-	Middleware []MiddlewareFunc // Used when adding a new route
-	DBs        map[string]*sql.DB
-	ExitServer chan bool
+type AppServer struct {
+	Session      *scs.SessionManager
+	Config       ServerConfig
+	Server       *http.Server // Main HTTP Server
+	Router       *httprouter.Router
+	Middleware   []MiddlewareFunc // Used when adding a new route
+	DBs          map[string]*sql.DB
+	ExitServerCh chan bool
+
+	// These are embedded mini-servers for various admin tasks
+	RedirectServer *WebServer // Port 80 Server to redirect to https, if not using TLS
+	MetricsServer  *WebServer // Dumps performance metrics
+	AdminServer    *WebServer // Allows administration
 
 	js                *jsrun.JSManager
 	jsinjections      []jsrun.InjectorFunc
@@ -37,17 +42,14 @@ type Server struct {
 	authz             *acacia.PolicyManager
 	globalRateLimiter *rate.Limiter
 	ipRateLimiter     map[string]*rate.Limiter
-	ipFilter          *ipfilter.IPFilter
-	redirectServer    *http.Server // Port 80 Server to redirect to https, if not using TLS
-	metricsServer     *http.Server
-	adminServer       *http.Server
+	httpIpFilter      *ipfilter.IPFilter
 }
 
-func New(userStore authn.IUserStore, cfg ServerConfig) *Server {
+func New(userStore authn.IUserStore, cfg ServerConfig) *AppServer {
 	// set up logging (we use stdout until the server is up and running)
 	deck.Add(logger.Init(os.Stdout, 0))
 
-	s := &Server{}
+	s := &AppServer{}
 	s.Config = cfg
 	s.users = userStore
 	s.DBs = make(map[string]*sql.DB)
@@ -56,7 +58,7 @@ func New(userStore authn.IUserStore, cfg ServerConfig) *Server {
 
 	// Set up IP filter
 	// TODO
-	s.ipFilter = ipfilter.New(ipfilter.Options{})
+	s.httpIpFilter = ipfilter.New(ipfilter.Options{})
 
 	// Set up our feature flags
 	// TODO
@@ -98,17 +100,17 @@ func New(userStore authn.IUserStore, cfg ServerConfig) *Server {
 	return s
 }
 
-func (srv *Server) AddJSInjector(injectorFunc jsrun.InjectorFunc) {
+func (srv *AppServer) AddJSInjector(injectorFunc jsrun.InjectorFunc) {
 	srv.jsinjections = append(srv.jsinjections, injectorFunc)
 }
 
-func (srv *Server) AddMiddleware(middlewareFunc MiddlewareFunc) {
+func (srv *AppServer) AddMiddleware(middlewareFunc MiddlewareFunc) {
 	srv.Middleware = append(srv.Middleware, middlewareFunc)
 }
 
 // This takes the user-added routes and wraps them in additional middleware.
 // Note that these aren't bound until the server is started.
-func (srv *Server) bindRoutes() http.Handler {
+func (srv *AppServer) bindRoutes() http.Handler {
 	if len(srv.Middleware) == 0 {
 		return srv.Router
 	}
@@ -120,17 +122,17 @@ func (srv *Server) bindRoutes() http.Handler {
 }
 
 /* http.Server overloads */
-func (srv *Server) Close() error {
+func (srv *AppServer) Close() error {
 	return srv.Server.Close()
 }
 
-func (srv *Server) ListenAndServe() error {
+func (srv *AppServer) ListenAndServe() error {
 	srv.Server.Handler = srv.bindRoutes()
 	srv.state.setState(SERVER_STATE_RUNNING)
 	return srv.Server.ListenAndServe()
 }
 
-func (srv *Server) ListenAndServeTLS(certFile, keyFile string) error {
+func (srv *AppServer) ListenAndServeTLS(certFile, keyFile string) error {
 	srv.Server.Handler = srv.bindRoutes()
 	srv.state.setState(SERVER_STATE_INITIALIZING)
 
@@ -156,17 +158,17 @@ func (srv *Server) ListenAndServeTLS(certFile, keyFile string) error {
 	return srv.Server.ListenAndServeTLS(certFile, keyFile)
 }
 
-func (srv *Server) RegisterOnShutdown(f func()) {
+func (srv *AppServer) RegisterOnShutdown(f func()) {
 	srv.Server.RegisterOnShutdown(f)
 }
 
-func (srv *Server) Serve(l net.Listener) error {
+func (srv *AppServer) Serve(l net.Listener) error {
 	srv.Server.Handler = srv.bindRoutes()
 	srv.state.setState(SERVER_STATE_RUNNING)
 	return srv.Server.Serve(l)
 }
 
-func (srv *Server) ServeTLS(l net.Listener, certFile, keyFile string) error {
+func (srv *AppServer) ServeTLS(l net.Listener, certFile, keyFile string) error {
 	srv.Server.Handler = srv.bindRoutes()
 	srv.state.setState(SERVER_STATE_INITIALIZING)
 
@@ -193,10 +195,10 @@ func (srv *Server) ServeTLS(l net.Listener, certFile, keyFile string) error {
 	return srv.Server.ServeTLS(l, certFile, keyFile)
 }
 
-func (srv *Server) SetKeepAlivesEnabled(v bool) {
+func (srv *AppServer) SetKeepAlivesEnabled(v bool) {
 	srv.Server.SetKeepAlivesEnabled(v)
 }
 
-func (srv *Server) Shutdown(ctx context.Context) error {
+func (srv *AppServer) Shutdown(ctx context.Context) error {
 	return srv.Server.Shutdown(ctx)
 }

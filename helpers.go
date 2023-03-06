@@ -11,7 +11,7 @@ import (
 
 type DataEnvelope map[string]any
 
-func (srv *Server) WriteJSON(w http.ResponseWriter, prettyPrint bool, status int, data DataEnvelope, headers http.Header) error {
+func (srv *AppServer) WriteJSON(w http.ResponseWriter, prettyPrint bool, status int, data DataEnvelope, headers http.Header) error {
 	var js []byte
 	var err error
 	if prettyPrint {
@@ -35,7 +35,7 @@ func (srv *Server) WriteJSON(w http.ResponseWriter, prettyPrint bool, status int
 	return nil
 }
 
-func (srv *Server) ReadJSONFromBody(w http.ResponseWriter, r *http.Request, dst any) error {
+func (srv *AppServer) ReadJSONFromBody(w http.ResponseWriter, r *http.Request, dst any) error {
 	var maxBytes int64 = 1_048_576
 	r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
 	dec := json.NewDecoder(r.Body)

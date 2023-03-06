@@ -2,8 +2,10 @@ package taproot
 
 import (
 	"errors"
+	"github.com/alexedwards/scs/v2"
 	ffclient "github.com/thomaspoignant/go-feature-flag"
 	"net"
+	"net/http"
 )
 
 type ServerConfig struct {
@@ -38,6 +40,23 @@ type ServerConfig struct {
 	RedirectServer HttpConfig
 	MetricsServer  HttpConfig
 	AdminServer    HttpConfig
+
+	Sessions SessionConfig
+}
+
+type SessionConfig struct {
+	SessionStore        scs.Store
+	ContextSessionStore scs.CtxStore
+	LifetimeInSecs      int
+	IdleTimeoutInSecs   int
+	UseCookies          bool
+	CookieName          string
+	CookieDomain        string
+	CookieHttpOnly      bool
+	CookiePath          string
+	CookiePersist       bool
+	CookieSiteMode      http.SameSite
+	CookieSecure        bool
 }
 
 type HttpConfig struct {
@@ -67,7 +86,7 @@ type TimeoutConfig struct {
 
 type TLSConfig struct {
 	UseTLS              bool
-	UseHTTPSRedirection bool // Start a port 80 Server to force redirects to the main port (this will automatically take place if using ACME)
+	UseHTTPSRedirection bool // Start a port 80 AppServer to force redirects to the main port (this will automatically take place if using ACME)
 	UseSelfSignedCert   bool
 	UseACME             bool
 	ACMEDirectory       string
@@ -75,9 +94,6 @@ type TLSConfig struct {
 	ACMEHostName        string
 	LocalCertFilePath   string
 	LocalKeyFilePath    string
-}
-
-type SessionConfig struct {
 }
 
 func (c *TLSConfig) IsValid() (bool, error) {

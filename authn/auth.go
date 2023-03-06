@@ -5,6 +5,7 @@ import "errors"
 const (
 	AUTH_BASIC          string = "basic"
 	AUTH_BEARER         string = "bearer"
+	AUTH_SESSION        string = "session"
 	AUTH_FORM           string = "form"
 	AUTH_TOTP           string = "totp"
 	AUTH_MFACODE        string = "mfa"
@@ -20,12 +21,13 @@ const (
 )
 
 var (
-	ErrUserNotAuthenticated    = errors.New("user was not authenticated")
-	ErrUserNotAuthorized       = errors.New("user was not authorized for authentication")
-	ErrMalformedAuthHeader     = errors.New("malformed authorization header")
-	ErrUnsupportedScheme       = errors.New("unsupported authorization header scheme")
-	ErrAuthUnknownScheme       = errors.New("unknown authorization header scheme")
-	ErrInvalidBasicCredentials = errors.New("invalid basic credentials formatting")
+	ErrUserNotAuthenticated       = errors.New("user was not authenticated")
+	ErrUserRequiresAuthentication = errors.New("user must log in")
+	ErrUserNotAuthorized          = errors.New("user was not authorized for authentication")
+	ErrMalformedAuthHeader        = errors.New("malformed authorization header")
+	ErrUnsupportedScheme          = errors.New("unsupported authorization header scheme")
+	ErrAuthUnknownScheme          = errors.New("unknown authorization header scheme")
+	ErrInvalidBasicCredentials    = errors.New("invalid basic credentials formatting")
 )
 
 type UserAuth struct {
