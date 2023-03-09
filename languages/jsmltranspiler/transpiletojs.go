@@ -169,7 +169,7 @@ func (tr *Transpiler) dispatchNonSemanticTag(node jsmlparser.ParseNode) error {
 
 	for _, attr := range attrs {
 		if len(attr.Children) == 0 {
-			// TODO -- handle special variables (@-vars)
+			// TODO -- if we handle @-vars here, we need a way to not escape them later.
 			if strings.HasPrefix(attr.NodeName, "@") {
 				rets = append(rets, ret)
 				// mark that the next value is an interpval

@@ -60,8 +60,23 @@ be evaluated as a single expression:
 The answer is: <go.val>x</go.val>
 ~~~
 
+If you're inside a tag, you can use `@`-values to insert a variable as the value of an HTML annotation:
+~~~
+<go>
+let className = "default-class";
+if(someTest()){
+    className = "other-class";
+}
+<div class=@className>
+</go>
+~~~
+`@`-values are always output inside double quotes, so the above translates to `<div class="default-class">`.
+
 These three tags are all the markup you need to execute JSML. However, there are other semantic tags that provide 
 additional capabilities:
 
 - `<go.include src="..." />`: Inserts another JSML file at the point where the tag appears.
-- 
+
+
+BUGS AND TODOS:
+-
