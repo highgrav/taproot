@@ -17,19 +17,24 @@ type ServerConfig struct {
 	UseMetricsServer bool
 	MetricsPort      int
 
+	UseAdminServer bool
+	AdminPort      int
+
+	UseHttpsRedirectServer bool
+
 	/* ACADIA SECURITY POLICIES */
 	ListenForPolicyChanges bool
 	SecurityPolicyDir      string
 
 	/* STATIC FILE SERVING */
-	StaticFilePath      string
+	StaticUrlPath       string
 	StaticFileDirectory string
 
 	/* SCRIPTS AND JSML */
 	ScriptFilePath       string
 	UseScripts           bool
 	JSMLFilePath         string // Where are JSML files stored?
-	UseJSMLFiles         bool   // Use JSML file templates?
+	UseJSML              bool   // Use JSML file templates?
 	JSMLCompiledFilePath string // A subdirectory under the ScriptFilePath where Taproot will put compiled JSML files
 
 	/* FEATURE FLAGS */
@@ -42,6 +47,14 @@ type ServerConfig struct {
 	AdminServer    HttpConfig
 
 	Sessions SessionConfig
+	FFlags   FFlagConfig
+}
+
+type FFlagConfig struct {
+	Environment           string
+	LogFlagUsage          bool
+	PollingIntervalInSecs int
+	OfflineOnly           bool
 }
 
 type SessionConfig struct {
@@ -64,7 +77,6 @@ type HttpConfig struct {
 	Port             int
 	TLS              TLSConfig
 	Timeouts         TimeoutConfig
-	Session          SessionConfig
 	GlobalRateLimits ApiRateLimitConfig
 	IpRateLimits     ApiRateLimitConfig
 	CorsDomains      []string
@@ -74,6 +86,7 @@ type ApiRateLimitConfig struct {
 	RequestsPerSecond         int
 	BurstableRequests         int
 	ExemptNets                []net.IPNet
+	ExemptNetworks            []string
 	SweepClientCacheInSeconds int
 }
 
@@ -85,15 +98,14 @@ type TimeoutConfig struct {
 }
 
 type TLSConfig struct {
-	UseTLS              bool
-	UseHTTPSRedirection bool // Start a port 80 AppServer to force redirects to the main port (this will automatically take place if using ACME)
-	UseSelfSignedCert   bool
-	UseACME             bool
-	ACMEDirectory       string
-	ACMEAllowedHost     string
-	ACMEHostName        string
-	LocalCertFilePath   string
-	LocalKeyFilePath    string
+	UseTLS            bool
+	UseSelfSignedCert bool
+	UseACME           bool
+	ACMEDirectory     string
+	ACMEAllowedHost   string
+	ACMEHostName      string
+	LocalCertFilePath string
+	LocalKeyFilePath  string
 }
 
 func (c *TLSConfig) IsValid() (bool, error) {

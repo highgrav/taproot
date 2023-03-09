@@ -19,14 +19,14 @@ func (srv *AppServer) HandleStaticFiles(next http.Handler) http.Handler {
 	staticFs := http.Dir(srv.Config.StaticFileDirectory)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, srv.Config.StaticFilePath) {
+		if strings.HasPrefix(r.URL.Path, srv.Config.StaticUrlPath) {
 			// don't return any directory listings
 			if strings.HasSuffix(r.URL.Path, "/") {
 				http.NotFound(w, r)
 				return
 			}
 
-			spath := strings.TrimPrefix(r.URL.Path, srv.Config.StaticFilePath)
+			spath := strings.TrimPrefix(r.URL.Path, srv.Config.StaticUrlPath)
 			surl, err := url.Parse(spath)
 			if err != nil {
 				panic(err)
