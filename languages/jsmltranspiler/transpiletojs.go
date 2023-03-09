@@ -69,7 +69,6 @@ func (tr *Transpiler) dispatchToJS(node jsmlparser.ParseNode) error {
 func (tr *Transpiler) dispatchOutput(node jsmlparser.ParseNode) error {
 	if tr.mode() == transpModeDirectOutput {
 		// We're outputting code, so just dump it directly to the output
-
 		tr.output.Write([]byte(node.Data))
 	} else if tr.mode() == transpModeHTMLOutput {
 		// We're writing HTML, so wrap each line in out.write() statements
@@ -160,7 +159,10 @@ func (tr *Transpiler) dispatchSemanticTag(node jsmlparser.ParseNode) error {
 
 // TODO -- Looks good
 func (tr *Transpiler) dispatchNonSemanticTag(node jsmlparser.ParseNode) error {
-	ret := ""
+
+	rets := make([]string, 0)
+	interps := make([]int, 0)
+	ret := " "
 	ret += "<" + node.Data
 
 	attrs, body := extractNodes(node.Children, []jsmlparser.ParserNodeType{jsmlparser.NODE_ATTRIBUTE})
@@ -168,18 +170,67 @@ func (tr *Transpiler) dispatchNonSemanticTag(node jsmlparser.ParseNode) error {
 	for _, attr := range attrs {
 		if len(attr.Children) == 0 {
 			// TODO -- handle special variables (@-vars)
-			ret += " " + attr.NodeName + " "
+			if strings.HasPrefix(attr.NodeName, "@") {
+				rets = append(rets, ret)
+				// mark that the next value is an interpval
+				interps = append(interps, len(rets))
+				rets = append(rets, attr.NodeName[1:])
+				ret = " "
+				tr.IVars = tr.IVars + 1
+			} else {
+				ret += " " + attr.NodeName + " "
+			}
 		} else {
-			ret += " " + attr.NodeName + "=" + attr.Children[0].Data + " "
+			ret += " " + attr.NodeName + "="
+			if strings.HasPrefix(attr.Children[0].Data, "@") {
+				rets = append(rets, ret)
+				// mark that the next value is an interpval
+				interps = append(interps, len(rets))
+				rets = append(rets, attr.Children[0].Data[1:])
+				ret = " "
+				tr.IVars = tr.IVars + 1
+			} else {
+				ret += attr.Children[0].Data + " "
+			}
 		}
 	}
 
 	if node.IsSelfClosingTag {
 		ret += "/>"
-		tr.output.Write([]byte("out.write(\"" + escapeTextForWriting(ret) + "\");\n"))
+		rets = append(rets, ret)
+		for i, ret := range rets {
+			isInterp := false
+			for _, v := range interps {
+				if v == i {
+					isInterp = true
+				}
+			}
+			if !isInterp {
+				tr.output.Write([]byte("out.write(\"" + escapeTextForWriting(ret) + "\");\n"))
+			} else {
+				tr.output.Write([]byte("out.write(\"\\\"\");\n"))
+				tr.output.Write([]byte("out.write(" + ret + ");\n"))
+				tr.output.Write([]byte("out.write(\"\\\"\");\n"))
+			}
+		}
 	} else {
 		ret += ">"
-		tr.output.Write([]byte("out.write(\"" + escapeTextForWriting(ret) + "\");\n"))
+		rets = append(rets, ret)
+		for i, ret := range rets {
+			isInterp := false
+			for _, v := range interps {
+				if v == i {
+					isInterp = true
+				}
+			}
+			if !isInterp {
+				tr.output.Write([]byte("out.write(\"" + escapeTextForWriting(ret) + "\");\n"))
+			} else {
+				tr.output.Write([]byte("out.write(\"\\\"\");\n"))
+				tr.output.Write([]byte("out.write(" + ret + ");\n"))
+				tr.output.Write([]byte("out.write(\"\\\"\");\n"))
+			}
+		}
 
 		for _, itm := range body {
 			err := tr.dispatchToJS(itm)

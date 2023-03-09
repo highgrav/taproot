@@ -30,6 +30,7 @@ type Transpiler struct {
 	imports         map[string]string
 	script          string
 	DisplayComments bool
+	IVars           int
 	// hidden state
 	modes []transpMode
 }
