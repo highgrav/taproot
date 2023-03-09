@@ -18,12 +18,12 @@ type MiddlewareFunc func(http.Handler) http.Handler
 type AppServer struct {
 	Session      *scs.SessionManager
 	Config       ServerConfig
-	Server       *http.Server // Main HTTP Server
 	Router       *httprouter.Router
 	Middleware   []MiddlewareFunc // Used when adding a new route
 	DBs          map[string]*sql.DB
 	ExitServerCh chan bool
 
+	Server *WebServer
 	// These are embedded mini-servers for various admin tasks
 	RedirectServer *WebServer // Port 80 Server to redirect to https, if not using TLS
 	MetricsServer  *WebServer // Dumps performance metrics

@@ -43,7 +43,7 @@ func pemBlockForKey(priv interface{}) *pem.Block {
 	}
 }
 
-func (srv *AppServer) generateSelfSignedTlsCert() (*tls.Config, error) {
+func generateSelfSignedTlsCert() (*tls.Config, error) {
 	t := &tls.Config{}
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {

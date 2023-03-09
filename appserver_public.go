@@ -23,22 +23,22 @@ func (srv *AppServer) Close() error {
 }
 
 func (srv *AppServer) ListenAndServe() error {
-	srv.Server.Handler = srv.bindRoutes()
+	srv.Server.Server.Handler = srv.bindRoutes()
 	srv.state.setState(SERVER_STATE_RUNNING)
 	return srv.Server.ListenAndServe()
 }
 
 func (srv *AppServer) ListenAndServeTLS(certFile, keyFile string) error {
-	srv.Server.Handler = srv.bindRoutes()
+	srv.Server.Server.Handler = srv.bindRoutes()
 	srv.state.setState(SERVER_STATE_INITIALIZING)
 
 	if srv.Config.HttpServer.TLS.UseSelfSignedCert && !srv.Config.HttpServer.TLS.UseACME {
 		deck.Info("Generating self-signed certificate for serving...")
-		c, err := srv.generateSelfSignedTlsCert()
+		c, err := generateSelfSignedTlsCert()
 		if err != nil {
 			return err
 		}
-		srv.Server.TLSConfig = c
+		srv.Server.Server.TLSConfig = c
 		deck.Info("Serving self-signed TLS on port ", srv.Config.HttpServer.Port)
 		return srv.Server.ListenAndServeTLS(certFile, keyFile)
 	}
@@ -59,25 +59,25 @@ func (srv *AppServer) RegisterOnShutdown(f func()) {
 }
 
 func (srv *AppServer) Serve(l net.Listener) error {
-	srv.Server.Handler = srv.bindRoutes()
+	srv.Server.Server.Handler = srv.bindRoutes()
 	srv.state.setState(SERVER_STATE_RUNNING)
 	return srv.Server.Serve(l)
 }
 
 func (srv *AppServer) ServeTLS(l net.Listener, certFile, keyFile string) error {
-	srv.Server.Handler = srv.bindRoutes()
+	srv.Server.Server.Handler = srv.bindRoutes()
 	srv.state.setState(SERVER_STATE_INITIALIZING)
 
 	if srv.Config.HttpServer.TLS.UseSelfSignedCert && !srv.Config.HttpServer.TLS.UseACME {
 		deck.Info("Generating self-signed certificate for serving...")
-		c, err := srv.generateSelfSignedTlsCert()
-		fmt.Printf("Cert count: %d\n", len(srv.Server.TLSConfig.Certificates))
+		c, err := generateSelfSignedTlsCert()
+		fmt.Printf("Cert count: %d\n", len(srv.Server.Server.TLSConfig.Certificates))
 
 		if err != nil {
 			deck.Fatal(err)
 			os.Exit(-222)
 		}
-		srv.Server.TLSConfig = c
+		srv.Server.Server.TLSConfig = c
 		return srv.Server.ServeTLS(l, "", "")
 	}
 

@@ -58,7 +58,7 @@ func injectHttpRequest(r *http.Request, vm *goja.Runtime) {
 }
 
 // An endpoint route that executes a compiled script
-func (svr *AppServer) HandleScript(scriptKey string) http.HandlerFunc {
+func (svr *AppServer) HandleScript(scriptKey string, ctx *jsrun.ContextData) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		script, err := svr.js.GetScript(scriptKey)
 		if err != nil {
@@ -69,6 +69,9 @@ func (svr *AppServer) HandleScript(scriptKey string) http.HandlerFunc {
 		vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 		new(require.Registry).Enable(vm)
 		console.Enable(vm)
+		if ctx != nil {
+			jsrun.InjectContextDataFunctor(*ctx, vm)
+		}
 		jsrun.InjectJSHttpFunctor(w, r, vm)
 		jsrun.InjectJSDBFunctor(svr.DBs, vm)
 		addJSUtilFunctor(svr, vm)

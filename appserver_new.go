@@ -80,7 +80,8 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 
 	s.Router = httprouter.New()
 	s.Router.SaveMatchedRoutePath = true // necessary to get the matched path back for Acacia authz
-	s.Server = &http.Server{
+	s.Server = &WebServer{}
+	s.Server.Server = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", cfg.HttpServer.ServerName, cfg.HttpServer.Port),
 		Handler:      s.Router,
 		IdleTimeout:  time.Duration(cfg.HttpServer.Timeouts.Idle) * time.Second,
