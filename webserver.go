@@ -6,6 +6,7 @@ import (
 	"github.com/google/deck"
 	"github.com/jpillora/ipfilter"
 	"github.com/julienschmidt/httprouter"
+	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/time/rate"
 	"highgrav/taproot/v1/authn"
 	"net"
@@ -15,17 +16,18 @@ import (
 )
 
 type WebServer struct {
-	Config       HttpConfig
-	Server       *http.Server
-	Router       *httprouter.Router
-	Middleware   []MiddlewareFunc // Used when adding a new route
-	ExitServerCh chan bool
-
+	Config            HttpConfig
+	Server            *http.Server
+	Router            *httprouter.Router
+	Middleware        []MiddlewareFunc // Used when adding a new route
+	ExitServerCh      chan bool
+	Handler           http.Handler
 	ipFilter          *ipfilter.IPFilter
 	globalRateLimiter *rate.Limiter
 	ipRateLimiter     map[string]*rate.Limiter
 	state             serverStateManager
 	users             authn.IUserStore
+	autocert          *autocert.Manager
 }
 
 func NewWebServer(userStore authn.IUserStore, cfg HttpConfig) *WebServer {
@@ -71,8 +73,9 @@ func (srv *WebServer) ListenAndServeTLS(certFile, keyFile string) error {
 	}
 
 	if srv.Config.TLS.UseACME {
-
+		// TODO
 	} else {
+		// TODO
 		// Ignore ACME, use the provided key files
 	}
 
@@ -107,8 +110,10 @@ func (srv *WebServer) ServeTLS(l net.Listener, certFile, keyFile string) error {
 	}
 
 	if srv.Config.TLS.UseACME {
-
+		//TODO
+		// create a manager and then make sure all the routes are wrapped in the handler's .HTTPHandler()
 	} else {
+		// TODO
 		// Ignore ACME, use the provided key files
 	}
 

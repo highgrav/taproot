@@ -58,7 +58,7 @@ func injectHttpRequest(r *http.Request, vm *goja.Runtime) {
 }
 
 // An endpoint route that executes a compiled script
-func (svr *AppServer) HandleScript(scriptKey string, ctx *jsrun.ContextData) http.HandlerFunc {
+func (svr *AppServer) HandleScript(scriptKey string, ctx *map[string]any) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		script, err := svr.js.GetScript(scriptKey)
 		if err != nil {

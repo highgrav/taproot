@@ -1,6 +1,7 @@
 package acaciaparser
 
 import (
+	"fmt"
 	"highgrav/taproot/v1/acacia"
 	"highgrav/taproot/v1/languages/lexer"
 	"highgrav/taproot/v1/languages/token"
@@ -9,6 +10,7 @@ import (
 type AcaciaNodeType string
 
 const (
+	NODE_START     AcaciaNodeType = "start"
 	NODE_POLICY    AcaciaNodeType = "policy"
 	NODE_MANIFEST  AcaciaNodeType = "manifest"
 	NODE_ATTRIBUTE AcaciaNodeType = "attribute"
@@ -24,6 +26,8 @@ const (
 	NODE_LOG       AcaciaNodeType = "log"
 	NODE_MATCHES   AcaciaNodeType = "matches"
 	NODE_MATCH     AcaciaNodeType = "match"
+	NODE_ERROR     AcaciaNodeType = "error"
+	NODE_EOF       AcaciaNodeType = "eof"
 )
 
 type AcaciaParseNode struct {
@@ -31,7 +35,7 @@ type AcaciaParseNode struct {
 	NodeName string
 	Data     string
 	Code     int
-	Children []AcaciaNodeType
+	Children []AcaciaParseNode
 	Parent   *AcaciaNodeType
 	Token    token.Token
 }
@@ -39,11 +43,13 @@ type AcaciaParseNode struct {
 type AcaciaParser struct {
 	script string
 	tokens *[]token.Token
+	nodes  []AcaciaParseNode
 }
 
 func New(script string) (*AcaciaParser, error) {
 	ap := &AcaciaParser{
 		script: script,
+		nodes:  make([]AcaciaParseNode, 0),
 	}
 	l := lexer.New(script)
 	toks, err := l.Lex()
@@ -54,7 +60,30 @@ func New(script string) (*AcaciaParser, error) {
 	return ap, nil
 }
 
+func (p *AcaciaParser) current() *AcaciaParseNode {
+	if p.nodes == nil || len(p.nodes) == 0 {
+		return nil
+	}
+	return &(p.nodes[len(p.nodes)-1])
+}
+
 func (p *AcaciaParser) Parse() (acacia.Policy, error) {
 	policy := acacia.Policy{}
+	p.nodes = make([]AcaciaParseNode, 0)
+
+	p.nodes = append(p.nodes, AcaciaParseNode{
+		NodeType: NODE_START,
+		NodeName: "",
+		Data:     "",
+		Code:     0,
+		Children: make([]AcaciaParseNode, 0),
+		Parent:   nil,
+		Token:    token.Token{},
+	})
+
+	for _, n := range *p.tokens {
+		fmt.Printf("%s: %s\n", n.Type, n.Literal)
+	}
+
 	return policy, nil
 }

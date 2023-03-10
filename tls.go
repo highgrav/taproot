@@ -2,6 +2,7 @@ package taproot
 
 import (
 	"bytes"
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -11,6 +12,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"golang.org/x/crypto/acme/autocert"
 	"math/big"
 	"os"
 	"time"
@@ -93,4 +95,19 @@ func generateSelfSignedTlsCert() (*tls.Config, error) {
 
 	t.Certificates = []tls.Certificate{cert}
 	return t, nil
+}
+
+func generateAcmeTlsCert(cfg HttpConfig) (*autocert.Manager, error) {
+	m := &autocert.Manager{
+		Prompt: autocert.AcceptTOS,
+		Cache:  autocert.DirCache(cfg.TLS.ACMEDirectory),
+		HostPolicy: func(ctx context.Context, host string) error {
+			if host == cfg.ServerName {
+				return nil
+			}
+			return fmt.Errorf("acme/autocert: only %s host is allowed", cfg.TLS.ACMEAllowedHost)
+		},
+	}
+
+	return m, nil
 }

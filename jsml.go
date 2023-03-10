@@ -161,9 +161,11 @@ func (srv *AppServer) monitorJSMLDirectories() {
 			return
 		case event := <-watcher.Events:
 			if event.Op&fsnotify.Write == fsnotify.Write {
+				// TODO
 				// recompile
 			}
 			if event.Op&fsnotify.Create == fsnotify.Create {
+				// TODO
 				// if a directory, add a watcher
 				// if a file, compile it
 			}
@@ -173,6 +175,7 @@ func (srv *AppServer) monitorJSMLDirectories() {
 			}
 			if event.Op&fsnotify.Rename == fsnotify.Rename {
 				watcher.Remove(event.Name)
+				// TODO
 				// rename the compiled JS file
 			}
 		}
