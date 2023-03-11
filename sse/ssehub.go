@@ -49,30 +49,30 @@ func (evt *SSEEvent) Dispatch() string {
 	return sb.String()
 }
 
-type SSEBroker struct {
+type SSEHub struct {
 	Name string
 	// We assume that a constant key (ideally user ID, persistent session ID, etc.) is used here
 	conns map[string][]chan SSEEvent
 	acts  chan func() // prevents logical conflicts by single-threading operations
 }
 
-func (broker *SSEBroker) runInternalActions() {
-	for act := range broker.acts {
+func (hub *SSEHub) runInternalActions() {
+	for act := range hub.acts {
 		act()
 	} // infinite loop
 }
 
-func (broker *SSEBroker) AddClient(clientId string, clientChan chan SSEEvent) {
-	broker.acts <- func() {
-		if _, ok := broker.conns[clientId]; !ok {
-			broker.conns[clientId] = make([]chan SSEEvent, 0)
+func (hub *SSEHub) AddClient(clientId string, clientChan chan SSEEvent) {
+	hub.acts <- func() {
+		if _, ok := hub.conns[clientId]; !ok {
+			hub.conns[clientId] = make([]chan SSEEvent, 0)
 		}
-		broker.conns[clientId] = append(broker.conns[clientId], clientChan)
+		hub.conns[clientId] = append(hub.conns[clientId], clientChan)
 	}
 }
 
-func (broker *SSEBroker) RemoveClient(clientId string, clientChan chan SSEEvent) {
-	if _, ok := broker.conns[clientId]; !ok {
+func (hub *SSEHub) RemoveClient(clientId string, clientChan chan SSEEvent) {
+	if _, ok := hub.conns[clientId]; !ok {
 		close(clientChan)
 		return
 	}
@@ -80,26 +80,26 @@ func (broker *SSEBroker) RemoveClient(clientId string, clientChan chan SSEEvent)
 		for range clientChan {
 		}
 	}()
-	broker.acts <- func() {
+	hub.acts <- func() {
 		tmpChs := make([]chan SSEEvent, 0)
-		for _, c := range broker.conns[clientId] {
+		for _, c := range hub.conns[clientId] {
 			if c != clientChan {
 				tmpChs = append(tmpChs, c)
 			}
 		}
 		// clean up if necessary
 		if len(tmpChs) == 0 {
-			delete(broker.conns, clientId)
+			delete(hub.conns, clientId)
 		} else {
-			broker.conns[clientId] = tmpChs
+			hub.conns[clientId] = tmpChs
 		}
 		close(clientChan)
 	}
 }
 
-func (broker *SSEBroker) WriteOne(clientId string, msg SSEEvent) {
-	broker.acts <- func() {
-		chs, ok := broker.conns[clientId]
+func (hub *SSEHub) WriteOne(clientId string, msg SSEEvent) {
+	hub.acts <- func() {
+		chs, ok := hub.conns[clientId]
 		if ok {
 			for _, ch := range chs {
 				ch <- msg
@@ -108,7 +108,7 @@ func (broker *SSEBroker) WriteOne(clientId string, msg SSEEvent) {
 	}
 }
 
-func (broker *SSEBroker) WriteMany(clientIds []string, msg SSEEvent) {
+func (broker *SSEHub) WriteMany(clientIds []string, msg SSEEvent) {
 	broker.acts <- func() {
 		for _, id := range clientIds {
 			chs, ok := broker.conns[id]
@@ -121,7 +121,7 @@ func (broker *SSEBroker) WriteMany(clientIds []string, msg SSEEvent) {
 	}
 }
 
-func (broker *SSEBroker) WriteAll(msg SSEEvent) {
+func (broker *SSEHub) WriteAll(msg SSEEvent) {
 	broker.acts <- func() {
 		for _, v := range broker.conns {
 			for _, c := range v {
@@ -131,8 +131,8 @@ func (broker *SSEBroker) WriteAll(msg SSEEvent) {
 	}
 }
 
-func New(name string) *SSEBroker {
-	broker := &SSEBroker{
+func New(name string) *SSEHub {
+	broker := &SSEHub{
 		Name:  name,
 		conns: make(map[string][]chan SSEEvent),
 		acts:  make(chan func()),

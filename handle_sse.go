@@ -16,7 +16,7 @@ func (srv *AppServer) HandleSSE(brokerName string, autoTimeoutMinutes int) http.
 			autoTimeoutMinutes = 525600
 		}
 		timer := time.NewTimer(time.Duration(autoTimeoutMinutes) * time.Minute)
-		broker, ok := srv.SseBrokers[brokerName]
+		broker, ok := srv.SSEHubs[brokerName]
 		user := srv.GetUserFromRequest(r)
 		if !ok {
 			// return error

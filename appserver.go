@@ -25,7 +25,7 @@ type AppServer struct {
 	DBs             map[string]*sql.DB
 	ExitServerCh    chan bool
 
-	SseBrokers map[string]*sse.SSEBroker
+	SSEHubs map[string]*sse.SSEHub
 
 	Server *WebServer
 	// These are embedded mini-servers for various admin tasks

@@ -10,15 +10,15 @@ import (
 	"os"
 )
 
-func (srv *AppServer) AddSSEBroker(name string) {
-	if srv.SseBrokers == nil {
-		srv.SseBrokers = make(map[string]*sse.SSEBroker)
+func (srv *AppServer) AddSSEHub(name string) {
+	if srv.SSEHubs == nil {
+		srv.SSEHubs = make(map[string]*sse.SSEHub)
 	}
-	if _, ok := srv.SseBrokers[name]; ok {
+	if _, ok := srv.SSEHubs[name]; ok {
 		return
 	}
 	b := sse.New(name)
-	srv.SseBrokers[name] = b
+	srv.SSEHubs[name] = b
 }
 
 func (srv *AppServer) AddJSInjector(injectorFunc jsrun.InjectorFunc) {
