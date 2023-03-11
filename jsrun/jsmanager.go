@@ -44,8 +44,7 @@ func (jsm *JSManager) GetScript(key string) (*goja.Program, error) {
 	fullKey := filepath.Join(jsm.fileDir, key)
 	v, ok := jsm.compiledScripts[fullKey]
 	if !ok {
-		deck.Error("Script '" + key + "' not found for path " + fullKey + "!")
-		return nil, ErrScriptNotFound
+		return nil, errors.New("Script '" + key + "' not found for path " + fullKey + "!")
 	}
 	return v, nil
 }

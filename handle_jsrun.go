@@ -58,10 +58,13 @@ func injectHttpRequest(r *http.Request, vm *goja.Runtime) {
 }
 
 // An endpoint route that executes a compiled script
-func (svr *AppServer) HandleScript(scriptKey string, ctx *map[string]any) http.HandlerFunc {
+func (srv *AppServer) HandleScript(scriptKey string, ctx *map[string]any) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		script, err := svr.js.GetScript(scriptKey)
+		var corrId string = r.Context().Value(CONTEXT_CORRELATION_KEY_NAME).(string)
+
+		script, err := srv.js.GetScript(scriptKey)
 		if err != nil {
+			deck.Error("JS\t" + corrId + "\t" + err.Error())
 			w.WriteHeader(http.StatusExpectationFailed)
 			return
 		}
@@ -73,24 +76,23 @@ func (svr *AppServer) HandleScript(scriptKey string, ctx *map[string]any) http.H
 			jsrun.InjectContextDataFunctor(*ctx, vm)
 		}
 		jsrun.InjectJSHttpFunctor(w, r, vm)
-		jsrun.InjectJSDBFunctor(svr.DBs, vm)
-		addJSUtilFunctor(svr, vm)
+		jsrun.InjectJSDBFunctor(srv.DBs, vm)
+		addJSUtilFunctor(srv, vm)
 
-		for _, v := range svr.jsinjections {
+		for _, v := range srv.jsinjections {
 			v(vm)
 		}
 
-		corrId := r.Context().Value(CONTEXT_CORRELATION_KEY_NAME)
 		deck.Info(fmt.Sprintf("JS\t%s\t%s\n", corrId, scriptKey))
 		injectHttpRequest(r, vm)
 		_, err = vm.RunProgram(script)
 
 		if jserr, ok := err.(*goja.Exception); ok {
-			deck.Error("Error running " + scriptKey + ": " + jserr.Error())
-			svr.ErrorResponse(w, r, http.StatusInternalServerError, jserr.Error())
+			deck.Error("JS\t" + corrId + "\tError running " + scriptKey + ": " + jserr.Error())
+			srv.ErrorResponse(w, r, http.StatusInternalServerError, jserr.Error())
 		} else if err != nil {
-			deck.Error("Error running " + scriptKey + ": " + err.Error())
-			svr.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
+			deck.Error("JS\t" + corrId + "\tError running " + scriptKey + ": " + err.Error())
+			srv.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
 		}
 	}
 }

@@ -10,18 +10,22 @@ import (
 	"highgrav/taproot/v1/acacia"
 	"highgrav/taproot/v1/authn"
 	"highgrav/taproot/v1/jsrun"
+	"highgrav/taproot/v1/sse"
 	"net/http"
 )
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
 type AppServer struct {
-	Session      *scs.SessionManager
-	Config       ServerConfig
-	Router       *httprouter.Router
-	Middleware   []MiddlewareFunc // Used when adding a new route
-	DBs          map[string]*sql.DB
-	ExitServerCh chan bool
+	SiteDisplayName string
+	Session         *scs.SessionManager
+	Config          ServerConfig
+	Router          *httprouter.Router
+	Middleware      []MiddlewareFunc // Used when adding a new route
+	DBs             map[string]*sql.DB
+	ExitServerCh    chan bool
+
+	SseBrokers map[string]*sse.SSEBroker
 
 	Server *WebServer
 	// These are embedded mini-servers for various admin tasks

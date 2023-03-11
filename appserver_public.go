@@ -5,9 +5,21 @@ import (
 	"fmt"
 	"github.com/google/deck"
 	"highgrav/taproot/v1/jsrun"
+	"highgrav/taproot/v1/sse"
 	"net"
 	"os"
 )
+
+func (srv *AppServer) AddSSEBroker(name string) {
+	if srv.SseBrokers == nil {
+		srv.SseBrokers = make(map[string]*sse.SSEBroker)
+	}
+	if _, ok := srv.SseBrokers[name]; ok {
+		return
+	}
+	b := sse.New(name)
+	srv.SseBrokers[name] = b
+}
 
 func (srv *AppServer) AddJSInjector(injectorFunc jsrun.InjectorFunc) {
 	srv.jsinjections = append(srv.jsinjections, injectorFunc)
