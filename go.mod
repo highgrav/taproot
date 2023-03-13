@@ -12,6 +12,9 @@ require (
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
+	github.com/gobwas/httphead v0.1.0 // indirect
+	github.com/gobwas/pool v0.2.1 // indirect
+	github.com/gobwas/ws v1.1.0 // indirect
 	github.com/google/deck v1.0.0 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect

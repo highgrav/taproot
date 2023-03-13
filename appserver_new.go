@@ -62,14 +62,6 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 	}
 	s.authz = sa
 
-	// set up our JS manager
-	js, err := jsrun.New(cfg.ScriptFilePath)
-	if err != nil {
-		deck.Fatal(err.Error())
-		os.Exit(-1)
-	}
-	s.js = js
-
 	if s.Config.UseJSML {
 		err = s.compileJSMLFiles(s.Config.JSMLFilePath, s.Config.JSMLCompiledFilePath)
 		if err != nil {
@@ -77,6 +69,14 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 			os.Exit(-1)
 		}
 	}
+
+	// set up our JS manager
+	js, err := jsrun.New(cfg.ScriptFilePath)
+	if err != nil {
+		deck.Fatal(err.Error())
+		os.Exit(-1)
+	}
+	s.js = js
 
 	s.Router = httprouter.New()
 	s.Router.SaveMatchedRoutePath = true // necessary to get the matched path back for Acacia authz

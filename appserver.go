@@ -11,6 +11,7 @@ import (
 	"highgrav/taproot/v1/authn"
 	"highgrav/taproot/v1/jsrun"
 	"highgrav/taproot/v1/sse"
+	"highgrav/taproot/v1/websock"
 	"net/http"
 )
 
@@ -26,6 +27,7 @@ type AppServer struct {
 	ExitServerCh    chan bool
 
 	SSEHubs map[string]*sse.SSEHub
+	WSHubs  map[string]*websock.WSHub
 
 	Server *WebServer
 	// These are embedded mini-servers for various admin tasks

@@ -5,19 +5,30 @@ import "testing"
 func TestAcacia(t *testing.T) {
 	input := `
 	<policy>
-    <manifest ns="acacia" v="1.0.0">
+    <manifest>
+		<ns>acacia</ns>
+		<v>1.0.0</v>
         <name>My Policy</name>
         <desc>A sample policy</desc>
         <priority>10</priority>
     </manifest>
     <paths>
-        <path name="/api/v1/user/:id"/>
+        <path>/api/v1/crm/:id</path>
+		<path>/app/:tenantId/crm/:id</path>
     </paths>
     <effects>
-        <rights>
-			"ml.denied"
-        </rights>
-        <redirect>"/to/some/:id"</redirect>
+		<allow>	
+			"crm.search.self"
+			"crm.read"
+		</allow>
+        <deny>
+			"crm.search.all"
+			"crm.write"
+			"crm.create"
+			"crm.delete"
+			"crm.admin"
+        </deny>
+        <redirect>"/user/read/crm/:id"</redirect>
 		<deny 300>User not allowed</deny>
     </effects>
     <log>

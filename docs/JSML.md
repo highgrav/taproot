@@ -1,13 +1,18 @@
 # JSML: JavaScript Markup Language
 
-JSML is a small, JSX-like templating language that mixes HTML and Javascript, and compiles to server-side JS. It's
-intended to support rapid development and "tracer"-style code, so, like Taproot's server-side JS, it is not highly
-performant, but it *is* convenient.
+JSML is a small, JSX-like templating language that mixes HTML and Javascript, and compiles to server-side JS.
 
 You can think of JSML as a kind of "reverse JSX" -- rather than being JS that allows embedded HTML, it's HTML that 
 embeds server-side Javascript. This makes it substantially similar to traditional "gen one" server-side languages, like 
 Coldfusion, JSP, or PHP. While it's not ideal for complex web applications, JSML pages allow you to quickly iterate on 
 simple pages that can be mixed with SPA or hybrid SPA applications served out of Taproot.
+
+JSML is exceptionally well-suited for HTMX and similar HTML-fragment-rendering front-end approaches; by using JSML, you 
+can trivially render HTML fragments in response to HTMX requests.
+
+JSML is surprisingly performant; rendering a basic HTML page takes about 2ms on a low-powered dev machine, about as much 
+time as it takes to serve a very small static file. However, marshaling large amounts of data back and forth, particularly 
+when having to do JSON conversions, will have a significant impact on performance.
 
 ## Tags
 JSML files are compiled to Javascript, so the JSML transpiler is mostly an elaborate exercise in outputting text, with 

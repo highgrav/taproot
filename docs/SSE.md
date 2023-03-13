@@ -15,18 +15,18 @@ server.AddSSEHub("test")
 server.Router.HandlerFunc(http.MethodGet, "/app/sse", server.HandleSSE("test", 72*60))
 
 go func() {
-    ticker := time.NewTicker(2 * time.Second)
+    ticker := time.NewTicker(1 * time.Second)
     incr := 0
     go func() {
         for {
             select {
             case _ = <-ticker.C:
                 incr++
-                msg := "<div hx-ext=\"sse\" sse-connect=\"/app/sse\" sse-swap=\"message\">Message Count: " + strconv.Itoa(incr) + "</div>"
+                msg := "Message Count: " + strconv.Itoa(incr)
                 evt := sse.SSEEvent{
                     UserID:    "",
-                    ID:        "",
-                    EventType: "",
+                    ID:        strconv.Itoa(incr),
+                    EventType: "INFO",
                     Data:      []string{msg},
                     Retry:     0,
                 }
@@ -37,3 +37,7 @@ go func() {
     }()
 }()
 ~~~
+
+Note that if you're using HTMX's SSE extension, you should only populate the `EventType` and a single `sse.SSEEvent.Data` 
+string, as the  default HTMX SSE code only expects this. Also note that the default Taproot handler ignores the 
+`Last-Event-ID` header at this time, though if you are building a custom handler you can implement it as needed.
