@@ -100,7 +100,7 @@ func (srv *WebServer) ServeTLS(l net.Listener, certFile, keyFile string) error {
 	if srv.Config.TLS.UseSelfSignedCert && !srv.Config.TLS.UseACME {
 		deck.Info("Generating self-signed certificate for serving...")
 		c, err := generateSelfSignedTlsCert()
-		fmt.Printf("Cert count: %d\n", len(srv.Server.TLSConfig.Certificates))
+		deck.Info(fmt.Sprintf("Cert count: %d\n", len(srv.Server.TLSConfig.Certificates)))
 
 		if err != nil {
 			deck.Fatal(err)

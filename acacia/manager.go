@@ -3,7 +3,6 @@ package acacia
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/google/deck"
 	"highgrav/taproot/v1/common"
 	"os"
@@ -166,8 +165,6 @@ func (pm *PolicyManager) Apply(route string, request *RightsRequest) (RightRespo
 		approvals[pri] = append(approvals[pri], resp.Rights.Allowed...)
 		denials[pri] = append(denials[pri], resp.Rights.Denied...)
 	}
-
-	fmt.Printf("Resp: %d Redir: %d Rights: %d\n", topRedirPri, topRedirPri, topApprovalPri)
 
 	// if response pri >= redirect pri && response pri > approval pri
 	if topRespPri >= topRedirPri && topRespPri > topApprovalPri && len(responses) > 0 {

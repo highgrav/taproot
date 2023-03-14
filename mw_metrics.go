@@ -2,13 +2,13 @@ package taproot
 
 import (
 	"expvar"
-	"fmt"
 	"github.com/felixge/httpsnoop"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"strconv"
 )
 
+// TODO -- this is broken, since we can't get the registered route
 func (srv *AppServer) HandleMetrics(next http.Handler) http.Handler {
 	type stats struct {
 		requests       *expvar.Int
@@ -26,8 +26,7 @@ func (srv *AppServer) HandleMetrics(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ps := httprouter.ParamsFromContext(r.Context())
-		registeredPath := ps.MatchedRoutePath()
-		fmt.Println("PATH: " + registeredPath)
+		registeredPath := ps.MatchedRoutePath() // TODO -- broken!
 		stat, exists := routeStates[registeredPath]
 		if !exists {
 			// There's a minor race condition here, but it's not important
