@@ -37,7 +37,7 @@ func NewWebServer(userStore authn.IUserStore, cfg HttpConfig) *WebServer {
 	s.ipFilter = ipfilter.New(ipfilter.Options{})
 
 	s.Router = httprouter.New()
-	s.Router.SaveMatchedRoutePath = true // necessary to get the matched path back for Acacia authz
+	s.Router.SaveMatchedRoutePath = true // necessary to get the matched path back for Acacia acacia
 	s.Server = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", cfg.ServerName, cfg.Port),
 		Handler:      s.Router,

@@ -39,7 +39,7 @@ type AppServer struct {
 	jsinjections      []jsrun.InjectorFunc
 	state             serverStateManager
 	users             authn.IUserStore
-	authz             *acacia.PolicyManager
+	acacia            *acacia.PolicyManager
 	globalRateLimiter *rate.Limiter
 	ipRateLimiter     map[string]*rate.Limiter
 	httpIpFilter      *ipfilter.IPFilter

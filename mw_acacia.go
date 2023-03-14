@@ -1,8 +1,7 @@
 package taproot
 
 import (
-	"encoding/json"
-	"fmt"
+	"context"
 	"highgrav/taproot/v1/acacia"
 	"highgrav/taproot/v1/authn"
 	"net/http"
@@ -16,13 +15,21 @@ func (srv *AppServer) HandleAcacia(next http.Handler) http.Handler {
 		dom := r.Context().Value(HTTP_CONTEXT_DOMAIN_KEY).(string)
 		usr := r.Context().Value(HTTP_CONTEXT_USER_KEY).(authn.User)
 		rr := acacia.NewRightsRequest(realm, dom, usr, r)
-		js, err := json.Marshal(rr)
+
+		rights, err := srv.acacia.Apply(rr)
 		if err != nil {
-			panic(err)
+			srv.ErrorResponse(w, r, 500, err.Error())
+			return
 		}
 
-		fmt.Println(string(js))
+		// TODO
 
-		next.ServeHTTP(w, r)
+		// If we have a response, that takes priority
+
+		// If we have a redirect, that takes secondary priority
+
+		// Add rights into the context
+		ctx := context.WithValue(r.Context(), HTTP_CONTEXT_ACACIA_RIGHTS_KEY, rights.Rights)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
