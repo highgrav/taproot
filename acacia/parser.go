@@ -225,7 +225,11 @@ func readEffects(p *Policy, i *int, toks *[]token.Token) error {
 			}
 		} else if tok.Type == "startopentag" && tok.Literal == "<redirect" {
 			redirectTo := readTextFromElement(i, toks)
-			p.Rights.Redirect = redirectTo
+			if strings.HasPrefix(redirectTo, "\"") {
+				p.Rights.Redirect = redirectTo[1 : len(redirectTo)-1]
+			} else {
+				p.Rights.Redirect = redirectTo
+			}
 		} else if tok.Type == "startopentag" && tok.Literal == "<return" {
 			returnMsg := readTextFromElement(i, toks)
 			p.Rights.ReturnMsg = returnMsg

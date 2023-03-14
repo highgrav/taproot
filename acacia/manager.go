@@ -173,8 +173,8 @@ func (pm *PolicyManager) Apply(route string, request *RightsRequest) (RightRespo
 		return rr, nil
 	}
 
-	// if redirect pri > approval pri
-	if topRedirPri > topApprovalPri && len(redirects) > 0 {
+	// if redirect pri >= approval pri
+	if topRedirPri >= topApprovalPri && len(redirects) > 0 {
 		rr.Redirect = redirects[topRedirPri]
 		rr.Type = RESP_TYPE_REDIRECT
 		return rr, nil

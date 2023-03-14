@@ -139,3 +139,11 @@ func (srv *AppServer) SetKeepAlivesEnabled(v bool) {
 func (srv *AppServer) Shutdown(ctx context.Context) error {
 	return srv.Server.Shutdown(ctx)
 }
+
+func (srv *AppServer) WithPolicy(next http.Handler) http.Handler {
+	return srv.HandleAcacia(next)
+}
+
+func (srv *AppServer) WithPolicyFunc(next http.HandlerFunc) http.Handler {
+	return srv.HandleAcacia(next)
+}

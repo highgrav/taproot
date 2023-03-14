@@ -7,6 +7,7 @@ import (
 	"github.com/dop251/goja_nodejs/console"
 	"github.com/dop251/goja_nodejs/require"
 	"github.com/google/deck"
+	"highgrav/taproot/v1/authn"
 	"highgrav/taproot/v1/jsrun"
 	"io"
 	"net/http"
@@ -58,7 +59,7 @@ func injectHttpRequest(r *http.Request, vm *goja.Runtime) {
 }
 
 // An endpoint route that executes a compiled script
-func (srv *AppServer) HandleScript(scriptKey string, ctx *map[string]any) http.HandlerFunc {
+func (srv *AppServer) HandleScript(scriptKey string, customCtx *map[string]any) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var corrId string = r.Context().Value(HTTP_CONTEXT_CORRELATION_KEY).(string)
 
@@ -72,9 +73,47 @@ func (srv *AppServer) HandleScript(scriptKey string, ctx *map[string]any) http.H
 		vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 		new(require.Registry).Enable(vm)
 		console.Enable(vm)
-		if ctx != nil {
-			jsrun.InjectContextDataFunctor(*ctx, vm)
+
+		// Pass in the context
+		ctx := r.Context()
+		ctxItems := make(map[string]any)
+		if ctx.Value(HTTP_CONTEXT_USER_KEY) != nil {
+			ctxItems["user"] = ctx.Value(HTTP_CONTEXT_USER_KEY)
+		} else {
+			ctxItems["user"] = authn.User{}
 		}
+		if ctx.Value(HTTP_CONTEXT_REALM_KEY) != nil {
+			ctxItems["realm"] = ctx.Value(HTTP_CONTEXT_REALM_KEY)
+		} else {
+			ctxItems["realm"] = ""
+		}
+		if ctx.Value(HTTP_CONTEXT_DOMAIN_KEY) != nil {
+			ctxItems["domain"] = ctx.Value(HTTP_CONTEXT_DOMAIN_KEY)
+		} else {
+			ctxItems["domain"] = ""
+		}
+		if ctx.Value(HTTP_CONTEXT_ACACIA_RIGHTS_KEY) != nil {
+			ctxItems["rights"] = ctx.Value(HTTP_CONTEXT_ACACIA_RIGHTS_KEY)
+		} else {
+			ctxItems["rights"] = []string{}
+		}
+		if ctx.Value(HTTP_CONTEXT_CORRELATION_KEY) != nil {
+			ctxItems["correlationId"] = ctx.Value(HTTP_CONTEXT_CORRELATION_KEY)
+		} else {
+			ctxItems["correlationId"] = ""
+		}
+		if ctx.Value(HTTP_CONTEXT_CSP_NONCE_KEY) != nil {
+			ctxItems["cspNonceId"] = ctx.Value(HTTP_CONTEXT_CSP_NONCE_KEY)
+		} else {
+			ctxItems["cspNonceId"] = ""
+		}
+		jsrun.InjectContextDataFunctor(ctxItems, "context", vm)
+
+		// Pass in any custom data
+		if customCtx != nil {
+			jsrun.InjectContextDataFunctor(*customCtx, "data", vm)
+		}
+
 		jsrun.InjectJSHttpFunctor(w, r, vm)
 		jsrun.InjectJSDBFunctor(srv.DBs, vm)
 		addJSUtilFunctor(srv, vm)
@@ -101,7 +140,7 @@ func addJSUtilFunctor(svr *AppServer, vm *goja.Runtime) {
 	obj := vm.NewObject()
 
 	printToStdout := func(val goja.Value) {
-		fmt.Printf("%s\n", val.String())
+		deck.Info("%s\n", val.String())
 	}
 
 	obj.Set("print", printToStdout)
