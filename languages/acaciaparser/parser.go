@@ -2,7 +2,6 @@ package acaciaparser
 
 import (
 	"errors"
-	"fmt"
 	"highgrav/taproot/v1/acacia"
 	"highgrav/taproot/v1/languages/lexer"
 	"highgrav/taproot/v1/languages/token"
@@ -155,28 +154,26 @@ func readManifest(p *acacia.Policy, i *int, toks *[]token.Token) error {
 	for tok.Type != "closetag" && tok.Type != "eof" && tok.Type != "error" && tok.Literal != "</manifest>" {
 		if tok.Type == "startopentag" && tok.Literal == "<ns" {
 			val := readTextFromElement(i, toks)
-			fmt.Println("NS: " + val)
 			p.Manifest.Namespace = val
 		} else if tok.Type == "startopentag" && tok.Literal == "<v" {
 			val := readTextFromElement(i, toks)
-			fmt.Println("V: " + val)
 			p.Manifest.Version = val
 		} else if tok.Type == "startopentag" && tok.Literal == "<name" {
 			val := readTextFromElement(i, toks)
-			fmt.Println("NAME: " + val)
 			p.Manifest.Name = val
 		} else if tok.Type == "startopentag" && tok.Literal == "<desc" {
 			val := readTextFromElement(i, toks)
-			fmt.Println("DESC: " + val)
 			p.Manifest.Description = val
 		} else if tok.Type == "startopentag" && tok.Literal == "<priority" {
 			val := readTextFromElement(i, toks)
-			fmt.Println("PRI: " + val)
 			i, err := strconv.Atoi(val)
 			if err != nil {
-				return err
+				return errors.New("attempting to read priority from manifest (should be integer): " + err.Error())
 			}
 			p.Manifest.Priority = i
+		} else if tok.Type == "startopentag" && tok.Literal == "<id" {
+			val := readTextFromElement(i, toks)
+			p.Manifest.ID = val
 		}
 		// advance
 		*i++
@@ -195,7 +192,6 @@ func readPaths(p *acacia.Policy, i *int, toks *[]token.Token) error {
 	for tok.Type != "closetag" && tok.Type != "eof" && tok.Type != "error" && tok.Literal != "</paths>" {
 		if tok.Type == "startopentag" && tok.Literal == "<path" {
 			val := readTextFromElement(i, toks)
-			fmt.Println("PATH: " + val)
 			if p.Routes == nil {
 				p.Routes = make([]string, 0)
 			}
@@ -213,12 +209,43 @@ func readPaths(p *acacia.Policy, i *int, toks *[]token.Token) error {
 }
 
 func readEffects(p *acacia.Policy, i *int, toks *[]token.Token) error {
-	*i++
-	return nil
-}
+	tok := (*toks)[*i]
+	for tok.Type != "closetag" && tok.Type != "eof" && tok.Type != "error" && tok.Literal != "</effects>" {
+		if tok.Type == "startopentag" && tok.Literal == "<allow" {
+			rights := readStringArraysFromElement(i, toks)
 
-func readRights(p *acacia.Policy, i *int, toks *[]token.Token) error {
-	*i++
+			p.Rights.Allowed = make([]string, len(rights))
+			for _, v := range rights {
+				p.Rights.Allowed = append(p.Rights.Allowed, v[1:len(v)-1])
+			}
+		} else if tok.Type == "startopentag" && tok.Literal == "<deny" {
+			rights := readStringArraysFromElement(i, toks)
+			p.Rights.Denied = make([]string, len(rights))
+			for _, v := range rights {
+				p.Rights.Denied = append(p.Rights.Denied, v[1:len(v)-1])
+			}
+		} else if tok.Type == "startopentag" && tok.Literal == "<redirect" {
+			redirectTo := readTextFromElement(i, toks)
+			p.Rights.Redirect = redirectTo
+		} else if tok.Type == "startopentag" && tok.Literal == "<return" {
+			returnMsg := readTextFromElement(i, toks)
+			p.Rights.ReturnMsg = returnMsg
+		} else if tok.Type == "startopentag" && tok.Literal == "<returncode" {
+			returnCode := readTextFromElement(i, toks)
+			rcode, err := strconv.Atoi(returnCode)
+			if err != nil {
+				return errors.New("attempting to read return code (should be integer): " + err.Error())
+			}
+			p.Rights.ReturnCode = rcode
+		}
+		*i++
+		tok = (*toks)[*i]
+	}
+	if tok.Type == "eof" {
+		return errors.New("unexpected eof, effects section not closed")
+	} else if tok.Type == "error" {
+		return errors.New("unexpected error: " + tok.Literal)
+	}
 	return nil
 }
 
@@ -227,17 +254,20 @@ func readLogs(p *acacia.Policy, i *int, toks *[]token.Token) error {
 	return nil
 }
 
-func readLog(p *acacia.Policy, i *int, toks *[]token.Token) error {
-	*i++
-	return nil
-}
-
 func readMatches(p *acacia.Policy, i *int, toks *[]token.Token) error {
-	*i++
-	return nil
-}
-
-func readMatch(p *acacia.Policy, i *int, toks *[]token.Token) error {
-	*i++
+	tok := (*toks)[*i]
+	for tok.Type != "closetag" && tok.Type != "eof" && tok.Type != "error" && tok.Literal != "</paths>" {
+		if tok.Type == "startopentag" && tok.Literal == "<match" {
+			val := readTextFromElement(i, toks)
+			p.Match = val
+		}
+		*i++
+		tok = (*toks)[*i]
+	}
+	if tok.Type == "eof" {
+		return errors.New("unexpected eof, matches section not closed")
+	} else if tok.Type == "error" {
+		return errors.New("unexpected error: " + tok.Literal)
+	}
 	return nil
 }

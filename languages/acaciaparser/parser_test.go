@@ -1,11 +1,15 @@
 package acaciaparser
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestAcacia(t *testing.T) {
 	input := `
 	<policy>
     <manifest>
+		<id>My-Policy</id>
 		<ns>acacia</ns>
 		<v>1.0.0</v>
         <name>My Policy</name>
@@ -29,17 +33,9 @@ func TestAcacia(t *testing.T) {
 			"crm.admin"
         </deny>
         <redirect>"/user/read/crm/:id"</redirect>
-		<deny 300>User not allowed</deny>
+		<return>User not allowed</return>
+		<returncode>300</returncode>
     </effects>
-    <log>
-        <permit>
-        </permit>
-        <deny>
-			<info>User was denied access</info>
-        </deny>
-        <all>
-        </all>
-    </log>
     <matches>
         <match type="json">
             {
@@ -58,5 +54,9 @@ func TestAcacia(t *testing.T) {
 </policy>
 `
 	p, _ := New(input)
-	p.Parse()
+	policy, err := p.Parse()
+	if err != nil {
+		t.Error(err.Error())
+	}
+	fmt.Printf("%+v\n", policy)
 }

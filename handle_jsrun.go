@@ -15,14 +15,14 @@ import (
 func injectHttpRequest(r *http.Request, vm *goja.Runtime) {
 	// First, check to see if there's a correlation ID in context
 	corrID := ""
-	if r.Context().Value(CONTEXT_CORRELATION_KEY_NAME) != nil {
-		corrID = r.Context().Value(CONTEXT_CORRELATION_KEY_NAME).(string)
+	if r.Context().Value(HTTP_CONTEXT_CORRELATION_KEY) != nil {
+		corrID = r.Context().Value(HTTP_CONTEXT_CORRELATION_KEY).(string)
 	}
 
 	// Check to see if there's a content security policy nonce
 	cspNonce := ""
-	if r.Context().Value(CONTEXT_CSP_NONCE_KEY_NAME) != nil {
-		corrID = r.Context().Value(CONTEXT_CSP_NONCE_KEY_NAME).(string)
+	if r.Context().Value(HTTP_CONTEXT_CSP_NONCE_KEY) != nil {
+		corrID = r.Context().Value(HTTP_CONTEXT_CSP_NONCE_KEY).(string)
 	}
 	type requestData struct {
 		Host        string              `json:"host"`
@@ -60,7 +60,7 @@ func injectHttpRequest(r *http.Request, vm *goja.Runtime) {
 // An endpoint route that executes a compiled script
 func (srv *AppServer) HandleScript(scriptKey string, ctx *map[string]any) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var corrId string = r.Context().Value(CONTEXT_CORRELATION_KEY_NAME).(string)
+		var corrId string = r.Context().Value(HTTP_CONTEXT_CORRELATION_KEY).(string)
 
 		script, err := srv.js.GetScript(scriptKey)
 		if err != nil {

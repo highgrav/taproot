@@ -12,7 +12,7 @@ func (srv *AppServer) HandleTracing(next http.Handler) http.Handler {
 		var corrId string = common.CreateRandString(32)
 
 		// Save the correlation ID to context so we can propagate it
-		ctx := context.WithValue(r.Context(), CONTEXT_CORRELATION_KEY_NAME, corrId)
+		ctx := context.WithValue(r.Context(), HTTP_CONTEXT_CORRELATION_KEY, corrId)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 

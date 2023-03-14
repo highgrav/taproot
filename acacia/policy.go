@@ -26,8 +26,11 @@ type PolicyManifest struct {
 }
 
 type PolicyRights struct {
-	Allowed []string `json:"allowed"`
-	Denied  []string `json:"denied"`
+	Allowed    []string `json:"allowed"`
+	Denied     []string `json:"denied"`
+	Redirect   string   `json:"redirect"`
+	ReturnCode int      `json:"returnCode"`
+	ReturnMsg  string   `json:"returnMsg"`
 }
 
 type PolicyLogging struct {

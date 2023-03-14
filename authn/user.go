@@ -1,6 +1,6 @@
 package authn
 
-type DomainAssertions map[string]string
+type DomainAssertions map[string][]string
 
 type WorkgroupMembership map[string]map[string]string
 
@@ -10,22 +10,30 @@ func (mem WorkgroupMembership) ByDomain(domainId string) map[string]string {
 }
 
 func (mem WorkgroupMembership) AddDomain(domainId string) {
+	_, ok := mem[domainId]
+	if !ok {
+		mem[domainId] = make(map[string]string)
+	}
 }
 
 func (mem WorkgroupMembership) AddWorkgroup(domainId, workgroupId, workgroupName string) {
-
+	_, ok := mem[domainId]
+	if !ok {
+		mem[domainId] = make(map[string]string)
+	}
+	mem[domainId][workgroupId] = workgroupName
 }
 
 func (mem WorkgroupMembership) RemoveDomain(domainId string) {
-
+	delete(mem, domainId)
 }
 
 func (mem WorkgroupMembership) RemoveWorkgroupById(domainId, workgroupId string) {
-
+	// TODO
 }
 
 func (mem WorkgroupMembership) RemoveWorkgroupByName(domainId, workgroupName string) {
-
+	// TODO
 }
 
 type User struct {

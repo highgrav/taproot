@@ -22,7 +22,7 @@ func (srv *AppServer) HandleAddSecureHeaders(next http.Handler) http.Handler {
 		w.Header().Set("X-Frame-Options", "deny")
 		w.Header().Set("Content-Security-Policy", cspDetails)
 		w.Header().Set("Strict-Transport-Security", "max-age=63072000; includesubdomains;")
-		ctx := context.WithValue(r.Context(), CONTEXT_CSP_NONCE_KEY_NAME, cspNonce)
+		ctx := context.WithValue(r.Context(), HTTP_CONTEXT_CSP_NONCE_KEY, cspNonce)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

@@ -15,8 +15,8 @@ func (srv *AppServer) HandleLogging(next http.Handler) http.Handler {
 		corrId := ""
 		clientIp := realip.FromRequest(r)
 		customTimeFormat := "2006-01-02T15:04:05.000-07:00"
-		if r.Context().Value(CONTEXT_CORRELATION_KEY_NAME) != nil {
-			corrId = r.Context().Value(CONTEXT_CORRELATION_KEY_NAME).(string)
+		if r.Context().Value(HTTP_CONTEXT_CORRELATION_KEY) != nil {
+			corrId = r.Context().Value(HTTP_CONTEXT_CORRELATION_KEY).(string)
 		}
 
 		deck.Info(fmt.Sprintf("REQ\t%s\t%s\t-\t%s\t%s\t%s\t\t\t\n", clientIp, corrId, reqTime.Format(customTimeFormat), r.Method, r.URL))
