@@ -6,28 +6,44 @@ type PolicyManager struct {
 	patterns map[string]*quamina.Quamina
 }
 
-func (pm *PolicyManager) FlushAllFor(route string) {
-
+func NewPolicyManager() *PolicyManager {
+	pm := &PolicyManager{
+		patterns: make(map[string]*quamina.Quamina),
+	}
+	return pm
 }
 
-func (pm *PolicyManager) LoadAllFor(dirName string, suffix string, route string) error {
-	return nil
+func (pm *PolicyManager) FlushAllFor(route string) {
+	// TODO
 }
 
 func (pm *PolicyManager) FlushAll() {
-
+	// TODO
 }
 
-func (pm *PolicyManager) LoadAll(dirName string) error {
+func (pm *PolicyManager) LoadAllFrom(dirName string) error {
+	// TODO
 	return nil
 }
 
-func (pm *PolicyManager) AddPolicy(policy string) {
-
+func (pm *PolicyManager) AddPolicy(policy Policy) error {
+	for _, route := range policy.Routes {
+		if _, ok := pm.patterns[route]; !ok {
+			q, err := quamina.New(quamina.WithMediaType("application/json"), quamina.WithPatternDeletion(true))
+			if err != nil {
+				return err
+			}
+			pm.patterns[route] = q
+		}
+		pm.patterns[route].AddPattern(policy, policy.Match)
+	}
+	return nil
 }
 
-func (pm *PolicyManager) Apply(request UserRightRequest) ([]RightResponse, error) {
-	return []RightResponse{}, nil
+func (pm *PolicyManager) Apply(request UserRightRequest) (RightResponse, error) {
+	rr := RightResponse{}
+
+	return rr, nil
 }
 
 func New(dir string) (*PolicyManager, error) {
