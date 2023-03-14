@@ -1,8 +1,7 @@
-package acaciaparser
+package acacia
 
 import (
 	"errors"
-	"highgrav/taproot/v1/acacia"
 	"highgrav/taproot/v1/languages/lexer"
 	"highgrav/taproot/v1/languages/token"
 	"strconv"
@@ -48,7 +47,7 @@ type AcaciaParser struct {
 	nodes  []AcaciaParseNode
 }
 
-func New(script string) (*AcaciaParser, error) {
+func NewParser(script string) (*AcaciaParser, error) {
 	ap := &AcaciaParser{
 		script: script,
 		nodes:  make([]AcaciaParseNode, 0),
@@ -69,16 +68,16 @@ func (p *AcaciaParser) current() *AcaciaParseNode {
 	return &(p.nodes[len(p.nodes)-1])
 }
 
-func (p *AcaciaParser) Parse() (acacia.Policy, error) {
+func (p *AcaciaParser) Parse() (Policy, error) {
 	return readPolicy(p.tokens)
 }
 
-func readPolicy(toks *[]token.Token) (acacia.Policy, error) {
-	policy := acacia.Policy{
-		Manifest: acacia.PolicyManifest{},
+func readPolicy(toks *[]token.Token) (Policy, error) {
+	policy := Policy{
+		Manifest: PolicyManifest{},
 		Routes:   nil,
-		Rights:   acacia.PolicyRights{},
-		Logging:  acacia.PolicyLogging{},
+		Rights:   PolicyRights{},
+		Logging:  PolicyLogging{},
 		Match:    "",
 	}
 	var i int = 0
@@ -86,27 +85,27 @@ func readPolicy(toks *[]token.Token) (acacia.Policy, error) {
 		if (*toks)[i].Type == "startopentag" && (*toks)[i].Literal == "<manifest" {
 			err := readManifest(&policy, &i, toks)
 			if err != nil {
-				return acacia.Policy{}, err
+				return Policy{}, err
 			}
 		} else if (*toks)[i].Type == "startopentag" && (*toks)[i].Literal == "<paths" {
 			err := readPaths(&policy, &i, toks)
 			if err != nil {
-				return acacia.Policy{}, err
+				return Policy{}, err
 			}
 		} else if (*toks)[i].Type == "startopentag" && (*toks)[i].Literal == "<effects" {
 			err := readEffects(&policy, &i, toks)
 			if err != nil {
-				return acacia.Policy{}, err
+				return Policy{}, err
 			}
 		} else if (*toks)[i].Type == "startopentag" && (*toks)[i].Literal == "<log" {
 			err := readLogs(&policy, &i, toks)
 			if err != nil {
-				return acacia.Policy{}, err
+				return Policy{}, err
 			}
 		} else if (*toks)[i].Type == "startopentag" && (*toks)[i].Literal == "<matches" {
 			err := readMatches(&policy, &i, toks)
 			if err != nil {
-				return acacia.Policy{}, err
+				return Policy{}, err
 			}
 		}
 		i++
@@ -149,7 +148,7 @@ func readTextFromElement(i *int, toks *[]token.Token) string {
 	return sb.String()
 }
 
-func readManifest(p *acacia.Policy, i *int, toks *[]token.Token) error {
+func readManifest(p *Policy, i *int, toks *[]token.Token) error {
 	tok := (*toks)[*i]
 	for tok.Type != "closetag" && tok.Type != "eof" && tok.Type != "error" && tok.Literal != "</manifest>" {
 		if tok.Type == "startopentag" && tok.Literal == "<ns" {
@@ -187,7 +186,7 @@ func readManifest(p *acacia.Policy, i *int, toks *[]token.Token) error {
 	return nil
 }
 
-func readPaths(p *acacia.Policy, i *int, toks *[]token.Token) error {
+func readPaths(p *Policy, i *int, toks *[]token.Token) error {
 	tok := (*toks)[*i]
 	for tok.Type != "closetag" && tok.Type != "eof" && tok.Type != "error" && tok.Literal != "</paths>" {
 		if tok.Type == "startopentag" && tok.Literal == "<path" {
@@ -208,7 +207,7 @@ func readPaths(p *acacia.Policy, i *int, toks *[]token.Token) error {
 	return nil
 }
 
-func readEffects(p *acacia.Policy, i *int, toks *[]token.Token) error {
+func readEffects(p *Policy, i *int, toks *[]token.Token) error {
 	tok := (*toks)[*i]
 	for tok.Type != "closetag" && tok.Type != "eof" && tok.Type != "error" && tok.Literal != "</effects>" {
 		if tok.Type == "startopentag" && tok.Literal == "<allow" {
@@ -249,12 +248,12 @@ func readEffects(p *acacia.Policy, i *int, toks *[]token.Token) error {
 	return nil
 }
 
-func readLogs(p *acacia.Policy, i *int, toks *[]token.Token) error {
+func readLogs(p *Policy, i *int, toks *[]token.Token) error {
 	*i++
 	return nil
 }
 
-func readMatches(p *acacia.Policy, i *int, toks *[]token.Token) error {
+func readMatches(p *Policy, i *int, toks *[]token.Token) error {
 	tok := (*toks)[*i]
 	for tok.Type != "closetag" && tok.Type != "eof" && tok.Type != "error" && tok.Literal != "</paths>" {
 		if tok.Type == "startopentag" && tok.Literal == "<match" {

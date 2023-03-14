@@ -1,4 +1,4 @@
-package acaciaparser
+package acacia
 
 import (
 	"fmt"
@@ -53,7 +53,7 @@ func TestAcacia(t *testing.T) {
     </matches>
 </policy>
 `
-	p, _ := New(input)
+	p, _ := NewParser(input)
 	policy, err := p.Parse()
 	if err != nil {
 		t.Error(err.Error())

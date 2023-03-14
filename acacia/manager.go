@@ -2,7 +2,12 @@ package acacia
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/google/deck"
 	"highgrav/taproot/v1/common"
+	"os"
+	"path/filepath"
 	"quamina.net/go/quamina"
 	"sort"
 	"strings"
@@ -10,11 +15,13 @@ import (
 
 type PolicyManager struct {
 	patterns map[string]*quamina.Quamina
+	policies map[string]Policy
 }
 
 func NewPolicyManager() *PolicyManager {
 	pm := &PolicyManager{
 		patterns: make(map[string]*quamina.Quamina),
+		policies: make(map[string]Policy),
 	}
 	return pm
 }
@@ -28,11 +35,44 @@ func (pm *PolicyManager) FlushAll() {
 }
 
 func (pm *PolicyManager) LoadAllFrom(dirName string) error {
-	// TODO
+	deck.Info("Loading policy files from " + dirName)
+	s, err := os.Stat(dirName)
+	if err != nil {
+		return err
+	}
+	if !s.IsDir() {
+		return errors.New("Not a directory:  (" + dirName + ")")
+	}
+	err = filepath.Walk(dirName, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if strings.HasSuffix(info.Name(), ".acacia") {
+			// compile Acacia file
+			input, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			p, _ := NewParser(string(input))
+			policy, err := p.Parse()
+			if err != nil {
+				return err
+			}
+			deck.Info("Loading policy file " + info.Name())
+			err = pm.AddPolicy(path, policy)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (pm *PolicyManager) AddPolicy(policy Policy) error {
+func (pm *PolicyManager) AddPolicy(name string, policy Policy) error {
 	for _, route := range policy.Routes {
 		if _, ok := pm.patterns[route]; !ok {
 			q, err := quamina.New(quamina.WithMediaType("application/json"), quamina.WithPatternDeletion(true))
@@ -41,7 +81,9 @@ func (pm *PolicyManager) AddPolicy(policy Policy) error {
 			}
 			pm.patterns[route] = q
 		}
-		pm.patterns[route].AddPattern(policy, policy.Match)
+		deck.Info("Adding policy to route " + route)
+		pm.policies[name] = policy
+		pm.patterns[route].AddPattern(name, policy.Match)
 	}
 	return nil
 }
@@ -60,6 +102,7 @@ func (pm *PolicyManager) Apply(route string, request *RightsRequest) (RightRespo
 	// route not registered
 	q, ok := pm.patterns[route]
 	if !ok {
+		deck.Error("Attempted to call Acacia on unbound route " + route)
 		return rr, nil
 	}
 	js, err := json.Marshal(*request)
@@ -67,7 +110,7 @@ func (pm *PolicyManager) Apply(route string, request *RightsRequest) (RightRespo
 		return rr, err
 	}
 
-	resps, err := q.MatchesForEvent([]byte(js))
+	resps, err := q.MatchesForEvent(js)
 	if err != nil {
 		return rr, err
 	}
@@ -81,31 +124,35 @@ func (pm *PolicyManager) Apply(route string, request *RightsRequest) (RightRespo
 	topRedirPri := -999999
 	topApprovalPri := -999999
 
-	for _, resp := range resps {
-		pri := resp.(Policy).Manifest.Priority
+	for _, resp_id := range resps {
+		resp, ok := pm.policies[resp_id.(string)]
+		if !ok {
+			return rr, errors.New("could not access policy ID " + resp_id.(string))
+		}
+		pri := resp.Manifest.Priority
 		pris = append(pris, pri)
 
 		// grab any return code (note that if there's a tie in priority, last-in wins)
-		if resp.(Policy).Rights.ReturnCode > 0 {
+		if resp.Rights.ReturnCode > 0 {
 			if pri > topRespPri {
-				topRedirPri = pri
+				topRespPri = pri
 			}
 			responses[pri] = RightCodeResponse{
-				ReturnMsg:  resp.(Policy).Rights.ReturnMsg,
-				ReturnCode: resp.(Policy).Rights.ReturnCode,
+				ReturnMsg:  resp.Rights.ReturnMsg,
+				ReturnCode: resp.Rights.ReturnCode,
 			}
 		}
 
 		// grab any redirection (note that if there's a tie in priority, last-in wins)
-		if resp.(Policy).Rights.Redirect != "" {
+		if resp.Rights.Redirect != "" {
 			if pri > topRedirPri {
 				topRedirPri = pri
 			}
-			redirects[pri] = resp.(Policy).Rights.Redirect
+			redirects[pri] = resp.Rights.Redirect
 		}
 
 		// get approvals/denials
-		_, ok := approvals[pri]
+		_, ok = approvals[pri]
 		if !ok {
 			approvals[pri] = make([]string, 0)
 		}
@@ -113,22 +160,24 @@ func (pm *PolicyManager) Apply(route string, request *RightsRequest) (RightRespo
 		if !ok {
 			denials[pri] = make([]string, 0)
 		}
-		if len(resp.(Policy).Rights.Allowed) > 0 && pri > topApprovalPri {
+		if len(resp.Rights.Allowed) > 0 && pri > topApprovalPri {
 			topApprovalPri = pri
 		}
-		approvals[pri] = append(approvals[pri], resp.(Policy).Rights.Allowed...)
-		denials[pri] = append(denials[pri], resp.(Policy).Rights.Denied...)
+		approvals[pri] = append(approvals[pri], resp.Rights.Allowed...)
+		denials[pri] = append(denials[pri], resp.Rights.Denied...)
 	}
 
-	// if response pri >= redirect pri && reponse pri > approval pri
-	if topRespPri >= topRedirPri && topRespPri > topApprovalPri {
+	fmt.Printf("Resp: %d Redir: %d Rights: %d\n", topRedirPri, topRedirPri, topApprovalPri)
+
+	// if response pri >= redirect pri && response pri > approval pri
+	if topRespPri >= topRedirPri && topRespPri > topApprovalPri && len(responses) > 0 {
 		rr.Response = responses[topRespPri]
 		rr.Type = RESP_TYPE_RESPONSE
 		return rr, nil
 	}
 
 	// if redirect pri > approval pri
-	if topRedirPri > topApprovalPri {
+	if topRedirPri > topApprovalPri && len(redirects) > 0 {
 		rr.Redirect = redirects[topRedirPri]
 		rr.Type = RESP_TYPE_REDIRECT
 		return rr, nil
@@ -164,9 +213,4 @@ func (pm *PolicyManager) Apply(route string, request *RightsRequest) (RightRespo
 	rr.Type = RESP_TYPE_RIGHTS
 	rr.Rights = approved
 	return rr, nil
-}
-
-func New(dir string) (*PolicyManager, error) {
-	pm := &PolicyManager{}
-	return pm, nil
 }

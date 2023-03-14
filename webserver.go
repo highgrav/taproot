@@ -6,6 +6,7 @@ import (
 	"github.com/google/deck"
 	"github.com/jpillora/ipfilter"
 	"github.com/julienschmidt/httprouter"
+	"github.com/justinas/alice"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/time/rate"
 	"highgrav/taproot/v1/authn"
@@ -19,7 +20,7 @@ type WebServer struct {
 	Config            HttpConfig
 	Server            *http.Server
 	Router            *httprouter.Router
-	Middleware        []MiddlewareFunc // Used when adding a new route
+	Middleware        []alice.Constructor // Used when adding a new route
 	ExitServerCh      chan bool
 	Handler           http.Handler
 	ipFilter          *ipfilter.IPFilter
@@ -32,12 +33,12 @@ type WebServer struct {
 
 func NewWebServer(userStore authn.IUserStore, cfg HttpConfig) *WebServer {
 	s := &WebServer{}
-	s.Middleware = make([]MiddlewareFunc, 0)
+	s.Middleware = make([]alice.Constructor, 0)
 	s.users = userStore
 	s.ipFilter = ipfilter.New(ipfilter.Options{})
 
 	s.Router = httprouter.New()
-	s.Router.SaveMatchedRoutePath = true // necessary to get the matched path back for Acacia acacia
+	s.Router.SaveMatchedRoutePath = true // necessary to get the matched path back for Acacia Acacia
 	s.Server = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", cfg.ServerName, cfg.Port),
 		Handler:      s.Router,

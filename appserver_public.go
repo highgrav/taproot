@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/deck"
+	"github.com/justinas/alice"
 	"highgrav/taproot/v1/jsrun"
 	"highgrav/taproot/v1/sse"
 	"net"
+	"net/http"
 	"os"
 )
 
@@ -25,8 +27,19 @@ func (srv *AppServer) AddJSInjector(injectorFunc jsrun.InjectorFunc) {
 	srv.jsinjections = append(srv.jsinjections, injectorFunc)
 }
 
-func (srv *AppServer) AddMiddleware(middlewareFunc MiddlewareFunc) {
+func (srv *AppServer) AddMiddleware(middlewareFunc alice.Constructor) {
 	srv.Middleware = append(srv.Middleware, middlewareFunc)
+}
+
+func (srv *AppServer) Handler(method string, route string, handler http.Handler) {
+	if srv.routes == nil {
+		srv.routes = make([]RouteBinding, 0)
+	}
+	srv.routes = append(srv.routes, RouteBinding{
+		Method:  method,
+		Route:   route,
+		Handler: handler,
+	})
 }
 
 /* http.Server overloads */

@@ -20,6 +20,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/jpillora/ipfilter v1.2.9 // indirect
 	github.com/julienschmidt/httprouter v1.3.1-0.20220603155159-34250257ea14 // indirect
+	github.com/justinas/alice v1.2.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/nikunjy/rules v1.2.0 // indirect

@@ -2,9 +2,12 @@ package taproot
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/alexedwards/scs/v2"
+	"github.com/google/deck"
 	"github.com/jpillora/ipfilter"
 	"github.com/julienschmidt/httprouter"
+	"github.com/justinas/alice"
 	"github.com/thomaspoignant/go-feature-flag/retriever"
 	"golang.org/x/time/rate"
 	"highgrav/taproot/v1/acacia"
@@ -15,14 +18,18 @@ import (
 	"net/http"
 )
 
-type MiddlewareFunc func(http.Handler) http.Handler
+type RouteBinding struct {
+	Method  string
+	Route   string
+	Handler http.Handler
+}
 
 type AppServer struct {
 	SiteDisplayName string
 	Session         *scs.SessionManager
 	Config          ServerConfig
 	Router          *httprouter.Router
-	Middleware      []MiddlewareFunc // Used when adding a new route
+	Middleware      []alice.Constructor // Used when adding a new route
 	DBs             map[string]*sql.DB
 	ExitServerCh    chan bool
 
@@ -34,27 +41,44 @@ type AppServer struct {
 	RedirectServer *WebServer // Port 80 Server to redirect to https, if not using TLS
 	MetricsServer  *WebServer // Dumps performance metrics
 	AdminServer    *WebServer // Allows administration
+	Acacia         *acacia.PolicyManager
 
 	js                *jsrun.JSManager
 	jsinjections      []jsrun.InjectorFunc
 	state             serverStateManager
 	users             authn.IUserStore
-	acacia            *acacia.PolicyManager
 	globalRateLimiter *rate.Limiter
 	ipRateLimiter     map[string]*rate.Limiter
 	httpIpFilter      *ipfilter.IPFilter
 	fflags            retriever.Retriever
+	routes            []RouteBinding
 }
 
 // This takes the user-added routes and wraps them in additional middleware.
 // Note that these aren't bound until the server is started.
 func (srv *AppServer) bindRoutes() http.Handler {
+	srv.Router.SaveMatchedRoutePath = true
 	if len(srv.Middleware) == 0 {
+		deck.Info("No middleware defined, setting routes")
+		x := 0
+		for _, rb := range srv.routes {
+			srv.Router.Handler(rb.Method, rb.Route, rb.Handler)
+			x++
+		}
+		deck.Info(fmt.Sprintf("%d routes added", x))
 		return srv.Router
 	}
-	var h http.Handler = srv.Router
-	for x := len(srv.Middleware) - 1; x >= 0; x-- {
-		h = srv.Middleware[x](h)
+
+	deck.Info("Setting routes")
+	x := 0
+
+	dmw := alice.New()
+	for _, rb := range srv.routes {
+		deck.Info("Setting route " + rb.Route)
+		srv.Router.Handler(rb.Method, rb.Route, dmw.Then(rb.Handler))
+		x++
 	}
-	return h
+	deck.Info(fmt.Sprintf("%d routes added", x))
+	mw := alice.New(srv.Middleware...)
+	return mw.Then(srv.Router)
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/google/deck/backends/logger"
 	"github.com/jpillora/ipfilter"
 	"github.com/julienschmidt/httprouter"
+	"github.com/justinas/alice"
 	ffclient "github.com/thomaspoignant/go-feature-flag"
 	"github.com/thomaspoignant/go-feature-flag/retriever"
 	"highgrav/taproot/v1/acacia"
@@ -35,7 +36,7 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 	s.Config = cfg
 	s.users = userStore
 	s.DBs = make(map[string]*sql.DB)
-	s.Middleware = make([]MiddlewareFunc, 0)
+	s.Middleware = make([]alice.Constructor, 0)
 	s.jsinjections = make([]jsrun.InjectorFunc, 0)
 
 	// Set up IP filter
@@ -55,12 +56,12 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 	})
 
 	// Set up our security policy authorizer
-	sa, err := acacia.New(cfg.SecurityPolicyDir)
+	sa := acacia.NewPolicyManager()
+	s.Acacia = sa
+	err := s.Acacia.LoadAllFrom(cfg.SecurityPolicyDir)
 	if err != nil {
-		deck.Fatal(err.Error())
-		os.Exit(-1)
+		panic(err)
 	}
-	s.acacia = sa
 
 	if s.Config.UseJSML {
 		err = s.compileJSMLFiles(s.Config.JSMLFilePath, s.Config.JSMLCompiledFilePath)
@@ -79,7 +80,7 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 	s.js = js
 
 	s.Router = httprouter.New()
-	s.Router.SaveMatchedRoutePath = true // necessary to get the matched path back for Acacia acacia
+	s.Router.SaveMatchedRoutePath = true // necessary to get the matched path back for Acacia Acacia
 	s.Server = &WebServer{}
 	s.Server.Server = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", cfg.HttpServer.ServerName, cfg.HttpServer.Port),
