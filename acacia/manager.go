@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/deck"
+	"highgrav/taproot/v1"
 	"highgrav/taproot/v1/common"
 	"os"
 	"path/filepath"
@@ -34,7 +35,7 @@ func (pm *PolicyManager) FlushAll() {
 }
 
 func (pm *PolicyManager) LoadAllFrom(dirName string) error {
-	deck.Info("Loading policy files from " + dirName)
+	taproot.LogToDeck("info", "Loading policy files from "+dirName)
 	s, err := os.Stat(dirName)
 	if err != nil {
 		return err
@@ -57,7 +58,7 @@ func (pm *PolicyManager) LoadAllFrom(dirName string) error {
 			if err != nil {
 				return err
 			}
-			deck.Info("Loading policy file " + info.Name())
+			taproot.LogToDeck("info", "Loading policy file "+info.Name())
 			err = pm.AddPolicy(path, policy)
 			if err != nil {
 				return err

@@ -85,6 +85,7 @@ type HttpConfig struct {
 	GlobalRateLimits ApiRateLimitConfig
 	IpRateLimits     ApiRateLimitConfig
 	CorsDomains      []string
+	IPFilter         IPFilterConfig
 }
 
 // Configuration for HTTP server rate limiting (global and per-ip)
@@ -114,6 +115,14 @@ type TLSConfig struct {
 	ACMEHostName      string
 	LocalCertFilePath string
 	LocalKeyFilePath  string
+}
+
+type IPFilterConfig struct {
+	BlockByDefault   bool
+	BlockedCountries []string
+	AllowedCountries []string
+	BlockedCidrs     []string
+	AllowedCidrs     []string
 }
 
 // Checks to see if a TLS config is valid (that is, does not conflict between using ACME and internally-generated self-signed certs)

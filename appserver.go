@@ -68,20 +68,8 @@ get the matched route prototype -- we want stats to be collected for /some/:id, 
 */
 func (srv *AppServer) bindRoutes() http.Handler {
 	srv.Router.SaveMatchedRoutePath = true
-	if len(srv.Middleware) == 0 {
-		deck.Info("No middleware defined, setting routes")
-		x := 0
-		for _, rb := range srv.routes {
-			srv.Router.Handler(rb.Method, rb.Route, srv.handleLocalMetrics(rb.Handler))
-			x++
-		}
-		deck.Info(fmt.Sprintf("%d routes added", x))
-		return srv.Router
-	}
 
-	deck.Info("Setting routes")
 	x := 0
-
 	dmw := alice.New()
 	for _, rb := range srv.routes {
 		deck.Info("Setting route " + rb.Route)
@@ -89,6 +77,7 @@ func (srv *AppServer) bindRoutes() http.Handler {
 		x++
 	}
 	deck.Info(fmt.Sprintf("%d routes added", x))
-	mw := alice.New(srv.Middleware...)
+	mw := alice.New(append([]alice.Constructor{srv.handleIPFiltering}, srv.Middleware...)...) // We always filter
+	mw.Append(srv.Middleware...)
 	return mw.Then(srv.Router)
 }

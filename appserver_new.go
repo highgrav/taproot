@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/google/deck"
 	"github.com/google/deck/backends/logger"
-	"github.com/jpillora/ipfilter"
 	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"
 	ffclient "github.com/thomaspoignant/go-feature-flag"
@@ -47,8 +46,7 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 	s.jsinjections = make([]jsrun.InjectorFunc, 0)
 
 	// Set up IP filter
-	// TODO
-	s.httpIpFilter = ipfilter.New(ipfilter.Options{})
+	s.httpIpFilter = newIpFilter(cfg.HttpServer.IPFilter)
 
 	// Set up our feature flags
 	s.fflags = fflagretriever
