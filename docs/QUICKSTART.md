@@ -45,5 +45,6 @@ A Taproot-based server needs to do a few simple things to configure and start th
   - Call `taproot.NewWithConfig()` if you've created your own config, or `taproot.New()` to have Taproot find the config files and bootstrap itself.
 - Open any databases and add them to `appsvr.DBs[MyDBName] = myDB` (we assume your Taproot instance is called `appsvr`).
 - Add global middleware with `appsvr.AddMiddleware()`.
+  - Make sure that you add in custom middleware that injects into the HTTP context a realm ID (usually the website is its own realm), a domain ID (in a single-tenant environment usually the same or isomorphic to the realm, in a multi-tenant environment probably the tenant's security domain), and user details in an `authn.User` struct.
 - Set up endpoints with `appsvr.Handler()`.
 - Call `appsvr.ListenAndServeTLS()` or any other of the start functions.

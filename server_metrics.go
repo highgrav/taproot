@@ -1,5 +1,5 @@
 package taproot
 
-func NewMetricsServer() *WebServer {
+func (srv *AppServer) NewMetricsServer() *WebServer {
 	return NewWebServer(nil, HttpConfig{})
 }

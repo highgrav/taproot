@@ -55,6 +55,7 @@ type AppServer struct {
 	fflags            retriever.Retriever
 	routes            []RouteBinding
 	stats             map[string]stats
+	globalStats       stats
 }
 
 /*

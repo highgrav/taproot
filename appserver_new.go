@@ -2,6 +2,7 @@ package taproot
 
 import (
 	"database/sql"
+	"expvar"
 	"fmt"
 	"github.com/google/deck"
 	"github.com/google/deck/backends/logger"
@@ -63,6 +64,12 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 
 	// Set up stats
 	s.stats = make(map[string]stats)
+	s.globalStats = stats{
+		requests:       expvar.NewInt("total requests received"),
+		responses:      expvar.NewInt("total responses sent"),
+		processingTime: expvar.NewInt("total processing time in microsecs"),
+		responseCodes:  expvar.NewMap("total responses by HTTP code"),
+	}
 
 	// Set up our security policy authorizer
 	sa := acacia.NewPolicyManager()

@@ -44,24 +44,18 @@ func (srv *AppServer) handleLocalMetrics(next http.Handler) http.Handler {
 }
 
 func (srv *AppServer) HandleGlobalMetrics(next http.Handler) http.Handler {
-	var globalStats stats = stats{
-		requests:       expvar.NewInt("total requests received"),
-		responses:      expvar.NewInt("total responses sent"),
-		processingTime: expvar.NewInt("total processing time in microsecs"),
-		responseCodes:  expvar.NewMap("total responses by HTTP code"),
-	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		globalStats.requests.Add(1)
+		srv.globalStats.requests.Add(1)
 
 		// keep going
 		metrics := httpsnoop.CaptureMetrics(next, w, r)
 
 		// pick up processing on the way back
-		globalStats.responses.Add(1)
-		globalStats.processingTime.Add(metrics.Duration.Microseconds())
+		srv.globalStats.responses.Add(1)
+		srv.globalStats.processingTime.Add(metrics.Duration.Microseconds())
 		c := strconv.Itoa(metrics.Code)
-		globalStats.responseCodes.Add(c, 1)
+		srv.globalStats.responseCodes.Add(c, 1)
 
 	})
 }

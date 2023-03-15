@@ -2,7 +2,6 @@ package taproot
 
 import (
 	"context"
-	"fmt"
 	"github.com/google/deck"
 	"github.com/julienschmidt/httprouter"
 	"highgrav/taproot/v1/acacia"
@@ -39,7 +38,7 @@ func (srv *AppServer) handleAcacia(next http.Handler) http.Handler {
 			srv.ErrorResponse(w, r, 500, "failed to apply security policy")
 			return
 		}
-		fmt.Printf("%+v\n", usr)
+		//fmt.Printf("%+v\n", usr)
 		rr := acacia.NewRightsRequest(realm, dom, usr, r)
 
 		params := httprouter.ParamsFromContext(r.Context())
