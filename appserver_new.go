@@ -13,6 +13,7 @@ import (
 	"highgrav/taproot/v1/acacia"
 	"highgrav/taproot/v1/authn"
 	"highgrav/taproot/v1/jsrun"
+	"highgrav/taproot/v1/workers"
 	"net/http"
 	"os"
 	"time"
@@ -45,6 +46,13 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 	s.Middleware = make([]alice.Constructor, 0)
 	s.jsinjections = make([]jsrun.InjectorFunc, 0)
 
+	wh, err := workers.New(cfg.WorkHub.Name, cfg.WorkHub.StorageDir, cfg.WorkHub.SegmentSize)
+	if err != nil {
+		LogToDeck("fatal", err.Error())
+		panic(err)
+	}
+	s.WorkHub = wh
+
 	// Set up IP filter
 	s.httpIpFilter = newIpFilter(cfg.HttpServer.IPFilter)
 
@@ -72,15 +80,16 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 	// Set up our security policy authorizer
 	sa := acacia.NewPolicyManager()
 	s.Acacia = sa
-	err := s.Acacia.LoadAllFrom(cfg.SecurityPolicyDir)
+	err = s.Acacia.LoadAllFrom(cfg.SecurityPolicyDir)
 	if err != nil {
+		LogToDeck("fatal", err.Error())
 		panic(err)
 	}
 
 	if s.Config.UseJSML {
 		err = s.compileJSMLFiles(s.Config.JSMLFilePath, s.Config.JSMLCompiledFilePath)
 		if err != nil {
-			deck.Fatal(err.Error())
+			LogToDeck("fatal", err.Error())
 			os.Exit(-1)
 		}
 	}
@@ -88,7 +97,7 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 	// set up our JS manager
 	js, err := jsrun.New(cfg.ScriptFilePath)
 	if err != nil {
-		deck.Fatal(err.Error())
+		LogToDeck("fatal", err.Error())
 		os.Exit(-1)
 	}
 	s.js = js

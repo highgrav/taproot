@@ -7,7 +7,9 @@ import (
 type WorkStatus string
 
 type WorkStatusReport struct {
+	Type      string
 	ID        string
+	Msg       WorkRequest
 	Status    WorkStatus
 	StartedOn time.Time
 	EndedOn   time.Time

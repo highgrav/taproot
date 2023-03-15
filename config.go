@@ -39,7 +39,7 @@ type ServerConfig struct {
 	JSMLCompiledFilePath string // A subdirectory under the ScriptFilePath where Taproot will put compiled JSML files
 
 	/* QUEUE */
-	AsyncQueue MQueueConfig
+	WorkHub WorkHubConfig
 
 	/* FEATURE FLAGS */
 	Flags ffclient.Config // Configuration data for feature flag management
@@ -136,7 +136,7 @@ func (c *TLSConfig) IsValid() (bool, error) {
 	return true, nil
 }
 
-type MQueueConfig struct {
+type WorkHubConfig struct {
 	Name        string
 	StorageDir  string
 	SegmentSize int
