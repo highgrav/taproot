@@ -6,10 +6,11 @@ import (
 	"time"
 )
 
-// This is a generic middleware for connecting to a broker and handling messages.
-// Often you'll need specific logic, so you'd want to write your own handler,
-// but this is a decent starting point. Set autoTimeoutMinutes to something
-// reasonably far in the future -- 72 hours or so.
+/*
+This is a generic middleware for connecting to a Server-Sent Events Hub and handling messages.
+Often you'll need specific logic, so you'd want to write your own handler, but this is a decent starting point for custom code, and can be used for simple prototyping needs.
+Set autoTimeoutMinutes to something reasonably far in the future -- 72 hours or so.
+*/
 func (srv *AppServer) HandleSSE(brokerName string, autoTimeoutMinutes int) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if autoTimeoutMinutes < 1 {

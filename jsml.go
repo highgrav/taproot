@@ -12,10 +12,12 @@ import (
 	"strings"
 )
 
+// A small struct for managing JSML scripts
 type ScriptAccessor struct {
 	srv *AppServer
 }
 
+// Gets a JSML file (used when attempting to compile a file directly or via inclusion)
 func (sa ScriptAccessor) GetJSMLScriptByID(id string) (string, error) {
 	// Make sure we're looking for a JSML file
 	if strings.HasSuffix(id, ".js") {
@@ -34,11 +36,12 @@ func (sa ScriptAccessor) GetJSMLScriptByID(id string) (string, error) {
 	return string(script), nil
 }
 
+// Gets the compiled JS for a JSML file.
 func (sa ScriptAccessor) GetJSScriptByID(id string) (string, error) {
 	return sa.srv.js.GetScriptText(id)
 }
 
-// This simply compiles all the files at startup.
+// This simply compiles all the JSML files at startup.
 func (srv *AppServer) compileJSMLFiles(srcDirName, dstDirName string) error {
 	var sa ScriptAccessor = ScriptAccessor{
 		srv: srv,
@@ -130,7 +133,7 @@ func (srv *AppServer) compileJSMLFiles(srcDirName, dstDirName string) error {
 	return retainedError
 }
 
-// goroutine to start file monitoring
+// Starts monitoring of the JSML file directories to catch any updates and recompile accordingly.
 func (srv *AppServer) monitorJSMLDirectories() {
 	// TODO
 	dirList := []string{srv.Config.JSMLFilePath}
@@ -162,7 +165,8 @@ func (srv *AppServer) monitorJSMLDirectories() {
 		case event := <-watcher.Events:
 			if event.Op&fsnotify.Write == fsnotify.Write {
 				// TODO
-				// recompile
+
+				event.Name
 			}
 			if event.Op&fsnotify.Create == fsnotify.Create {
 				// TODO

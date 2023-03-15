@@ -8,6 +8,7 @@ import (
 	"net/http"
 )
 
+// Overall configuration structure
 type ServerConfig struct {
 	ConfigFilePath         string
 	IPFilterConfigFilePath string
@@ -50,6 +51,7 @@ type ServerConfig struct {
 	FFlags   FFlagConfig
 }
 
+// Configuration for feature flag management
 type FFlagConfig struct {
 	Environment           string
 	LogFlagUsage          bool
@@ -57,6 +59,7 @@ type FFlagConfig struct {
 	OfflineOnly           bool
 }
 
+// Configuration for session management
 type SessionConfig struct {
 	SessionStore        scs.Store
 	ContextSessionStore scs.CtxStore
@@ -72,6 +75,7 @@ type SessionConfig struct {
 	CookieSecure        bool
 }
 
+// Configuration for the various HTTP servers (web server, HTTP redirect server, metrics server, and admin server)
 type HttpConfig struct {
 	ServerName       string
 	Port             int
@@ -82,6 +86,7 @@ type HttpConfig struct {
 	CorsDomains      []string
 }
 
+// Configuration for HTTP server rate limiting (global and per-ip)
 type ApiRateLimitConfig struct {
 	RequestsPerSecond         int
 	BurstableRequests         int
@@ -90,6 +95,7 @@ type ApiRateLimitConfig struct {
 	SweepClientCacheInSeconds int
 }
 
+// Configuration for HTTP server timeouts
 type TimeoutConfig struct {
 	Server int
 	Idle   int
@@ -97,6 +103,7 @@ type TimeoutConfig struct {
 	Write  int
 }
 
+// Configuration for HTTP server TLS.  Note that Taproot will configure TLS using internally-generated self-signed certs, via ACME, or with local key/cert files.
 type TLSConfig struct {
 	UseTLS            bool
 	UseSelfSignedCert bool
@@ -108,6 +115,7 @@ type TLSConfig struct {
 	LocalKeyFilePath  string
 }
 
+// Checks to see if a TLS config is valid (that is, does not conflict between using ACME and internally-generated self-signed certs)
 func (c *TLSConfig) IsValid() (bool, error) {
 	if c.UseSelfSignedCert && c.UseACME {
 		return false, errors.New("Cannot use ACME and a self-signed cert!")

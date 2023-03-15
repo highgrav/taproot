@@ -18,16 +18,22 @@ import (
 	"time"
 )
 
+/*
+Creates a new AppServer; uses Viper to populate the config from YAML files.
+Requires the user pass in an IUserStore and a fflag retriever, as well as
+the directories to search for default config files.
+*/
 func New(userStore authn.IUserStore, fflagretriever retriever.Retriever, cfgDirs []string) *AppServer {
 	cfg, err := loadConfig(cfgDirs)
 	if err != nil {
 		panic(err)
 	}
-
+	// TODO
 	svr := NewWithConfig(userStore, fflagretriever, cfg)
 	return svr
 }
 
+// Creates a new AppServer using a ServerConfig struct.
 func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retriever, cfg ServerConfig) *AppServer {
 	// set up logging (we use stdout until the server is up and running)
 	deck.Add(logger.Init(os.Stdout, 0))
@@ -54,6 +60,9 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 		DataExporter:    ffclient.DataExporter{},
 		Offline:         s.Config.Flags.Offline,
 	})
+
+	// Set up stats
+	s.stats = make(map[string]stats)
 
 	// Set up our security policy authorizer
 	sa := acacia.NewPolicyManager()

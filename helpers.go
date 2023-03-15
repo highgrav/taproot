@@ -9,8 +9,10 @@ import (
 	"strings"
 )
 
+// A simple string-value dictionary for using with WriteJSON()
 type DataEnvelope map[string]any
 
+// Writes a basic string-value dictionary into a common JSON format and sends it to a client.
 func (srv *AppServer) WriteJSON(w http.ResponseWriter, prettyPrint bool, status int, data DataEnvelope, headers http.Header) error {
 	var js []byte
 	var err error
@@ -35,6 +37,7 @@ func (srv *AppServer) WriteJSON(w http.ResponseWriter, prettyPrint bool, status 
 	return nil
 }
 
+// Reads JSON from a request body into a struct
 func (srv *AppServer) ReadJSONFromBody(w http.ResponseWriter, r *http.Request, dst any) error {
 	var maxBytes int64 = 1_048_576
 	r.Body = http.MaxBytesReader(w, r.Body, maxBytes)

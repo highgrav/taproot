@@ -13,6 +13,7 @@ import (
 	"net/http"
 )
 
+// Injects data about an HTTP request into a JS runtime
 func injectHttpRequest(r *http.Request, vm *goja.Runtime) {
 	// First, check to see if there's a correlation ID in context
 	corrID := ""
@@ -58,7 +59,7 @@ func injectHttpRequest(r *http.Request, vm *goja.Runtime) {
 	vm.Set("req", reqData)
 }
 
-// An endpoint route that executes a compiled script
+// An endpoint route that executes a compiled script identified by the path to the script, injecting various data and functions into the runtime.
 func (srv *AppServer) HandleScript(scriptKey string, customCtx *map[string]any) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var corrId string = r.Context().Value(HTTP_CONTEXT_CORRELATION_KEY).(string)
@@ -136,6 +137,7 @@ func (srv *AppServer) HandleScript(scriptKey string, customCtx *map[string]any) 
 	}
 }
 
+// Injects some utility functions into the JS runtime
 func addJSUtilFunctor(svr *AppServer, vm *goja.Runtime) {
 	obj := vm.NewObject()
 
