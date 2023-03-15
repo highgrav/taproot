@@ -4,6 +4,8 @@
 - Feature flags
 - IP filtering
 - Directory monitoring for changed JSML files
+  - This is having issues managing changes
+  - Might also have problems with JS filewatching, too!
 - VIPER config
 - HTTP redirect server
 - Admin server

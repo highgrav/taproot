@@ -11,6 +11,7 @@ import (
 	"highgrav/taproot/v1/jsrun"
 	"io"
 	"net/http"
+	"strings"
 )
 
 // Injects data about an HTTP request into a JS runtime
@@ -59,11 +60,26 @@ func injectHttpRequest(r *http.Request, vm *goja.Runtime) {
 	vm.Set("req", reqData)
 }
 
+// Injects some utility functions into the JS runtime
+func addJSUtilFunctor(svr *AppServer, vm *goja.Runtime) {
+	obj := vm.NewObject()
+
+	printToStdout := func(val goja.Value) {
+		deck.Info("%s\n", val.String())
+	}
+
+	obj.Set("print", printToStdout)
+	vm.Set("util", obj)
+}
+
 // An endpoint route that executes a compiled script identified by the path to the script, injecting various data and functions into the runtime.
 func (srv *AppServer) HandleScript(scriptKey string, customCtx *map[string]any) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var corrId string = r.Context().Value(HTTP_CONTEXT_CORRELATION_KEY).(string)
-
+		// special case for when we have .jsml file names
+		if strings.HasSuffix(scriptKey, ".jsml") {
+			scriptKey = scriptKey[:len(scriptKey)-2]
+		}
 		script, err := srv.js.GetScript(scriptKey)
 		if err != nil {
 			deck.Error("JS\t" + corrId + "\t" + err.Error())
@@ -135,16 +151,4 @@ func (srv *AppServer) HandleScript(scriptKey string, customCtx *map[string]any) 
 			srv.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
 		}
 	}
-}
-
-// Injects some utility functions into the JS runtime
-func addJSUtilFunctor(svr *AppServer, vm *goja.Runtime) {
-	obj := vm.NewObject()
-
-	printToStdout := func(val goja.Value) {
-		deck.Info("%s\n", val.String())
-	}
-
-	obj.Set("print", printToStdout)
-	vm.Set("util", obj)
 }
