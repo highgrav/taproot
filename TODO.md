@@ -3,10 +3,15 @@
   - Maybe corrected now?
 - Feature flags
 - IP filtering
+  - Done!
 - Directory monitoring for changed JSML files
   - This is having issues managing changes
   - Might also have problems with JS filewatching, too!
 - VIPER config
 - HTTP redirect server
+  - Needs work
+  - Needs IP filtering
 - Admin server
 - Metrics server
+  - Done, mostly
+  - Needs IP filtering

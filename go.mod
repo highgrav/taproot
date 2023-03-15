@@ -15,9 +15,11 @@ require (
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.1.0 // indirect
+	github.com/gofrs/flock v0.7.1 // indirect
 	github.com/google/deck v1.0.0 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/joncrlsn/dque v0.0.0-20211108142734-c2ef48c5192a // indirect
 	github.com/jpillora/ipfilter v1.2.9 // indirect
 	github.com/julienschmidt/httprouter v1.3.1-0.20220603155159-34250257ea14 // indirect
 	github.com/justinas/alice v1.2.0 // indirect
@@ -26,6 +28,7 @@ require (
 	github.com/nikunjy/rules v1.2.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/phuslu/iploc v1.0.20230201 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
