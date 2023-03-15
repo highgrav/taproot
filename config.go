@@ -77,6 +77,7 @@ type SessionConfig struct {
 
 // Configuration for the various HTTP servers (web server, HTTP redirect server, metrics server, and admin server)
 type HttpConfig struct {
+	FriendlyName     string
 	ServerName       string
 	Port             int
 	TLS              TLSConfig

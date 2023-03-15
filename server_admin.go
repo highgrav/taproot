@@ -1,5 +1,5 @@
 package taproot
 
-func (srv *AppServer) NewAdminServer() *WebServer {
-	return NewWebServer(nil, HttpConfig{})
+func (srv *AppServer) NewAdminServer(cfg HttpConfig) *WebServer {
+	return NewWebServer(nil, cfg)
 }

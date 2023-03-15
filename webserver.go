@@ -17,6 +17,7 @@ import (
 )
 
 type WebServer struct {
+	Name              string
 	Config            HttpConfig
 	Server            *http.Server
 	Router            *httprouter.Router
@@ -33,6 +34,7 @@ type WebServer struct {
 
 func NewWebServer(userStore authn.IUserStore, cfg HttpConfig) *WebServer {
 	s := &WebServer{}
+	s.Name = cfg.FriendlyName
 	s.Middleware = make([]alice.Constructor, 0)
 	s.users = userStore
 	s.ipFilter = ipfilter.New(ipfilter.Options{})
@@ -55,11 +57,13 @@ func (srv *WebServer) Close() error {
 }
 
 func (srv *WebServer) ListenAndServe() error {
+	deck.Info("Starting webserver '" + srv.Name + "'")
 	srv.state.setState(SERVER_STATE_RUNNING)
 	return srv.Server.ListenAndServe()
 }
 
 func (srv *WebServer) ListenAndServeTLS(certFile, keyFile string) error {
+	deck.Info("Starting webserver '" + srv.Name + "'")
 	srv.state.setState(SERVER_STATE_INITIALIZING)
 
 	if srv.Config.TLS.UseSelfSignedCert && !srv.Config.TLS.UseACME {
@@ -90,11 +94,13 @@ func (srv *WebServer) RegisterOnShutdown(f func()) {
 }
 
 func (srv *WebServer) Serve(l net.Listener) error {
+	deck.Info("Starting webserver '" + srv.Name + "'")
 	srv.state.setState(SERVER_STATE_RUNNING)
 	return srv.Server.Serve(l)
 }
 
 func (srv *WebServer) ServeTLS(l net.Listener, certFile, keyFile string) error {
+	deck.Info("Starting webserver '" + srv.Name + "'")
 	srv.state.setState(SERVER_STATE_INITIALIZING)
 
 	if srv.Config.TLS.UseSelfSignedCert && !srv.Config.TLS.UseACME {
@@ -128,4 +134,8 @@ func (srv *WebServer) SetKeepAlivesEnabled(v bool) {
 
 func (srv *WebServer) Shutdown(ctx context.Context) error {
 	return srv.Server.Shutdown(ctx)
+}
+
+func (srv *WebServer) bindRoutes() {
+
 }

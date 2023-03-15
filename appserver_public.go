@@ -94,21 +94,15 @@ func (srv *AppServer) ListenAndServeTLS(certFile, keyFile string) error {
 		}
 		srv.Server.Server.TLSConfig = c
 		deck.Info("Serving self-signed TLS on port ", srv.Config.HttpServer.Port)
-		if srv.Config.UseHttpsRedirectServer {
-			// TODO
-		}
+
 		return srv.Server.ListenAndServeTLS(certFile, keyFile)
 	}
 
 	if srv.Config.HttpServer.TLS.UseACME {
-		if srv.Config.UseHttpsRedirectServer {
-			// TODO
-		}
+		// TODO
 	} else {
 		// Ignore ACME, use the provided key files
-		if srv.Config.UseHttpsRedirectServer {
-			// TODO
-		}
+		// TODO
 	}
 
 	srv.state.setState(SERVER_STATE_RUNNING)
@@ -133,6 +127,7 @@ HTTP/2 support is only enabled if the Listener returns *tls.Conn connections and
 Serve always returns a non-nil error and closes l. After Shutdown or Close, the returned error is ErrServerClosed.
 */
 func (srv *AppServer) Serve(l net.Listener) error {
+
 	srv.Server.Server.Handler = srv.bindRoutes()
 	srv.state.setState(SERVER_STATE_RUNNING)
 	return srv.Server.Serve(l)
@@ -161,21 +156,15 @@ func (srv *AppServer) ServeTLS(l net.Listener, certFile, keyFile string) error {
 			os.Exit(-222)
 		}
 		srv.Server.Server.TLSConfig = c
-		if srv.Config.UseHttpsRedirectServer {
-			// TODO
-		}
+
 		return srv.Server.ServeTLS(l, "", "")
 	}
 
 	if srv.Config.HttpServer.TLS.UseACME {
-		if srv.Config.UseHttpsRedirectServer {
-			// TODO
-		}
+		// TODO
 	} else {
 		// Ignore ACME, use the provided key files
-		if srv.Config.UseHttpsRedirectServer {
-			// TODO
-		}
+		// TODO
 	}
 
 	srv.state.setState(SERVER_STATE_RUNNING)
@@ -201,16 +190,16 @@ func (srv *AppServer) Shutdown(ctx context.Context) error {
 }
 
 /*
-	Adds an endpoint handler wrapped in an Acacia policy tester.
-	Only endpoints wrapped with WithPolicy() or WithPolicyFunc() will have Acacia policies applied to them.
+Adds an endpoint handler wrapped in an Acacia policy tester.
+Only endpoints wrapped with WithPolicy() or WithPolicyFunc() will have Acacia policies applied to them.
 */
 func (srv *AppServer) WithPolicy(next http.Handler) http.Handler {
 	return srv.handleAcacia(next)
 }
 
 /*
-	Adds an endpoint handler, using a function wrapper, wrapped in an Acacia policy tester.
-	Only endpoints wrapped with WithPolicy() or WithPolicyFunc() will have Acacia policies applied to them.
+Adds an endpoint handler, using a function wrapper, wrapped in an Acacia policy tester.
+Only endpoints wrapped with WithPolicy() or WithPolicyFunc() will have Acacia policies applied to them.
 */
 func (srv *AppServer) WithPolicyFunc(next http.HandlerFunc) http.Handler {
 	return srv.handleAcacia(next)

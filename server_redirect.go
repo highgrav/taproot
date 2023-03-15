@@ -7,6 +7,7 @@ func (srv *AppServer) NewHttpRedirectServer(cfg HttpConfig) *WebServer {
 	ws := NewWebServer(nil, cfg)
 
 	handleRedirectToHttps := func(w http.ResponseWriter, r *http.Request) {
+		// TODO -- strip port from request and add in main webserver port
 		newURI := "https://" + r.Host + r.URL.String()
 		http.Redirect(w, r, newURI, http.StatusFound)
 	}
