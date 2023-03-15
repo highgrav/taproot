@@ -15,7 +15,6 @@ type stats struct {
 	responseCodes  *expvar.Map
 }
 
-// TODO -- breaks pages after the first load
 func (srv *AppServer) handleLocalMetrics(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ps := httprouter.ParamsFromContext(r.Context())
@@ -30,15 +29,17 @@ func (srv *AppServer) handleLocalMetrics(next http.Handler) http.Handler {
 				responseCodes:  expvar.NewMap(r.URL.Path + ": responses by HTTP code"),
 			}
 			stat, _ = srv.stats[registeredPath]
-			stat.requests.Add(1)
 
-			metrics := httpsnoop.CaptureMetrics(next, w, r)
-			stat, _ = srv.stats[registeredPath]
-			stat.responses.Add(1)
-			stat.processingTime.Add(metrics.Duration.Microseconds())
-			c := strconv.Itoa(metrics.Code)
-			stat.responseCodes.Add(c, 1)
 		}
+		stat.requests.Add(1)
+
+		metrics := httpsnoop.CaptureMetrics(next, w, r)
+
+		stat, _ = srv.stats[registeredPath]
+		stat.responses.Add(1)
+		stat.processingTime.Add(metrics.Duration.Microseconds())
+		c := strconv.Itoa(metrics.Code)
+		stat.responseCodes.Add(c, 1)
 	})
 }
 

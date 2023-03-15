@@ -71,7 +71,7 @@ func (srv *AppServer) bindRoutes() http.Handler {
 		deck.Info("No middleware defined, setting routes")
 		x := 0
 		for _, rb := range srv.routes {
-			srv.Router.Handler(rb.Method, rb.Route, rb.Handler)
+			srv.Router.Handler(rb.Method, rb.Route, srv.handleLocalMetrics(rb.Handler))
 			x++
 		}
 		deck.Info(fmt.Sprintf("%d routes added", x))
@@ -84,7 +84,7 @@ func (srv *AppServer) bindRoutes() http.Handler {
 	dmw := alice.New()
 	for _, rb := range srv.routes {
 		deck.Info("Setting route " + rb.Route)
-		srv.Router.Handler(rb.Method, rb.Route, dmw.Then(rb.Handler))
+		srv.Router.Handler(rb.Method, rb.Route, dmw.Then(srv.handleLocalMetrics(rb.Handler)))
 		x++
 	}
 	deck.Info(fmt.Sprintf("%d routes added", x))
