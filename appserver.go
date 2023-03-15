@@ -58,12 +58,12 @@ type AppServer struct {
 }
 
 /*
-	This function takes  user-added routes and wraps them in additional middleware.
-	Anything added to the server using server.AddMiddleware() will be wrapped as a
-	global middleware shared across all routes. bindRoutes() also automatically wraps
-	each endpoint in handleLocalMetrics() (necessary because we depend on being able to
-	get the matched route prototype -- we want stats to be collected for /some/:id, not
-	/some/1234325245.
+This function takes  user-added routes and wraps them in additional middleware.
+Anything added to the server using server.AddMiddleware() will be wrapped as a
+global middleware shared across all routes. bindRoutes() also automatically wraps
+each endpoint in handleLocalMetrics() (necessary because we depend on being able to
+get the matched route prototype -- we want stats to be collected for /some/:id, not
+/some/1234325245.
 */
 func (srv *AppServer) bindRoutes() http.Handler {
 	srv.Router.SaveMatchedRoutePath = true
@@ -84,7 +84,7 @@ func (srv *AppServer) bindRoutes() http.Handler {
 	dmw := alice.New()
 	for _, rb := range srv.routes {
 		deck.Info("Setting route " + rb.Route)
-		srv.Router.Handler(rb.Method, rb.Route, dmw.Then(srv.handleLocalMetrics(rb.Handler)))
+		srv.Router.Handler(rb.Method, rb.Route, dmw.Then(rb.Handler))
 		x++
 	}
 	deck.Info(fmt.Sprintf("%d routes added", x))

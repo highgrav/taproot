@@ -15,6 +15,7 @@ type stats struct {
 	responseCodes  *expvar.Map
 }
 
+// TODO -- breaks pages after the first load
 func (srv *AppServer) handleLocalMetrics(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ps := httprouter.ParamsFromContext(r.Context())
