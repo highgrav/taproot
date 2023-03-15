@@ -47,6 +47,7 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 	s.Middleware = make([]alice.Constructor, 0)
 	s.jsinjections = make([]jsrun.InjectorFunc, 0)
 
+	logging.LogToDeck("info", "Setting up async work hub")
 	wh, err := workers.New(cfg.WorkHub.Name, cfg.WorkHub.StorageDir, cfg.WorkHub.SegmentSize)
 	if err != nil {
 		logging.LogToDeck("fatal", err.Error())
@@ -55,6 +56,7 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 	s.WorkHub = wh
 
 	// Set up IP filter
+	logging.LogToDeck("info", "Setting up IP filtering")
 	s.httpIpFilter = newIpFilter(cfg.HttpServer.IPFilter)
 
 	// Set up our feature flags

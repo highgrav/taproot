@@ -28,6 +28,13 @@ func (wq *WorkQueue) AddWorkFunc(msgType string, fn WorkHandler) {
 	wq.workHandlers[msgType] = append(wq.workHandlers[msgType], fn)
 }
 
+func (wq *WorkQueue) AddResultsFunc(msgType string, fn ResultHandler) {
+	if _, ok := wq.resultHandlers[msgType]; !ok {
+		wq.resultHandlers[msgType] = make([]ResultHandler, 0)
+	}
+	wq.resultHandlers[msgType] = append(wq.resultHandlers[msgType], fn)
+}
+
 func (wq *WorkQueue) processResults() {
 	for {
 		select {
@@ -52,11 +59,11 @@ func (wq *WorkQueue) processMsgs() {
 				Error:  err,
 			}
 		} else {
-			fns, ok := wq.workHandlers[msg.(WorkRequest).Type]
+			fns, ok := wq.workHandlers[msg.(*WorkRequest).Type]
 			if ok {
 				for _, fn := range fns {
 					go func() {
-						res := fn(msg.(WorkRequest))
+						res := fn(msg.(*WorkRequest))
 						wq.Status <- res
 					}()
 				}
