@@ -1,4 +1,4 @@
-package taproot
+package logging
 
 import (
 	"fmt"

@@ -13,6 +13,7 @@ import (
 	"highgrav/taproot/v1/acacia"
 	"highgrav/taproot/v1/authn"
 	"highgrav/taproot/v1/jsrun"
+	"highgrav/taproot/v1/logging"
 	"highgrav/taproot/v1/workers"
 	"net/http"
 	"os"
@@ -48,7 +49,7 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 
 	wh, err := workers.New(cfg.WorkHub.Name, cfg.WorkHub.StorageDir, cfg.WorkHub.SegmentSize)
 	if err != nil {
-		LogToDeck("fatal", err.Error())
+		logging.LogToDeck("fatal", err.Error())
 		panic(err)
 	}
 	s.WorkHub = wh
@@ -82,14 +83,14 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 	s.Acacia = sa
 	err = s.Acacia.LoadAllFrom(cfg.SecurityPolicyDir)
 	if err != nil {
-		LogToDeck("fatal", err.Error())
+		logging.LogToDeck("fatal", err.Error())
 		panic(err)
 	}
 
 	if s.Config.UseJSML {
 		err = s.compileJSMLFiles(s.Config.JSMLFilePath, s.Config.JSMLCompiledFilePath)
 		if err != nil {
-			LogToDeck("fatal", err.Error())
+			logging.LogToDeck("fatal", err.Error())
 			os.Exit(-1)
 		}
 	}
@@ -97,7 +98,7 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 	// set up our JS manager
 	js, err := jsrun.New(cfg.ScriptFilePath)
 	if err != nil {
-		LogToDeck("fatal", err.Error())
+		logging.LogToDeck("fatal", err.Error())
 		os.Exit(-1)
 	}
 	s.js = js

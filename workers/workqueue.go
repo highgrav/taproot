@@ -34,7 +34,9 @@ func (wq *WorkQueue) processResults() {
 		case res := <-wq.Status:
 			hs := wq.resultHandlers[res.Type]
 			for _, fn := range hs {
-				fn(res)
+				go func() {
+					fn(res)
+				}()
 			}
 		}
 	}
