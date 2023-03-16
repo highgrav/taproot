@@ -15,3 +15,4 @@
 - Metrics server
   - Done, mostly
   - Needs IP filtering
+- Determine if the Worker Hub should be able to use a centralized message queue

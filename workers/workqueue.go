@@ -6,7 +6,7 @@ import (
 
 /*
 The WorkQueue is a centralized message queue that takes messages and dispatches them to specified functions.
-Messages are serialized to disk and are durable between restarts.
+Messages are serialized to disk and are durable between restarts, but currently are limited to a single server instance.
 */
 type WorkQueue struct {
 	Status         chan WorkStatusReport

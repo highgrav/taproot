@@ -32,3 +32,17 @@ func LogW3CResponse(crit string, reqTime time.Time, clientIp, corrId, rMethod, r
 	val := fmt.Sprintf("RES\t%s\t%s\t-\t%s\t%s\t%s\t%s\t%d\t%d\n", clientIp, corrId, time.Now().Format(customTimeFormat), time.Now().Sub(reqTime).String(), rMethod, rURL, rCode, rBytesWritten)
 	LogToDeck(crit, val)
 }
+
+func LogTaskStart(crit string, taskType string, taskId string, msg string) {
+	customTimeFormat := "2006-01-02T15:04:05.000-07:00"
+	tm := time.Now().Format(customTimeFormat)
+	val := fmt.Sprintf("TSKBGN\t%s\t%s\t%s\t%s\n", taskType, taskId, tm, msg)
+	LogToDeck(crit, val)
+}
+
+func LogTaskEnd(crit string, taskType string, taskId string, result string, msg string) {
+	customTimeFormat := "2006-01-02T15:04:05.000-07:00"
+	tm := time.Now().Format(customTimeFormat)
+	val := fmt.Sprintf("TSKEND\t%s\t%s\t%s\t%s\t%s\n", taskType, taskId, tm, result, msg)
+	LogToDeck(crit, val)
+}

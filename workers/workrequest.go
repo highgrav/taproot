@@ -11,7 +11,7 @@ type WorkRequest struct {
 func NewWorkRequest(msgType string, t any) *WorkRequest {
 	return &WorkRequest{
 		Type: msgType,
-		ID:   common.CreateRandString(16),
+		ID:   common.CreateRandString(24),
 		Data: t,
 	}
 }
