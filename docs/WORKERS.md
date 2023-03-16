@@ -1,4 +1,4 @@
-# WORKERS
+# Workers
 Taproot provides a facility for executing asynchronous tasks through its `workers.WorkQueue` feature. To use 
 asynchronous tasks, you register functions for acting on specified task types and acting on the return for specified 
 task types. (These functions need to satisfy the `workers.WorkHandler` and `workers.ResultHandler` type signatures, 
@@ -8,6 +8,8 @@ Once registered, you can send task requests to `AppServer.StartWork()`. *When st
 over the expected `Data` type, and that your `WorkHandler` can deal with unexpected type issues.*
 
 Each executed task has a unique ID that can be tracked as needed, for logging, business logic, or notifications.
+
+Taproot uses `github.com/joncrlsn/dque` to manage durable local worker queues.
 
 ### Example
 ~~~

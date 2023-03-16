@@ -6,6 +6,7 @@ endpoint level.
 Acacia policy scripts are XML files that contain information about the routes to match, the effects of a policy match, 
 and JSON that will be matched against the HTTP request's context.
 
+Taproot uses `github.com/timbray/quamina` to handle high-speed JSON matching for policies.
 
 ### Rights Request Format
 ~~~

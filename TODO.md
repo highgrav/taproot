@@ -17,3 +17,5 @@
   - Needs IP filtering
 - Determine if the Worker Hub should be able to use a centralized message queue
 - Determine if cronjobs should manage their own timers rather than using a single loop
+- Move a bunch of non-optional middleware into the static global MW chain automatically
+  - Done, should move middleware to internal functions
