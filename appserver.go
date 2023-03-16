@@ -12,6 +12,7 @@ import (
 	"golang.org/x/time/rate"
 	"highgrav/taproot/v1/acacia"
 	"highgrav/taproot/v1/authn"
+	"highgrav/taproot/v1/cron"
 	"highgrav/taproot/v1/jsrun"
 	"highgrav/taproot/v1/sse"
 	"highgrav/taproot/v1/websock"
@@ -39,6 +40,7 @@ type AppServer struct {
 	SSEHubs map[string]*sse.SSEHub
 	WSHubs  map[string]*websock.WSHub
 	WorkHub *workers.WorkQueue
+	CronHub *cron.CronHub
 
 	Server *WebServer
 	// These are embedded mini-servers for various admin tasks

@@ -12,6 +12,7 @@ import (
 	"github.com/thomaspoignant/go-feature-flag/retriever"
 	"highgrav/taproot/v1/acacia"
 	"highgrav/taproot/v1/authn"
+	"highgrav/taproot/v1/cron"
 	"highgrav/taproot/v1/jsrun"
 	"highgrav/taproot/v1/logging"
 	"highgrav/taproot/v1/workers"
@@ -54,6 +55,9 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 		panic(err)
 	}
 	s.WorkHub = wh
+
+	logging.LogToDeck("info", "Setting up cron hub")
+	s.CronHub = cron.New()
 
 	// Set up IP filter
 	logging.LogToDeck("info", "Setting up IP filtering")

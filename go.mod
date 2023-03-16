@@ -18,6 +18,7 @@ require (
 	github.com/gofrs/flock v0.7.1 // indirect
 	github.com/google/deck v1.0.0 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/joncrlsn/dque v0.0.0-20211108142734-c2ef48c5192a // indirect
 	github.com/jpillora/ipfilter v1.2.9 // indirect
