@@ -16,3 +16,4 @@
   - Done, mostly
   - Needs IP filtering
 - Determine if the Worker Hub should be able to use a centralized message queue
+- Determine if cronjobs should manage their own timers rather than using a single loop

@@ -8,7 +8,6 @@ and JSON that will be matched against the HTTP request's context.
 
 
 ### Rights Request Format
-
 ~~~
 rightsRequest: {
     "securityRealmId":"...",

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/google/deck"
 	"github.com/justinas/alice"
+	"highgrav/taproot/v1/cron"
 	"highgrav/taproot/v1/jsrun"
 	"highgrav/taproot/v1/sse"
 	"net"
@@ -203,4 +204,18 @@ Only endpoints wrapped with WithPolicy() or WithPolicyFunc() will have Acacia po
 */
 func (srv *AppServer) WithPolicyFunc(next http.HandlerFunc) http.Handler {
 	return srv.handleAcacia(next)
+}
+
+func (srv *AppServer) AddCronJob(name, schedule string, job cron.CronJob) error {
+	if srv.CronHub == nil {
+		srv.CronHub = cron.New()
+	}
+	return srv.CronHub.AddJob(name, schedule, job)
+}
+
+func (srv *AppServer) RemoveCronJob(name string) {
+	if srv.CronHub == nil {
+		return
+	}
+	srv.CronHub.RemoveJob(name)
 }

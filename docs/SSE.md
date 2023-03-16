@@ -10,6 +10,7 @@ Here's a simple example that creates an SSE hub, hooks up a default handler, and
 the SSE channels. (Note that in this case we use the -- expensive -- `sse.SSEHub.WriteAll()` method to write to all 
 connected clients, which is suitable for messages that need to go to everyone.)
 
+### Example
 ~~~
 server.AddSSEHub("test")
 server.Router.HandlerFunc(http.MethodGet, "/app/sse", server.HandleSSE("test", 72*60))

@@ -82,7 +82,8 @@ func (ch *CronHub) scheduleAll() {
 
 // Loops endlessly, looking for jobs to run every minute
 func (ch *CronHub) loopForJobs() {
-	ticker := time.NewTicker(time.Second * 60)
+	logging.LogToDeck("info", "Cronjobs starting")
+	ticker := time.NewTicker(time.Second * 10)
 	go func() {
 		for {
 			select {

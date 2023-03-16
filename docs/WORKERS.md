@@ -9,6 +9,7 @@ over the expected `Data` type, and that your `WorkHandler` can deal with unexpec
 
 Each executed task has a unique ID that can be tracked as needed, for logging, business logic, or notifications.
 
+### Example
 ~~~
 server.AddWorkHandlers("email-lead", func(wk *workers.WorkRequest) workers.WorkStatusReport {
 		deck.Info("Adding work")
