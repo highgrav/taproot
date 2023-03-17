@@ -2,8 +2,10 @@ package taproot
 
 import "net/http"
 
-// Generates a new WebServer with a mux that redirects to HTTPS
+// Generates a new WebServer with a mux that redirects to HTTPS.
+// TODO -- How does this play with autocert's HTTP server?
 func (srv *AppServer) NewHttpRedirectServer(cfg HttpConfig) *WebServer {
+
 	ws := NewWebServer(nil, cfg)
 
 	handleRedirectToHttps := func(w http.ResponseWriter, r *http.Request) {

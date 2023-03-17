@@ -117,7 +117,7 @@ type TLSConfig struct {
 	UseSelfSignedCert bool
 	UseACME           bool
 	ACMEDirectory     string
-	ACMEAllowedHost   string
+	ACMEAllowedHosts  []string
 	ACMEHostName      string
 	LocalCertFilePath string
 	LocalKeyFilePath  string

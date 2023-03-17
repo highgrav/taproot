@@ -16,7 +16,7 @@ solutions for common requirements for modern small-to-midsized applications:
 
 
 
-*Taproot is pre-Alpha software! No guarantees are made regarding breaking changes, and at this point we are not avoiding 
+*HERE THERE BE DRAGONS: Taproot is pre-Alpha software! No guarantees are made regarding breaking changes, and at this point we are not avoiding 
 breaking changes.*
 
 Check out the `/docs` directory for more information on how to use Taproot.

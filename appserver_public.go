@@ -100,7 +100,7 @@ func (srv *AppServer) ListenAndServeTLS(certFile, keyFile string) error {
 	}
 
 	if srv.Config.HttpServer.TLS.UseACME {
-		// TODO
+		srv.startACME()
 	} else {
 		// Ignore ACME, use the provided key files
 		// TODO
@@ -162,7 +162,7 @@ func (srv *AppServer) ServeTLS(l net.Listener, certFile, keyFile string) error {
 	}
 
 	if srv.Config.HttpServer.TLS.UseACME {
-		// TODO
+		srv.startACME()
 	} else {
 		// Ignore ACME, use the provided key files
 		// TODO

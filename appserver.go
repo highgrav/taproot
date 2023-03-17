@@ -7,6 +7,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"
 	"github.com/thomaspoignant/go-feature-flag/retriever"
+	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/time/rate"
 	"highgrav/taproot/v1/acacia"
 	"highgrav/taproot/v1/authn"
@@ -60,4 +61,5 @@ type AppServer struct {
 	stats             map[string]stats
 	globalStats       stats
 	startedOn         time.Time
+	autocert          *autocert.Manager
 }
