@@ -4,6 +4,7 @@ import (
 	"expvar"
 	"github.com/felixge/httpsnoop"
 	"github.com/julienschmidt/httprouter"
+	"highgrav/taproot/v1/common"
 	"net/http"
 	"strconv"
 )
@@ -13,6 +14,7 @@ type stats struct {
 	responses      *expvar.Int
 	processingTime *expvar.Int
 	responseCodes  *expvar.Map
+	window         *common.StatWindow
 }
 
 func (srv *AppServer) handleLocalMetrics(next http.Handler) http.Handler {
@@ -27,6 +29,7 @@ func (srv *AppServer) handleLocalMetrics(next http.Handler) http.Handler {
 				responses:      expvar.NewInt(r.URL.Path + ": responses sent"),
 				processingTime: expvar.NewInt(r.URL.Path + ": processing time in microsecs"),
 				responseCodes:  expvar.NewMap(r.URL.Path + ": responses by HTTP code"),
+				window:         common.NewStatWindow(r.URL.Path, 1000, srv.Config.MaxEndpointLatency, srv.latencyAlertChan),
 			}
 			stat, _ = srv.stats[registeredPath]
 
@@ -38,6 +41,7 @@ func (srv *AppServer) handleLocalMetrics(next http.Handler) http.Handler {
 		stat, _ = srv.stats[registeredPath]
 		stat.responses.Add(1)
 		stat.processingTime.Add(metrics.Duration.Microseconds())
+		go stat.window.Add(metrics.Duration)
 		c := strconv.Itoa(metrics.Code)
 		stat.responseCodes.Add(c, 1)
 	})

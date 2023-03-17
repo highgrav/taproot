@@ -119,6 +119,6 @@ func NewWithConfig(userStore authn.IUserStore, fflagretriever retriever.Retrieve
 		ReadTimeout:  time.Duration(cfg.HttpServer.Timeouts.Read) * time.Second,
 		WriteTimeout: time.Duration(cfg.HttpServer.Timeouts.Write) * time.Second,
 	}
-
+	s.startedOn = time.Now()
 	return s
 }

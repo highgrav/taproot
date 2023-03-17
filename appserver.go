@@ -10,12 +10,14 @@ import (
 	"golang.org/x/time/rate"
 	"highgrav/taproot/v1/acacia"
 	"highgrav/taproot/v1/authn"
+	"highgrav/taproot/v1/common"
 	"highgrav/taproot/v1/cron"
 	"highgrav/taproot/v1/jsrun"
 	"highgrav/taproot/v1/sse"
 	"highgrav/taproot/v1/websock"
 	"highgrav/taproot/v1/workers"
 	"net/http"
+	"time"
 )
 
 // RouteBinding is used when adding a new route endpoint to the app server. It should not be addressed directly.
@@ -58,4 +60,7 @@ type AppServer struct {
 	routes            []RouteBinding
 	stats             map[string]stats
 	globalStats       stats
+	startedOn         time.Time
+
+	latencyAlertChan chan common.StatAlert
 }

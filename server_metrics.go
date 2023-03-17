@@ -3,15 +3,39 @@ package taproot
 import (
 	"expvar"
 	"github.com/google/deck"
+	"highgrav/taproot/v1/common"
 	"net/http"
+	"net/http/pprof"
+	"runtime"
+	"time"
 )
 
 // Creates a new metrics server using an HttpConfig. Metrics servers should be filtered to only allow local connections.
-func (srv *AppServer) NewMetricsServer(cfg HttpConfig) *WebServer {
+func (srv *AppServer) NewMetricsServer(cfg HttpConfig, usePprof bool) *WebServer {
 	ws := NewWebServer(nil, cfg)
 	ws.Router.HandlerFunc(http.MethodGet, "/global", srv.metrics_handle_global)
 	ws.Router.HandlerFunc(http.MethodGet, "/stats", srv.metrics_handle_path)
 	ws.Router.HandlerFunc(http.MethodGet, "/", srv.metrics_handle_getpaths)
+
+	if usePprof {
+		ws.Router.HandlerFunc(http.MethodGet, "/debug/pprof/", pprof.Index)
+		ws.Router.HandlerFunc(http.MethodGet, "/debug/pprof/cmdline", pprof.Cmdline)
+		ws.Router.HandlerFunc(http.MethodGet, "/debug/pprof/profile", pprof.Profile)
+		ws.Router.HandlerFunc(http.MethodGet, "/debug/pprof/symbol", pprof.Symbol)
+		ws.Router.HandlerFunc(http.MethodGet, "/debug/pprof/trace", pprof.Trace)
+		ws.Router.Handler(http.MethodGet, "/debug/pprof/goroutine", pprof.Handler("goroutine"))
+		ws.Router.Handler(http.MethodGet, "/debug/pprof/heap", pprof.Handler("heap"))
+		ws.Router.Handler(http.MethodGet, "/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+		ws.Router.Handler(http.MethodGet, "/debug/pprof/block", pprof.Handler("block"))
+
+		ws.Router.HandlerFunc(http.MethodGet, "/gc/force", func(w http.ResponseWriter, r *http.Request) {
+			runtime.GC()
+			de := DataEnvelope{}
+			de["ok"] = true
+			srv.WriteJSON(w, true, 200, de, nil)
+		})
+	}
+
 	return ws
 }
 
@@ -23,6 +47,23 @@ func (srv *AppServer) metrics_handle_global(w http.ResponseWriter, r *http.Reque
 	st2["requests"] = st.requests.Value()
 	st2["responses"] = st.responses.Value()
 	st2["processing_time"] = st.processingTime.Value()
+
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	st2["mem__mem_alloc_mb"] = common.BToMb(m.Alloc)
+	st2["mem__total_mem_alloc_mb"] = common.BToMb(m.TotalAlloc)
+	st2["mem__os_mem_used_mb"] = common.BToMb(m.Sys)
+	st2["gc__total_gcs"] = m.NumGC
+	st2["mem__mallocs"] = m.Mallocs
+	st2["mem__frees"] = m.Frees
+	st2["mem__heap_alloc_mb"] = common.BToMb(m.HeapAlloc)
+	st2["mem__heap_in_use_mb"] = common.BToMb(m.HeapInuse)
+	st2["mem__heap_released_mb"] = common.BToMb(m.HeapReleased)
+	st2["gc__heap_objects"] = m.HeapObjects
+	st2["mem__stack_mb"] = common.BToMb(m.StackSys)
+	st2["gc_stop_the_world_ns"] = m.PauseTotalNs
+	st2["uptime_secs"] = time.Now().Sub(srv.startedOn).Seconds()
+
 	ss := make(map[string]string)
 	st.responseCodes.Do(func(kv expvar.KeyValue) {
 		ss[kv.Key] = kv.Value.String()

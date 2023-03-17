@@ -52,6 +52,7 @@ type User struct {
 	Workgroups             WorkgroupMembership `json:"wgs"`    // maps Domains to WgIDs to unique names
 	Labels                 DomainAssertions    `json:"labels"` // maps Domains to labels
 	FFlags                 map[string]any      `json:"fflags"` // Populated by app server
+	Keys                   []string            `json:"keys"`
 }
 
 func Anonymous() User {

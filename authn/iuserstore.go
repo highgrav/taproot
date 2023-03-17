@@ -1,6 +1,8 @@
 package authn
 
+import "database/sql"
+
 type IUserStore interface {
-	GetUserById(id string) (User, error)
-	GetUserByAuth(auth UserAuth) (User, error)
+	GetUserById(db *sql.DB, id string) (User, error)
+	GetUserByAuth(db *sql.DB, auth UserAuth) (User, error)
 }

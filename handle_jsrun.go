@@ -139,16 +139,18 @@ func (srv *AppServer) HandleScript(scriptKey string, customCtx *map[string]any) 
 			v(vm)
 		}
 
-		deck.Info(fmt.Sprintf("JS\t%s\t%s\n", corrId, scriptKey))
+		deck.Info(fmt.Sprintf("JS\trun\t%s\t%s\n", corrId, scriptKey))
 		injectHttpRequest(r, vm)
 		_, err = vm.RunProgram(script)
 
 		if jserr, ok := err.(*goja.Exception); ok {
-			deck.Error("JS\t" + corrId + "\tError running " + scriptKey + ": " + jserr.Error())
+			deck.Error("JS\tfail\t" + corrId + "\tError running " + scriptKey + ": " + jserr.Error())
 			srv.ErrorResponse(w, r, http.StatusInternalServerError, jserr.Error())
 		} else if err != nil {
-			deck.Error("JS\t" + corrId + "\tError running " + scriptKey + ": " + err.Error())
+			deck.Error("JS\tfail\t" + corrId + "\tError running " + scriptKey + ": " + err.Error())
 			srv.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
+		} else {
+			deck.Info(fmt.Sprintf("JS\tok\t%s\t%s\n", corrId, scriptKey))
 		}
 	}
 }

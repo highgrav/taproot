@@ -19,3 +19,4 @@
 - Determine if cronjobs should manage their own timers rather than using a single loop
 - Move a bunch of non-optional middleware into the static global MW chain automatically
   - Done, should move middleware to internal functions
+- Remove STDOUT deck logging and place the responsibility on the embedding app?

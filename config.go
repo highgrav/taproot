@@ -6,6 +6,7 @@ import (
 	ffclient "github.com/thomaspoignant/go-feature-flag"
 	"net"
 	"net/http"
+	"time"
 )
 
 // Overall configuration structure
@@ -15,8 +16,10 @@ type ServerConfig struct {
 	FFlagsConfigFilePath   string
 
 	/* METRICS */
-	UseMetricsServer bool
-	MetricsPort      int
+	UseMetricsServer   bool
+	UsePprof           bool
+	MetricsPort        int
+	MaxEndpointLatency time.Duration
 
 	UseAdminServer bool
 	AdminPort      int
