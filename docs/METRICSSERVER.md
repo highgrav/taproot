@@ -11,3 +11,6 @@ The following endpoints are supported:
 metrics are not gathered for an endpoint until it has been hit by a user.
 - `/global`: Returns global server metrics
 - `/stats?path=/some/path`: Returns metrics for `/some/path`.
+
+If you set `UsePprof` on the `ServerConfig` struct, then a selected set of pprof endpoints will also be available 
+starting at `/debug/pprof`.

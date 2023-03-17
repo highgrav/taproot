@@ -10,7 +10,6 @@ import (
 	"golang.org/x/time/rate"
 	"highgrav/taproot/v1/acacia"
 	"highgrav/taproot/v1/authn"
-	"highgrav/taproot/v1/common"
 	"highgrav/taproot/v1/cron"
 	"highgrav/taproot/v1/jsrun"
 	"highgrav/taproot/v1/sse"
@@ -61,6 +60,4 @@ type AppServer struct {
 	stats             map[string]stats
 	globalStats       stats
 	startedOn         time.Time
-
-	latencyAlertChan chan common.StatAlert
 }

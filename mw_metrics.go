@@ -29,7 +29,7 @@ func (srv *AppServer) handleLocalMetrics(next http.Handler) http.Handler {
 				responses:      expvar.NewInt(r.URL.Path + ": responses sent"),
 				processingTime: expvar.NewInt(r.URL.Path + ": processing time in microsecs"),
 				responseCodes:  expvar.NewMap(r.URL.Path + ": responses by HTTP code"),
-				window:         common.NewStatWindow(r.URL.Path, 1000, srv.Config.MaxEndpointLatency, srv.latencyAlertChan),
+				window:         common.NewStatWindow(r.URL.Path, 1000),
 			}
 			stat, _ = srv.stats[registeredPath]
 

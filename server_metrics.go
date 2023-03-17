@@ -123,6 +123,10 @@ func (srv *AppServer) metrics_handle_path(w http.ResponseWriter, r *http.Request
 	})
 	st2["response_codes"] = ss
 
+	hist := st.window.MakeHistogram()
+	hist2 := hist.Xile(20)
+	st2["histogram"] = hist2
+
 	env := DataEnvelope{}
 	env["ok"] = true
 	env["stats"] = st2
