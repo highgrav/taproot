@@ -72,19 +72,20 @@ func NewStatWindow(name string, length int) *StatWindow {
 	return &StatWindow{
 		name:   name,
 		window: make([]time.Duration, length),
-		ptr:    0,
+		ptr:    -1,
 	}
 }
 
 func (sw *StatWindow) Add(t time.Duration) {
 	sw.Lock()
 	defer sw.Unlock()
-	sw.window[sw.ptr] = t
-	if sw.ptr >= len(sw.window) {
+	if sw.ptr >= len(sw.window)-1 || sw.ptr < 0 {
 		sw.ptr = 0
 	} else {
 		sw.ptr = sw.ptr + 1
 	}
+	sw.window[sw.ptr] = t
+
 }
 
 func (sw *StatWindow) MakeHistogram() *StatHistogram {
