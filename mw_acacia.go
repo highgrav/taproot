@@ -2,6 +2,7 @@ package taproot
 
 import (
 	"context"
+	"fmt"
 	"github.com/google/deck"
 	"github.com/julienschmidt/httprouter"
 	"highgrav/taproot/v1/acacia"
@@ -35,6 +36,7 @@ func (srv *AppServer) handleAcacia(next http.Handler) http.Handler {
 		}
 
 		if realm == "" || dom == "" {
+			fmt.Println("MISSING DOMAIN " + dom + " OR REALM " + realm)
 			srv.ErrorResponse(w, r, 500, "failed to apply security policy")
 			return
 		}

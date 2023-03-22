@@ -38,6 +38,7 @@ func (mem WorkgroupMembership) RemoveWorkgroupByName(domainId, workgroupName str
 
 type User struct {
 	RealmID                string              `json:"realmId"`
+	DomainID               string              `json:"domainId"`
 	UserID                 string              `json:"userId"`
 	Username               string              `json:"username"`
 	DisplayName            string              `json:"displayName"`
@@ -53,6 +54,7 @@ type User struct {
 	Labels                 DomainAssertions    `json:"labels"` // maps Domains to labels
 	FFlags                 map[string]any      `json:"fflags"` // Populated by app server
 	Keys                   []string            `json:"keys"`
+	SessionData            map[string]string   `json:"sessionData"`
 }
 
 func Anonymous() User {

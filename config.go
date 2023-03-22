@@ -27,10 +27,13 @@ type ServerConfig struct {
 
 	/* HEADER/COOKIE SIGNING */
 	RotateSessionSigningKeysEvery time.Duration
+	UseEncryptedSessionTokens     bool
 
 	/* ACADIA SECURITY POLICIES */
 	ListenForPolicyChanges bool
 	SecurityPolicyDir      string
+	DefaultRealm           string
+	DefaultDomain          string
 
 	/* STATIC FILE SERVING */
 	StaticUrlPath  string
