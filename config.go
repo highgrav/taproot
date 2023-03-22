@@ -30,10 +30,11 @@ type ServerConfig struct {
 	UseEncryptedSessionTokens     bool
 
 	/* ACADIA SECURITY POLICIES */
-	ListenForPolicyChanges bool
-	SecurityPolicyDir      string
-	DefaultRealm           string
-	DefaultDomain          string
+	ListenForPolicyChanges   bool
+	SecurityPolicyDir        string
+	DefaultRealm             string
+	DefaultDomain            string
+	DefaultUserSessionPrefix string
 
 	/* STATIC FILE SERVING */
 	StaticUrlPath  string

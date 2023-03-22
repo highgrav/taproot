@@ -24,14 +24,6 @@ type AuthSigner struct {
 	Block     cipher.Block // AES block should be safe for concurrent access, unlike BLAKE2
 }
 
-// AuthTokens hold basic security assertions for cookie and header security
-type AuthToken struct {
-	Token     string
-	Nonce     string
-	ExpiresAt time.Time
-	Signature []byte
-}
-
 // NewAuthSigner() creates an AuthSigner with a password and expiration date
 func NewAuthSigner(expiresAfter time.Duration) (AuthSigner, error) {
 	asign := AuthSigner{

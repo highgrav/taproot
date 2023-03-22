@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/alexedwards/scs/v2"
 	"highgrav/taproot/v1/authn"
+	"highgrav/taproot/v1/common"
 	"highgrav/taproot/v1/logging"
 	"net/http"
 )
@@ -26,15 +27,24 @@ func GetSessionItem[T any](ses *scs.SessionManager, ctx context.Context, key str
 	return t, nil
 }
 
-func (svr *AppServer) AddUserToSession(ctx context.Context, key string, user authn.User) error {
-	return svr.AddSession(ctx, key, user)
+func (svr *AppServer) AddUserToSession(ctx context.Context, user authn.User) (string, error) {
+	key := common.CreateRandString(16)
+	for svr.Session.Exists(ctx, key) {
+		key = common.CreateRandString(16)
+	}
+	return key, svr.AddSession(ctx, key, user)
 }
 
-func (svr *AppServer) AddOrReplaceUserToSession(ctx context.Context, key string, user authn.User) {
+func (svr *AppServer) AddOrReplaceUserToSession(ctx context.Context, user authn.User) (string, error) {
+	key := common.CreateRandString(16)
+	for svr.Session.Exists(ctx, key) {
+		key = common.CreateRandString(16)
+	}
 	svr.AddOrReplaceSession(ctx, key, user)
+	return key, nil
 }
 
-func (svr *AppServer) RemoveSession(ctx context.Context, key string) error {
+func (svr *AppServer) RemoveSession(ctx context.Context, key string) {
 	svr.Session.Remove(ctx, key)
 }
 
