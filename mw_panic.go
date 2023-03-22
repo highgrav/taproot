@@ -2,7 +2,7 @@ package taproot
 
 import (
 	"fmt"
-	"github.com/google/deck"
+	"highgrav/taproot/v1/logging"
 	"net/http"
 )
 
@@ -11,7 +11,8 @@ func (srv *AppServer) HandlePanic(next http.Handler) http.Handler {
 		defer func() {
 			if err := recover(); err != nil {
 				// can't recover, so fail gracefully and close the connection
-				deck.Error("Catching panic() on " + r.URL.String())
+				logging.LogToDeck("fatal", "PANIC\tCatching panic() on "+r.URL.String())
+				logging.LogToDeck("fatal", err.(error).Error())
 				w.Header().Set("Connection", "close")
 				srv.ErrorResponse(w, r, http.StatusInternalServerError, fmt.Errorf("%s", err))
 			}

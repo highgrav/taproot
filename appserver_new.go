@@ -93,6 +93,7 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore scs.Store, fflagretr
 	}
 
 	// set up sessions
+	logging.LogToDeck("info", "Setting up sessions...")
 	s.Session = scs.New()
 	s.Session.Lifetime = (time.Duration(s.Config.Sessions.LifetimeInMins) * time.Minute)
 	s.Session.IdleTimeout = (time.Duration(s.Config.Sessions.IdleTimeoutInMins) * time.Minute)

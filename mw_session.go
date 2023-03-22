@@ -82,8 +82,8 @@ func (srv *AppServer) CreateHandleSession(encryptTokens bool) alice.Constructor 
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
-			user, ok := srv.Session.Get(ctx, token.Token).(authn.User)
-			if !ok {
+			user, err = srv.GetUserFromSession(ctx, token.Token)
+			if err != nil {
 				logging.LogToDeck("error", fmt.Sprintf("SESS\tError casting session data to user: %s", err.Error()))
 				ctx = context.WithValue(r.Context(), HTTP_CONTEXT_USER_KEY, authn.Anonymous())
 				ctx = context.WithValue(ctx, HTTP_CONTEXT_REALM_KEY, srv.Config.DefaultRealm)
