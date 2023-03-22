@@ -1,5 +1,7 @@
 package common
 
+import "os"
+
 func Dedupe[T comparable](arr []T) []T {
 	keys := make(map[T]bool)
 	list := []T{}
@@ -15,4 +17,13 @@ func Dedupe[T comparable](arr []T) []T {
 
 func BToMb(b uint64) uint64 {
 	return b / 1024 / 1024
+}
+
+/************************************************************************************/
+// Get a value from environment variables
+func GetEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }

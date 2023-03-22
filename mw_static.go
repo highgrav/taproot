@@ -9,14 +9,14 @@ import (
 
 func (srv *AppServer) HandleStaticFiles(next http.Handler) http.Handler {
 
-	s, err := os.Stat(srv.Config.StaticFileDirectory)
+	s, err := os.Stat(srv.Config.StaticFilePath)
 	if err != nil {
 		panic(err)
 	}
 	if !s.IsDir() {
-		panic("Static file directory " + srv.Config.StaticFileDirectory + " is not a directory")
+		panic("Static file directory " + srv.Config.StaticFilePath + " is not a directory")
 	}
-	staticFs := http.Dir(srv.Config.StaticFileDirectory)
+	staticFs := http.Dir(srv.Config.StaticFilePath)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, srv.Config.StaticUrlPath) {

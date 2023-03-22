@@ -37,10 +37,11 @@ type AppServer struct {
 	DBs             map[string]*sql.DB
 	ExitServerCh    chan bool
 
-	SSEHubs map[string]*sse.SSEHub
-	WSHubs  map[string]*websock.WSHub
-	WorkHub *workers.WorkQueue
-	CronHub *cron.CronHub
+	SSEHubs      map[string]*sse.SSEHub
+	WSHubs       map[string]*websock.WSHub
+	WorkHub      *workers.WorkQueue
+	CronHub      *cron.CronHub
+	SignatureMgr *authn.AuthSignerManager
 
 	Server *WebServer
 	// These are embedded mini-servers for various admin tasks

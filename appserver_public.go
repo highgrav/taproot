@@ -5,30 +5,11 @@ import (
 	"fmt"
 	"github.com/google/deck"
 	"github.com/justinas/alice"
-	"highgrav/taproot/v1/cron"
 	"highgrav/taproot/v1/jsrun"
-	"highgrav/taproot/v1/sse"
 	"net"
 	"net/http"
 	"os"
 )
-
-/*
-Adds a new Server-Sent Events Hub that the application can write to. Note that, unlike WebSocket Hubs, SSE Hubs are write-only.
-The "name" is usually keyed to the user's ID; if you need to discriminate more carefully, then use the user ID plus a meaningful ID.
-For example, if you are writing a chat app and you only want the user to get updates for the open chat, you could use "user_id::chat_id"
-as the key.
-*/
-func (srv *AppServer) AddSSEHub(name string) {
-	if srv.SSEHubs == nil {
-		srv.SSEHubs = make(map[string]*sse.SSEHub)
-	}
-	if _, ok := srv.SSEHubs[name]; ok {
-		return
-	}
-	b := sse.New(name)
-	srv.SSEHubs[name] = b
-}
 
 // Adds a custom function that will be run to inject new objects or functions into the server-side JS runtime.
 func (srv *AppServer) AddJSInjector(injectorFunc jsrun.InjectorFunc) {
@@ -95,19 +76,20 @@ func (srv *AppServer) ListenAndServeTLS(certFile, keyFile string) error {
 		}
 		srv.Server.Server.TLSConfig = c
 		deck.Info("Serving self-signed TLS on port ", srv.Config.HttpServer.Port)
-
+		srv.state.setState(SERVER_STATE_RUNNING)
 		return srv.Server.ListenAndServeTLS(certFile, keyFile)
 	}
 
 	if srv.Config.HttpServer.TLS.UseACME {
 		srv.startACME()
+		srv.state.setState(SERVER_STATE_RUNNING)
+		return srv.Server.ListenAndServeTLS(certFile, keyFile)
 	} else {
 		// Ignore ACME, use the provided key files
 		// TODO
 	}
 
 	srv.state.setState(SERVER_STATE_RUNNING)
-
 	return srv.Server.ListenAndServeTLS(certFile, keyFile)
 }
 
@@ -157,12 +139,14 @@ func (srv *AppServer) ServeTLS(l net.Listener, certFile, keyFile string) error {
 			os.Exit(-222)
 		}
 		srv.Server.Server.TLSConfig = c
-
+		srv.state.setState(SERVER_STATE_RUNNING)
 		return srv.Server.ServeTLS(l, "", "")
 	}
 
 	if srv.Config.HttpServer.TLS.UseACME {
 		srv.startACME()
+		srv.state.setState(SERVER_STATE_RUNNING)
+		return srv.Server.ServeTLS(l, "", "")
 	} else {
 		// Ignore ACME, use the provided key files
 		// TODO
@@ -204,18 +188,4 @@ Only endpoints wrapped with WithPolicy() or WithPolicyFunc() will have Acacia po
 */
 func (srv *AppServer) WithPolicyFunc(next http.HandlerFunc) http.Handler {
 	return srv.handleAcacia(next)
-}
-
-func (srv *AppServer) AddCronJob(name, schedule string, job cron.CronJob) error {
-	if srv.CronHub == nil {
-		srv.CronHub = cron.New()
-	}
-	return srv.CronHub.AddJob(name, schedule, job)
-}
-
-func (srv *AppServer) RemoveCronJob(name string) {
-	if srv.CronHub == nil {
-		return
-	}
-	srv.CronHub.RemoveJob(name)
 }

@@ -1,9 +1,9 @@
 package common
 
 import (
+	crand "crypto/rand"
 	"fmt"
 	"math/rand"
-	"os"
 	"strings"
 	"time"
 )
@@ -20,6 +20,12 @@ var src = rand.NewSource(time.Now().UnixNano())
 
 func DumpObject(i interface{}) string {
 	return fmt.Sprintf("%#v", i)
+}
+
+func CreateRandBytes(n int) []byte {
+	arr := make([]byte, n)
+	crand.Read(arr)
+	return arr
 }
 
 func CreateRandString(n int) string {
@@ -39,13 +45,4 @@ func CreateRandString(n int) string {
 	}
 
 	return sb.String()
-}
-
-/************************************************************************************/
-// Get a value from environment variables
-func GetEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
 }

@@ -21,6 +21,7 @@ const (
 )
 
 var (
+	ErrUserNotFound               = errors.New("user not found")
 	ErrUserNotAuthenticated       = errors.New("user was not authenticated")
 	ErrUserRequiresAuthentication = errors.New("user must log in")
 	ErrUserNotAuthorized          = errors.New("user was not authorized for authentication")

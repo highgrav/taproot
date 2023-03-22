@@ -11,28 +11,30 @@ import (
 
 // Overall configuration structure
 type ServerConfig struct {
-	ConfigFilePath         string
-	IPFilterConfigFilePath string
-	FFlagsConfigFilePath   string
+	ConfigFilePath       string
+	FFlagsConfigFilePath string
 
 	/* METRICS */
-	UseMetricsServer   bool
-	UsePprof           bool
-	MetricsPort        int
-	MaxEndpointLatency time.Duration
+	UseMetricsServer bool
+	UsePprof         bool
 
+	/* ADMIN SERVER */
 	UseAdminServer bool
 	AdminPort      int
 
+	/* REDIRECT */
 	UseHttpsRedirectServer bool
+
+	/* HEADER/COOKIE SIGNING */
+	RotateSessionSigningKeysEvery time.Duration
 
 	/* ACADIA SECURITY POLICIES */
 	ListenForPolicyChanges bool
 	SecurityPolicyDir      string
 
 	/* STATIC FILE SERVING */
-	StaticUrlPath       string
-	StaticFileDirectory string
+	StaticUrlPath  string
+	StaticFilePath string
 
 	/* SCRIPTS AND JSML */
 	ScriptFilePath       string
@@ -69,8 +71,8 @@ type FFlagConfig struct {
 type SessionConfig struct {
 	SessionStore        scs.Store
 	ContextSessionStore scs.CtxStore
-	LifetimeInSecs      int
-	IdleTimeoutInSecs   int
+	LifetimeInMins      int
+	IdleTimeoutInMins   int
 	UseCookies          bool
 	CookieName          string
 	CookieDomain        string
