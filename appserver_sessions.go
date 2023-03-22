@@ -35,11 +35,7 @@ func (svr *AppServer) AddUserToSession(ctx context.Context, user authn.User) (st
 	return key, svr.AddSession(ctx, key, user)
 }
 
-func (svr *AppServer) AddOrReplaceUserToSession(ctx context.Context, user authn.User) (string, error) {
-	key := common.CreateRandString(16)
-	for svr.Session.Exists(ctx, key) {
-		key = common.CreateRandString(16)
-	}
+func (svr *AppServer) AddOrReplaceUserToSession(ctx context.Context, key string, user authn.User) (string, error) {
 	svr.AddOrReplaceSession(ctx, key, user)
 	return key, nil
 }
