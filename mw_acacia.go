@@ -2,11 +2,10 @@ package taproot
 
 import (
 	"context"
-	"fmt"
-	"github.com/google/deck"
 	"github.com/julienschmidt/httprouter"
 	"highgrav/taproot/v1/acacia"
 	"highgrav/taproot/v1/authn"
+	"highgrav/taproot/v1/logging"
 	"net/http"
 )
 
@@ -36,7 +35,7 @@ func (srv *AppServer) handleAcacia(next http.Handler) http.Handler {
 		}
 
 		if realm == "" || dom == "" {
-			fmt.Println("MISSING DOMAIN " + dom + " OR REALM " + realm)
+			logging.LogToDeck("error", "ACAC/terror/tMissing domain "+dom+" or realm "+realm)
 			srv.ErrorResponse(w, r, 500, "failed to apply security policy")
 			return
 		}
@@ -53,13 +52,13 @@ func (srv *AppServer) handleAcacia(next http.Handler) http.Handler {
 
 		// If we have a response, that takes priority
 		if rights.Type == acacia.RESP_TYPE_RESPONSE {
-			deck.Info("Received a short-circuit response from Acacia")
+			logging.LogToDeck("info", "ACAC\tinfo\tReceived a short-circuit response from Acacia")
 			srv.ErrorResponse(w, r, rights.Response.ReturnCode, rights.Response.ReturnMsg)
 			return
 		}
 		// If we have a redirect, that takes secondary priority
 		if rights.Type == acacia.RESP_TYPE_REDIRECT {
-			deck.Info("Received a redirect from Acacia")
+			logging.LogToDeck("info", "ACAC\tinfo\tReceived a redirect from Acacia")
 			http.Redirect(w, r, rights.Redirect, http.StatusSeeOther)
 			return
 		}

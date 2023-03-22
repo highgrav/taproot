@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/alexedwards/scs/v2"
+	"highgrav/taproot/v1/authn"
 	"highgrav/taproot/v1/logging"
 	"net/http"
 )
@@ -23,6 +24,18 @@ func GetSessionItem[T any](ses *scs.SessionManager, ctx context.Context, key str
 		return t, ErrSessionInvalidType
 	}
 	return t, nil
+}
+
+func (svr *AppServer) AddUserToSession(ctx context.Context, key string, user authn.User) error {
+	return svr.AddSession(ctx, key, user)
+}
+
+func (svr *AppServer) AddOrReplaceUserToSession(ctx context.Context, key string, user authn.User) {
+	svr.AddOrReplaceSession(ctx, key, user)
+}
+
+func (svr *AppServer) RemoveSession(ctx context.Context, key string) error {
+	svr.Session.Remove(ctx, key)
 }
 
 func (svr *AppServer) AddSession(ctx context.Context, key string, t any) error {
