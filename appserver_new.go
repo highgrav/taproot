@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"expvar"
 	"fmt"
-	"github.com/alexedwards/scs/v2"
 	"github.com/google/deck"
 	"github.com/google/deck/backends/logger"
 	"github.com/julienschmidt/httprouter"
@@ -17,6 +16,7 @@ import (
 	"highgrav/taproot/v1/cron"
 	"highgrav/taproot/v1/jsrun"
 	"highgrav/taproot/v1/logging"
+	"highgrav/taproot/v1/session"
 	"highgrav/taproot/v1/workers"
 	"net/http"
 	"os"
@@ -28,7 +28,7 @@ Creates a new AppServer; uses Viper to populate the config from YAML files.
 Requires the user pass in an IUserStore and a fflag retriever, as well as
 the directories to search for default config files.
 */
-func New(userStore authn.IUserStore, sessionStore scs.Store, fflagretriever retriever.Retriever, cfgDirs []string) *AppServer {
+func New(userStore authn.IUserStore, sessionStore session.IStore, fflagretriever retriever.Retriever, cfgDirs []string) *AppServer {
 	cfg, err := loadConfig(cfgDirs)
 	if err != nil {
 		panic(err)
@@ -39,7 +39,7 @@ func New(userStore authn.IUserStore, sessionStore scs.Store, fflagretriever retr
 }
 
 // Creates a new AppServer using a ServerConfig struct.
-func NewWithConfig(userStore authn.IUserStore, sessionStore scs.Store, fflagretriever retriever.Retriever, cfg ServerConfig) *AppServer {
+func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, fflagretriever retriever.Retriever, cfg ServerConfig) *AppServer {
 	// set up logging (we use stdout until the server is up and running)
 	deck.Add(logger.Init(os.Stdout, 0))
 
@@ -54,7 +54,12 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore scs.Store, fflagretr
 	s.jsinjections = make([]jsrun.InjectorFunc, 0)
 
 	// Session Signing
-	s.SignatureMgr = authn.NewAuthSignerManager(s.Config.RotateSessionSigningKeysEvery)
+	keyDur := s.Config.RotateSessionSigningKeysEvery
+	// TODO -- sane default?
+	if keyDur == 0 {
+		keyDur = 72 * time.Hour
+	}
+	s.SignatureMgr = authn.NewAuthSignerManager(keyDur)
 
 	logging.LogToDeck("info", "Setting up async work hub")
 	wh, err := workers.New(cfg.WorkHub.Name, cfg.WorkHub.StorageDir, cfg.WorkHub.SegmentSize)
@@ -94,17 +99,8 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore scs.Store, fflagretr
 
 	// set up sessions
 	logging.LogToDeck("info", "Setting up sessions...")
-	s.Session = scs.New()
+	s.Session = session.NewSessionManager(sessionStore)
 	s.Session.Lifetime = (time.Duration(s.Config.Sessions.LifetimeInMins) * time.Minute)
-	s.Session.IdleTimeout = (time.Duration(s.Config.Sessions.IdleTimeoutInMins) * time.Minute)
-	s.Session.Cookie.Name = s.Config.Sessions.CookieName
-	s.Session.Cookie.Path = s.Config.Sessions.CookiePath
-	s.Session.Cookie.Domain = s.Config.Sessions.CookieDomain
-	s.Session.Cookie.HttpOnly = s.Config.Sessions.CookieHttpOnly
-	s.Session.Cookie.Persist = s.Config.Sessions.CookiePersist
-	s.Session.Cookie.SameSite = s.Config.Sessions.CookieSiteMode
-	s.Session.Cookie.Secure = s.Config.Sessions.CookieSecure
-	s.Session.Store = sessionStore
 	s.Session.ErrorFunc = s.handleSessionError
 
 	// Set up our security policy authorizer

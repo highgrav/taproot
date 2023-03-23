@@ -2,7 +2,6 @@ package taproot
 
 import (
 	"database/sql"
-	"github.com/alexedwards/scs/v2"
 	"github.com/jpillora/ipfilter"
 	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"
@@ -13,6 +12,7 @@ import (
 	"highgrav/taproot/v1/authn"
 	"highgrav/taproot/v1/cron"
 	"highgrav/taproot/v1/jsrun"
+	"highgrav/taproot/v1/session"
 	"highgrav/taproot/v1/sse"
 	"highgrav/taproot/v1/websock"
 	"highgrav/taproot/v1/workers"
@@ -30,7 +30,7 @@ type RouteBinding struct {
 // AppServer is the core data structure for the embedded application server.
 type AppServer struct {
 	SiteDisplayName string
-	Session         *scs.SessionManager
+	Session         *session.SessionManager
 	Config          ServerConfig
 	Router          *httprouter.Router
 	Middleware      []alice.Constructor // Used when adding a new route

@@ -1,6 +1,6 @@
 # Sessions
-Taproot uses the `github.com/alexedwards/scs/v2` package for handling session management. Sessions are assumed to be 
-managed by the enclosing application, so Taproot itself does not write or read directly to sessions.
+Taproot uses a session abstraction mechanism that is mostly signature-compatible with the SCS library, in order to allow 
+the use of its existing integrations.
 
 ### Example
 ~~~

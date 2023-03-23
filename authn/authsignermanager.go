@@ -1,6 +1,7 @@
 package authn
 
 import (
+	"fmt"
 	"highgrav/taproot/v1/logging"
 	"strings"
 	"time"
@@ -30,6 +31,14 @@ func NewAuthSignerManager(rotationTime time.Duration) *AuthSignerManager {
 	return asm
 }
 
+func (asm *AuthSignerManager) ListSignerKeys() []string {
+	keys := make([]string, 0)
+	for k, _ := range asm.signers {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
 func (asm *AuthSignerManager) rotate() {
 	for {
 		select {
@@ -37,7 +46,9 @@ func (asm *AuthSignerManager) rotate() {
 			return
 		case t := <-asm.ticker.C:
 			if t.After(asm.currentSigner.ExpiresAt) {
+				currSig := asm.currentSigner.ID
 				asm.AddSigner()
+				logging.LogToDeck("info", "Rotating session signer from "+currSig+" to "+asm.currentSigner.ID)
 				go asm.RemoveSigners()
 			}
 		}
@@ -98,10 +109,12 @@ func (asm *AuthSignerManager) DecryptToken(token string) (AuthToken, error) {
 	}
 	if s, ok := asm.signers[elems[0]]; ok {
 		if time.Now().After(s.ExpiresAt) {
+			fmt.Println("SIGNER EXPIRES AT " + s.ExpiresAt.String())
 			return AuthToken{}, ErrExpiredToken
 		}
 		atok, err := s.DecryptToken(elems[1])
 		return atok, err
 	}
+	fmt.Println("COULD NOT FIND SIGNER " + elems[0])
 	return AuthToken{}, ErrExpiredToken
 }

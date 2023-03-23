@@ -3,10 +3,11 @@ package taproot
 import (
 	"context"
 	"errors"
-	"github.com/alexedwards/scs/v2"
+	"fmt"
 	"highgrav/taproot/v1/authn"
 	"highgrav/taproot/v1/common"
 	"highgrav/taproot/v1/logging"
+	"highgrav/taproot/v1/session"
 	"net/http"
 )
 
@@ -15,26 +16,21 @@ var ErrSessionKeyDoesNotExist = errors.New("session key does not exist")
 var ErrSessionInvalidType = errors.New("attempt to cast to invalid type")
 var ErrSessionManagerNotInitialized = errors.New("session manager not initialized")
 
-func GetSessionItem[T any](ses *scs.SessionManager, ctx context.Context, key string) (T, error) {
+func GetSessionItem[T any](ses *session.SessionManager, key string) (T, error) {
 	var t T
-	if !ses.Exists(ctx, key) {
+	if !ses.Exists(key) {
 		return t, ErrSessionKeyDoesNotExist
 	}
-	tmpVal := ses.Get(ctx, key)
-	t, ok := tmpVal.(T)
-	if !ok {
-		return t, ErrSessionInvalidType
-	}
-	return t, nil
+	return session.GetFromStore[T](ses, key)
 }
 
 /*
 AuthenticateUser() returns an authenticated user, if applicable, returning the user and error.
 */
-func (svr *AppServer) AuthenticateUser(ctx context.Context, authReq authn.UserAuth) (authn.User, error) {
+func (svr *AppServer) AuthenticateUser(authReq authn.UserAuth) (authn.User, error) {
 	user, err := svr.users.GetUserByAuth(authReq)
 	if err != nil {
-		logging.LogToDeck("error", "AUTH\terror\tError getting user: "+err.Error())
+		logging.LogToDeck("error", "SESS\terror\tError getting user: "+err.Error())
 		return authn.Anonymous(), err
 	}
 	return user, nil
@@ -43,41 +39,83 @@ func (svr *AppServer) AuthenticateUser(ctx context.Context, authReq authn.UserAu
 /*
 RegisterUser() authenticates a user and creates a new session for them, returning the user, session key, and error.
 */
-func (svr *AppServer) RegisterUser(ctx context.Context, authReq authn.UserAuth) (authn.User, string, error) {
+func (svr *AppServer) RegisterUser(authReq authn.UserAuth) (authn.User, string, error) {
 	if svr.Session == nil {
 		return authn.Anonymous(), "", ErrSessionManagerNotInitialized
 	}
 	user, err := svr.users.GetUserByAuth(authReq)
 	if err != nil {
-		logging.LogToDeck("error", "AUTH\terror\tError getting user: "+err.Error())
+		logging.LogToDeck("error", "SESS\terror\tError getting user: "+err.Error())
 		return authn.Anonymous(), "", err
 	}
-	key, err := svr.AddUserToSession(ctx, user)
+	key, err := svr.AddUserToSession(user)
+	fmt.Println("SESSION KEY: " + key)
 	if err != nil {
-		logging.LogToDeck("error", "AUTH\terror\tError adding user to session: "+err.Error())
+		logging.LogToDeck("error", "SESS\terror\tError adding user to session: "+err.Error())
 		return authn.Anonymous(), "", err
 	}
+
 	return user, key, nil
 }
 
-func (svr *AppServer) GetUserFromSession(ctx context.Context, key string) (authn.User, error) {
+func (svr *AppServer) AddSessionHeader(w http.ResponseWriter, token string) error {
+	var sessionToken string
+	var err error
+	if svr.Config.UseEncryptedSessionTokens {
+		sessionToken = svr.SignatureMgr.NewEncryptedToken(token)
+	} else {
+		sessionToken, err = svr.SignatureMgr.NewSignedToken(token)
+		if err != nil {
+			return err
+		}
+	}
+	w.Header().Set(SESSION_HEADER_KEY, sessionToken)
+	return nil
+}
+
+func (svr *AppServer) AddSessionCookie(w http.ResponseWriter, token string) error {
+	var sessionToken string
+	var err error
+	if svr.Config.UseEncryptedSessionTokens {
+		sessionToken = svr.SignatureMgr.NewEncryptedToken(token)
+	} else {
+		sessionToken, err = svr.SignatureMgr.NewSignedToken(token)
+		if err != nil {
+			return err
+		}
+	}
+
+	cookie := http.Cookie{
+		Name:     SESSION_COOKIE_NAME,
+		Value:    sessionToken,
+		Path:     "/",
+		MaxAge:   3600,
+		Secure:   svr.Config.Sessions.CookieSecure,
+		HttpOnly: svr.Config.Sessions.CookieHttpOnly,
+		SameSite: svr.Config.Sessions.CookieSiteMode,
+	}
+	http.SetCookie(w, &cookie)
+	return nil
+}
+
+func (svr *AppServer) GetUserFromSession(key string) (authn.User, error) {
 	if svr.Session == nil {
 		return authn.Anonymous(), ErrSessionManagerNotInitialized
 	}
-	return GetSessionItem[authn.User](svr.Session, ctx, key)
+	return GetSessionItem[authn.User](svr.Session, key)
 }
 
-func (svr *AppServer) AddUserToSession(ctx context.Context, user authn.User) (string, error) {
+func (svr *AppServer) AddUserToSession(user authn.User) (string, error) {
 	if svr.Session == nil {
 		return "", ErrSessionManagerNotInitialized
 	}
 	key := common.CreateRandString(16)
 
-	for svr.Session.Exists(ctx, key) {
+	for svr.Session.Exists(key) {
 		key = common.CreateRandString(16)
 	}
 
-	err := svr.AddSession(ctx, key, user)
+	err := svr.AddSession(key, user)
 	if err != nil {
 		return "", err
 	}
@@ -85,45 +123,50 @@ func (svr *AppServer) AddUserToSession(ctx context.Context, user authn.User) (st
 }
 
 func (svr *AppServer) AddOrReplaceUserToSession(ctx context.Context, key string, user authn.User) (string, error) {
-	svr.AddOrReplaceSession(ctx, key, user)
+	svr.AddOrReplaceSession(key, user)
 	return key, nil
 }
 
-func (svr *AppServer) RemoveSession(ctx context.Context, key string) error {
+func (svr *AppServer) RemoveSession(key string) error {
 	if svr.Session == nil {
 		return ErrSessionManagerNotInitialized
 	}
-	svr.Session.Remove(ctx, key)
+	svr.Session.Remove(key)
 	return nil
 }
 
-func (svr *AppServer) AddSession(ctx context.Context, key string, t any) error {
+func (svr *AppServer) AddSession(key string, t any) error {
 	if svr.Session == nil {
 		return ErrSessionManagerNotInitialized
 	}
-	if svr.Session.Exists(ctx, key) {
+	if svr.Session.Exists(key) {
 		return ErrSessionKeyExists
 	}
-	svr.Session.Put(ctx, key, t)
+	logging.LogToDeck("info", "SESS\tinfo\tAdding new session with ID "+key)
+	err := svr.Session.Put(key, t)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (svr *AppServer) AddOrReplaceSession(ctx context.Context, key string, t any) error {
+func (svr *AppServer) AddOrReplaceSession(key string, t any) error {
 	if svr.Session == nil {
 		return ErrSessionManagerNotInitialized
 	}
-	svr.Session.Put(ctx, key, t)
+	logging.LogToDeck("info", "SESS\tinfo\tAdding or removing new session with ID "+key)
+	svr.Session.Put(key, t)
 	return nil
 }
 
-func (svr *AppServer) ReplaceSession(ctx context.Context, key string, t any) error {
+func (svr *AppServer) ReplaceSession(key string, t any) error {
 	if svr.Session == nil {
 		return ErrSessionManagerNotInitialized
 	}
-	if !svr.Session.Exists(ctx, key) {
+	if !svr.Session.Exists(key) {
 		return ErrSessionKeyDoesNotExist
 	}
-	svr.Session.Put(ctx, key, t)
+	svr.Session.Put(key, t)
 	return nil
 }
 

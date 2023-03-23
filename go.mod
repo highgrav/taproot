@@ -4,7 +4,6 @@ go 1.20
 
 require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
-	github.com/alexedwards/scs/v2 v2.5.0 // indirect
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20220911224424-aa1f1f12a846 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/dlclark/regexp2 v1.7.0 // indirect

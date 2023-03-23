@@ -11,9 +11,9 @@ import (
 	"time"
 )
 
-const SessionHeaderKey string = "X-Session"
-const SessionExpirationHeaderKey string = "X-Session-Expires-At"
-const CookieSessionKey string = "SessionInfo"
+const SESSION_HEADER_KEY string = "X-Session"
+const SESSION_EXPIRATION_HEADER_KEY string = "X-Session-Expires-At"
+const SESSION_COOKIE_NAME string = "SessionInfo"
 
 /*
 HandleSession() checks to see if there is a valid session token in either the cookie or the header, and tries to
@@ -23,18 +23,18 @@ rehydrate the session from there.
 func (srv *AppServer) CreateHandleSession(encryptTokens bool) alice.Constructor {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var ctx context.Context = r.Context()
+			ctx := r.Context()
 			var user authn.User
 			var cookieVal string
 			var headerVal string
 			var token authn.AuthToken
-			cookie, err := r.Cookie(CookieSessionKey)
+			cookie, err := r.Cookie(SESSION_COOKIE_NAME)
 			if err != nil {
 				cookieVal = ""
 			} else {
 				cookieVal = cookie.Value
 			}
-			headerVal = r.Header.Get(SessionHeaderKey)
+			headerVal = r.Header.Get(SESSION_HEADER_KEY)
 
 			// If we don't see anything here, then just inject an anonymous user and move on
 			if headerVal == "" && cookieVal == "" {
@@ -75,16 +75,19 @@ func (srv *AppServer) CreateHandleSession(encryptTokens bool) alice.Constructor 
 			}
 			if time.Now().After(token.ExpiresAt) {
 				// TODO -- return warning to user that their session needs refreshing?s
-				srv.Session.Remove(ctx, token.Token)
+				srv.Session.Remove(token.Token)
 				ctx = context.WithValue(r.Context(), HTTP_CONTEXT_USER_KEY, authn.Anonymous())
 				ctx = context.WithValue(ctx, HTTP_CONTEXT_REALM_KEY, srv.Config.DefaultRealm)
 				ctx = context.WithValue(ctx, HTTP_CONTEXT_DOMAIN_KEY, srv.Config.DefaultDomain)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
-			user, err = srv.GetUserFromSession(ctx, token.Token)
 			if err != nil {
-				logging.LogToDeck("error", fmt.Sprintf("SESS\tError casting session data to user: %s", err.Error()))
+				logging.LogToDeck("error", "SESS\terror\tError loading SCS session: "+err.Error())
+			}
+			user, err = srv.GetUserFromSession(token.Token)
+			if err != nil {
+				logging.LogToDeck("error", fmt.Sprintf("SESS\tError casting session data to user for token %s: %s", token.Token, err.Error()))
 				ctx = context.WithValue(r.Context(), HTTP_CONTEXT_USER_KEY, authn.Anonymous())
 				ctx = context.WithValue(ctx, HTTP_CONTEXT_REALM_KEY, srv.Config.DefaultRealm)
 				ctx = context.WithValue(ctx, HTTP_CONTEXT_DOMAIN_KEY, srv.Config.DefaultDomain)

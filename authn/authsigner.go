@@ -116,7 +116,6 @@ func (asign *AuthSigner) DecryptToken(encToken string) (AuthToken, error) {
 	stream.XORKeyStream(encBytes, encBytes)
 
 	// EncBytes is padded to fit AES blocksize, so make sure we start the slice at aes.Blocksize when reading
-	fmt.Println("ENCODED BYTES: " + string(encBytes))
 	atoken, err := asign.tokenStringToAuthToken(string(encBytes[aes.BlockSize:]))
 	if err != nil {
 		return AuthToken{}, err
