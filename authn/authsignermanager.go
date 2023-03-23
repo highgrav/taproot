@@ -8,7 +8,9 @@ import (
 )
 
 type AuthSignerManager struct {
-	ExpiresAfter               time.Duration
+	ExpiresAfter time.Duration
+	GracePeriod  time.Duration
+
 	Done                       chan bool
 	CurrentSignatureExpiration time.Time
 	currentSigner              *AuthSigner
@@ -16,9 +18,10 @@ type AuthSignerManager struct {
 	ticker                     *time.Ticker
 }
 
-func NewAuthSignerManager(rotationTime time.Duration) *AuthSignerManager {
+func NewAuthSignerManager(rotationTime time.Duration, gracePeriod time.Duration) *AuthSignerManager {
 	asm := &AuthSignerManager{
-		ExpiresAfter:  rotationTime,
+		ExpiresAfter:  rotationTime + gracePeriod,
+		GracePeriod:   gracePeriod,
 		Done:          make(chan bool),
 		currentSigner: nil,
 		signers:       make(map[string]*AuthSigner),
@@ -45,12 +48,12 @@ func (asm *AuthSignerManager) rotate() {
 		case <-asm.Done:
 			return
 		case t := <-asm.ticker.C:
-			if t.After(asm.currentSigner.ExpiresAt) {
+			if t.After(asm.currentSigner.ExpiresAt.Add(time.Duration(-1) * asm.GracePeriod)) {
 				currSig := asm.currentSigner.ID
 				asm.AddSigner()
 				logging.LogToDeck("info", "Rotating session signer from "+currSig+" to "+asm.currentSigner.ID)
-				go asm.RemoveSigners()
 			}
+			go asm.RemoveSigners()
 		}
 	}
 }

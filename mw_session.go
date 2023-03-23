@@ -111,8 +111,12 @@ func (srv *AppServer) CreateHandleSession(encryptTokens bool) alice.Constructor 
 			sr := r.WithContext(ctx)
 			next.ServeHTTP(bw, sr)
 
-			// Inject cookie or header data if necessary (we use the buffered response writer so we can inject headers prior to writing the response)
+			// TODO -- if a cookie or header token is expired, re-encrypt
 
+			// Inject cookie or header data if necessary (we use the buffered response writer so we can inject headers prior to writing the response)
+			if headerVal != "" {
+				w.Header().Add(SESSION_HEADER_KEY, headerVal)
+			}
 			w.Write(bw.Buf.Bytes())
 		})
 	}

@@ -59,7 +59,11 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 	if keyDur == 0 {
 		keyDur = 72 * time.Hour
 	}
-	s.SignatureMgr = authn.NewAuthSignerManager(keyDur)
+	graceDur := s.Config.GracePeriodForSigningKeys
+	if graceDur == 0 {
+		graceDur = 1 * time.Hour
+	}
+	s.SignatureMgr = authn.NewAuthSignerManager(keyDur, graceDur)
 
 	logging.LogToDeck("info", "Setting up async work hub")
 	wh, err := workers.New(cfg.WorkHub.Name, cfg.WorkHub.StorageDir, cfg.WorkHub.SegmentSize)

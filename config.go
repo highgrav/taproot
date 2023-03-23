@@ -27,6 +27,7 @@ type ServerConfig struct {
 
 	/* HEADER/COOKIE SIGNING */
 	RotateSessionSigningKeysEvery time.Duration
+	GracePeriodForSigningKeys     time.Duration
 	UseEncryptedSessionTokens     bool
 
 	/* ACADIA SECURITY POLICIES */

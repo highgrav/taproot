@@ -20,4 +20,4 @@
 - Move a bunch of non-optional middleware into the static global MW chain automatically
   - Done, should move middleware to internal functions
 - Remove STDOUT deck logging and place the responsibility on the embedding app?
-- Add logic to store verified new session keys (potential race condition right now)
+- Re-encrypt session keys for headers and cookies in order to prevent time-outs (this can be handled in the middleware code)
