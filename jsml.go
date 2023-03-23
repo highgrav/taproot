@@ -1,6 +1,7 @@
 package taproot
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/google/deck"
@@ -42,7 +43,7 @@ func (sa ScriptAccessor) GetJSScriptByID(id string) (string, error) {
 }
 
 func (srv *AppServer) compileOne(fileName string, srcDirName string, dstDirName string) error {
-	logging.LogToDeck("info", fmt.Sprintf("JSML\tinfo\ttranspilation %s, from %s to %s\n", fileName, srcDirName, dstDirName))
+	logging.LogToDeck(context.Background(), "info", "JSML", "info", fmt.Sprintf("transpilation %s, from %s to %s\n", fileName, srcDirName, dstDirName))
 	var sa ScriptAccessor = ScriptAccessor{
 		srv: srv,
 	}

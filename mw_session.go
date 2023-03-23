@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/highgrav/taproot/v1/authn"
 	"github.com/highgrav/taproot/v1/common"
+	"github.com/highgrav/taproot/v1/constants"
 	"github.com/highgrav/taproot/v1/logging"
 	"github.com/justinas/alice"
 	"net/http"
@@ -38,10 +39,10 @@ func (srv *AppServer) CreateHandleSession(encryptTokens bool) alice.Constructor 
 
 			// If we don't see anything here, then just inject an anonymous user and move on
 			if headerVal == "" && cookieVal == "" {
-				ctx = context.WithValue(r.Context(), HTTP_CONTEXT_USER_KEY, authn.Anonymous())
-				ctx = context.WithValue(ctx, HTTP_CONTEXT_REALM_KEY, srv.Config.DefaultRealm)
-				ctx = context.WithValue(ctx, HTTP_CONTEXT_DOMAIN_KEY, srv.Config.DefaultDomain)
-				ctx = context.WithValue(ctx, HTTP_CONTEXT_SESSION_KEY, "")
+				ctx = context.WithValue(r.Context(), constants.HTTP_CONTEXT_USER_KEY, authn.Anonymous())
+				ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_REALM_KEY, srv.Config.DefaultRealm)
+				ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_DOMAIN_KEY, srv.Config.DefaultDomain)
+				ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_SESSION_KEY, "")
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
@@ -56,22 +57,22 @@ func (srv *AppServer) CreateHandleSession(encryptTokens bool) alice.Constructor 
 			if encryptTokens {
 				token, err = srv.SignatureMgr.DecryptToken(tokenVal)
 				if err != nil {
-					logging.LogToDeck("error", fmt.Sprintf("SESS\tDecrypt Header Token: %s", err.Error()))
-					ctx = context.WithValue(r.Context(), HTTP_CONTEXT_USER_KEY, authn.Anonymous())
-					ctx = context.WithValue(ctx, HTTP_CONTEXT_REALM_KEY, srv.Config.DefaultRealm)
-					ctx = context.WithValue(ctx, HTTP_CONTEXT_DOMAIN_KEY, srv.Config.DefaultDomain)
-					ctx = context.WithValue(ctx, HTTP_CONTEXT_SESSION_KEY, "")
+					logging.LogToDeck(ctx, "error", "SESS", "error", fmt.Sprintf("decrypt header token: %s", err.Error()))
+					ctx = context.WithValue(r.Context(), constants.HTTP_CONTEXT_USER_KEY, authn.Anonymous())
+					ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_REALM_KEY, srv.Config.DefaultRealm)
+					ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_DOMAIN_KEY, srv.Config.DefaultDomain)
+					ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_SESSION_KEY, "")
 					next.ServeHTTP(w, r.WithContext(ctx))
 					return
 				}
 			} else {
 				token, err = srv.SignatureMgr.VerifySignedToken(tokenVal)
 				if err != nil {
-					logging.LogToDeck("error", fmt.Sprintf("SESS\tVerify Header Token: %s", err.Error()))
-					ctx = context.WithValue(r.Context(), HTTP_CONTEXT_USER_KEY, authn.Anonymous())
-					ctx = context.WithValue(ctx, HTTP_CONTEXT_REALM_KEY, srv.Config.DefaultRealm)
-					ctx = context.WithValue(ctx, HTTP_CONTEXT_DOMAIN_KEY, srv.Config.DefaultDomain)
-					ctx = context.WithValue(ctx, HTTP_CONTEXT_SESSION_KEY, "")
+					logging.LogToDeck(ctx, "error", "SESS", "error", fmt.Sprintf("verify header token: %s", err.Error()))
+					ctx = context.WithValue(r.Context(), constants.HTTP_CONTEXT_USER_KEY, authn.Anonymous())
+					ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_REALM_KEY, srv.Config.DefaultRealm)
+					ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_DOMAIN_KEY, srv.Config.DefaultDomain)
+					ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_SESSION_KEY, "")
 					next.ServeHTTP(w, r.WithContext(ctx))
 					return
 				}
@@ -79,28 +80,28 @@ func (srv *AppServer) CreateHandleSession(encryptTokens bool) alice.Constructor 
 			if time.Now().After(token.ExpiresAt) {
 				// TODO -- return warning to user that their session needs refreshing?s
 				srv.Session.Remove(token.Token)
-				ctx = context.WithValue(r.Context(), HTTP_CONTEXT_USER_KEY, authn.Anonymous())
-				ctx = context.WithValue(ctx, HTTP_CONTEXT_REALM_KEY, srv.Config.DefaultRealm)
-				ctx = context.WithValue(ctx, HTTP_CONTEXT_DOMAIN_KEY, srv.Config.DefaultDomain)
-				ctx = context.WithValue(ctx, HTTP_CONTEXT_SESSION_KEY, "")
+				ctx = context.WithValue(r.Context(), constants.HTTP_CONTEXT_USER_KEY, authn.Anonymous())
+				ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_REALM_KEY, srv.Config.DefaultRealm)
+				ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_DOMAIN_KEY, srv.Config.DefaultDomain)
+				ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_SESSION_KEY, "")
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
 			if err != nil {
-				logging.LogToDeck("error", "SESS\terror\tError loading SCS session: "+err.Error())
+				logging.LogToDeck(ctx, "error", "SESS", "error", "error loading SCS session: "+err.Error())
 			}
 			user, err = srv.GetUserFromSession(token.Token)
 			if err != nil {
-				logging.LogToDeck("error", fmt.Sprintf("SESS\tError casting session data to user for token %s: %s", token.Token, err.Error()))
-				ctx = context.WithValue(r.Context(), HTTP_CONTEXT_USER_KEY, authn.Anonymous())
-				ctx = context.WithValue(ctx, HTTP_CONTEXT_REALM_KEY, srv.Config.DefaultRealm)
-				ctx = context.WithValue(ctx, HTTP_CONTEXT_DOMAIN_KEY, srv.Config.DefaultDomain)
-				ctx = context.WithValue(ctx, HTTP_CONTEXT_SESSION_KEY, "")
+				logging.LogToDeck(ctx, "error", "SESS", "error", fmt.Sprintf("error casting session data to user for token %s: %s", token.Token, err.Error()))
+				ctx = context.WithValue(r.Context(), constants.HTTP_CONTEXT_USER_KEY, authn.Anonymous())
+				ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_REALM_KEY, srv.Config.DefaultRealm)
+				ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_DOMAIN_KEY, srv.Config.DefaultDomain)
+				ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_SESSION_KEY, "")
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
-			ctx = context.WithValue(ctx, HTTP_CONTEXT_SESSION_KEY, token.Token)
-			ctx = context.WithValue(ctx, HTTP_CONTEXT_USER_KEY, user)
+			ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_SESSION_KEY, token.Token)
+			ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_USER_KEY, user)
 			realmId := user.RealmID
 			if realmId == "" {
 				user.RealmID = srv.Config.DefaultRealm
@@ -111,8 +112,8 @@ func (srv *AppServer) CreateHandleSession(encryptTokens bool) alice.Constructor 
 				user.DomainID = srv.Config.DefaultDomain
 				domainId = srv.Config.DefaultDomain
 			}
-			ctx = context.WithValue(ctx, HTTP_CONTEXT_REALM_KEY, realmId)
-			ctx = context.WithValue(ctx, HTTP_CONTEXT_DOMAIN_KEY, domainId)
+			ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_REALM_KEY, realmId)
+			ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_DOMAIN_KEY, domainId)
 			bw := &common.BufferedHttpResponseWriter{ResponseWriter: w}
 			sr := r.WithContext(ctx)
 			next.ServeHTTP(bw, sr)

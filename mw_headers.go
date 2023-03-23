@@ -2,6 +2,7 @@ package taproot
 
 import (
 	"github.com/highgrav/taproot/v1/common"
+	"github.com/highgrav/taproot/v1/constants"
 	"golang.org/x/net/context"
 	"net/http"
 )
@@ -22,7 +23,7 @@ func (srv *AppServer) HandleAddSecureHeaders(next http.Handler) http.Handler {
 		w.Header().Set("X-Frame-Options", "deny")
 		w.Header().Set("Content-Security-Policy", cspDetails)
 		w.Header().Set("Strict-Transport-Security", "max-age=63072000; includesubdomains;")
-		ctx := context.WithValue(r.Context(), HTTP_CONTEXT_CSP_NONCE_KEY, cspNonce)
+		ctx := context.WithValue(r.Context(), constants.HTTP_CONTEXT_CSP_NONCE_KEY, cspNonce)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

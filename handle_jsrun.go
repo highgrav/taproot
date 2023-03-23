@@ -8,6 +8,7 @@ import (
 	"github.com/dop251/goja_nodejs/require"
 	"github.com/google/deck"
 	"github.com/highgrav/taproot/v1/authn"
+	"github.com/highgrav/taproot/v1/constants"
 	"github.com/highgrav/taproot/v1/jsrun"
 	"io"
 	"net/http"
@@ -18,14 +19,14 @@ import (
 func injectHttpRequest(r *http.Request, vm *goja.Runtime) {
 	// First, check to see if there's a correlation ID in context
 	corrID := ""
-	if r.Context().Value(HTTP_CONTEXT_CORRELATION_KEY) != nil {
-		corrID = r.Context().Value(HTTP_CONTEXT_CORRELATION_KEY).(string)
+	if r.Context().Value(constants.HTTP_CONTEXT_CORRELATION_KEY) != nil {
+		corrID = r.Context().Value(constants.HTTP_CONTEXT_CORRELATION_KEY).(string)
 	}
 
 	// Check to see if there's a content security policy nonce
 	cspNonce := ""
-	if r.Context().Value(HTTP_CONTEXT_CSP_NONCE_KEY) != nil {
-		corrID = r.Context().Value(HTTP_CONTEXT_CSP_NONCE_KEY).(string)
+	if r.Context().Value(constants.HTTP_CONTEXT_CSP_NONCE_KEY) != nil {
+		corrID = r.Context().Value(constants.HTTP_CONTEXT_CSP_NONCE_KEY).(string)
 	}
 	type requestData struct {
 		Host        string              `json:"host"`
@@ -75,7 +76,7 @@ func addJSUtilFunctor(svr *AppServer, vm *goja.Runtime) {
 // An endpoint route that executes a compiled script identified by the path to the script, injecting various data and functions into the runtime.
 func (srv *AppServer) HandleScript(scriptKey string, customCtx *map[string]any) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var corrId string = r.Context().Value(HTTP_CONTEXT_CORRELATION_KEY).(string)
+		var corrId string = r.Context().Value(constants.HTTP_CONTEXT_CORRELATION_KEY).(string)
 		// special case for when we have .jsml file names
 		if strings.HasSuffix(scriptKey, ".jsml") {
 			scriptKey = scriptKey[:len(scriptKey)-2]
@@ -94,33 +95,33 @@ func (srv *AppServer) HandleScript(scriptKey string, customCtx *map[string]any) 
 		// Pass in the context
 		ctx := r.Context()
 		ctxItems := make(map[string]any)
-		if ctx.Value(HTTP_CONTEXT_USER_KEY) != nil {
-			ctxItems["user"] = ctx.Value(HTTP_CONTEXT_USER_KEY)
+		if ctx.Value(constants.HTTP_CONTEXT_USER_KEY) != nil {
+			ctxItems["user"] = ctx.Value(constants.HTTP_CONTEXT_USER_KEY)
 		} else {
 			ctxItems["user"] = authn.User{}
 		}
-		if ctx.Value(HTTP_CONTEXT_REALM_KEY) != nil {
-			ctxItems["realm"] = ctx.Value(HTTP_CONTEXT_REALM_KEY)
+		if ctx.Value(constants.HTTP_CONTEXT_REALM_KEY) != nil {
+			ctxItems["realm"] = ctx.Value(constants.HTTP_CONTEXT_REALM_KEY)
 		} else {
 			ctxItems["realm"] = ""
 		}
-		if ctx.Value(HTTP_CONTEXT_DOMAIN_KEY) != nil {
-			ctxItems["domain"] = ctx.Value(HTTP_CONTEXT_DOMAIN_KEY)
+		if ctx.Value(constants.HTTP_CONTEXT_DOMAIN_KEY) != nil {
+			ctxItems["domain"] = ctx.Value(constants.HTTP_CONTEXT_DOMAIN_KEY)
 		} else {
 			ctxItems["domain"] = ""
 		}
-		if ctx.Value(HTTP_CONTEXT_ACACIA_RIGHTS_KEY) != nil {
-			ctxItems["rights"] = ctx.Value(HTTP_CONTEXT_ACACIA_RIGHTS_KEY)
+		if ctx.Value(constants.HTTP_CONTEXT_ACACIA_RIGHTS_KEY) != nil {
+			ctxItems["rights"] = ctx.Value(constants.HTTP_CONTEXT_ACACIA_RIGHTS_KEY)
 		} else {
 			ctxItems["rights"] = []string{}
 		}
-		if ctx.Value(HTTP_CONTEXT_CORRELATION_KEY) != nil {
-			ctxItems["correlationId"] = ctx.Value(HTTP_CONTEXT_CORRELATION_KEY)
+		if ctx.Value(constants.HTTP_CONTEXT_CORRELATION_KEY) != nil {
+			ctxItems["correlationId"] = ctx.Value(constants.HTTP_CONTEXT_CORRELATION_KEY)
 		} else {
 			ctxItems["correlationId"] = ""
 		}
-		if ctx.Value(HTTP_CONTEXT_CSP_NONCE_KEY) != nil {
-			ctxItems["cspNonceId"] = ctx.Value(HTTP_CONTEXT_CSP_NONCE_KEY)
+		if ctx.Value(constants.HTTP_CONTEXT_CSP_NONCE_KEY) != nil {
+			ctxItems["cspNonceId"] = ctx.Value(constants.HTTP_CONTEXT_CSP_NONCE_KEY)
 		} else {
 			ctxItems["cspNonceId"] = ""
 		}

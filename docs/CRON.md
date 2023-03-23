@@ -12,7 +12,7 @@ minute execution.
 ~~~
 // adds a cronjob to run every minute
 err = server.AddCronJob("ticker", "* * * * *", func() error {
-		logging.LogToDeck("info", "TICK")
+		logging.LogToDeck(context.Background(), "info", "TICK", "info","tick tock")
 		return nil
 	})
 	if err != nil {

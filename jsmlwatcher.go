@@ -1,6 +1,7 @@
 package taproot
 
 import (
+	"context"
 	"github.com/fsnotify/fsnotify"
 	"github.com/google/deck"
 	"github.com/highgrav/taproot/v1/common"
@@ -83,22 +84,22 @@ func (srv *AppServer) monitorJSMLDirectories(srcDirName, dstDirName string) {
 				// Try to delete the filename from destination directory
 				fileName, err := common.FindRelocatedFile(dstDirName, event.Name[:len(event.Name)-2])
 				if err != nil {
-					logging.LogToDeck("error", "JSML\terror\tcould not locate file "+event.Name[:len(event.Name)-2])
+					logging.LogToDeck(context.Background(), "error", "JSML", "error", "could not locate file "+event.Name[:len(event.Name)-2])
 					return
 				}
 				st, err := os.Stat(fileName)
 				if err != nil {
-					logging.LogToDeck("error", "JSML\terror\tcould not stat file "+event.Name[:len(event.Name)-2])
+					logging.LogToDeck(context.Background(), "error", "JSML", "error", "could not stat file "+event.Name[:len(event.Name)-2])
 					return
 				}
 				if st.IsDir() {
-					logging.LogToDeck("error", "JSML\terror\ttried to recompile directory "+event.Name[:len(event.Name)-2])
+					logging.LogToDeck(context.Background(), "error", "JSML", "error", "tried to recompile directory "+event.Name[:len(event.Name)-2])
 					return
 				}
-				logging.LogToDeck("info", "JSML\tinfo\tdeleting file "+fileName)
+				logging.LogToDeck(context.Background(), "info", "JSML", "info", "deleting file "+fileName)
 				err = os.Remove(fileName)
 				if err != nil {
-					logging.LogToDeck("error", "JSML\terror\tcould not delete "+event.Name[:len(event.Name)-2]+": "+err.Error())
+					logging.LogToDeck(context.Background(), "error", "JSML", "error", "could not delete "+event.Name[:len(event.Name)-2]+": "+err.Error())
 					return
 				}
 			}
@@ -109,22 +110,22 @@ func (srv *AppServer) monitorJSMLDirectories(srcDirName, dstDirName string) {
 				// Try to delete the filename from destination
 				fileName, err := common.FindRelocatedFile(dstDirName, event.Name[:len(event.Name)-2])
 				if err != nil {
-					logging.LogToDeck("error", "JSML\terror\tcould not locate file "+event.Name[:len(event.Name)-2])
+					logging.LogToDeck(context.Background(), "error", "JSML", "error", "could not locate file "+event.Name[:len(event.Name)-2])
 					return
 				}
 				st, err := os.Stat(fileName)
 				if err != nil {
-					logging.LogToDeck("error", "JSML\terror\tcould not stat file "+event.Name[:len(event.Name)-2])
+					logging.LogToDeck(context.Background(), "error", "JSML", "error", "could not stat file "+event.Name[:len(event.Name)-2])
 					return
 				}
 				if st.IsDir() {
-					logging.LogToDeck("error", "JSML\terror\ttried to recompile directory "+event.Name[:len(event.Name)-2])
+					logging.LogToDeck(context.Background(), "error", "JSML", "error", "tried to recompile directory "+event.Name[:len(event.Name)-2])
 					return
 				}
-				logging.LogToDeck("info", "JSML\tinfo\tdeleting file "+fileName)
+				logging.LogToDeck(context.Background(), "info", "JSML", "info", "deleting file "+fileName)
 				err = os.Remove(fileName)
 				if err != nil {
-					logging.LogToDeck("error", "JSML\terror\tcould not delete "+event.Name[:len(event.Name)-2]+": "+err.Error())
+					logging.LogToDeck(context.Background(), "error", "JSML", "error", "could not delete "+event.Name[:len(event.Name)-2]+": "+err.Error())
 					return
 				}
 				// A rename fires off a create event also, so it'll handle
@@ -132,7 +133,7 @@ func (srv *AppServer) monitorJSMLDirectories(srcDirName, dstDirName string) {
 			}
 			continue
 		case err := <-watcher.Errors:
-			deck.Error("Error in JSML filewatcher: " + err.Error())
+			logging.LogToDeck(context.Background(), "error", "JSML", "error", "error in JSML filewatcher: "+err.Error())
 			continue
 		}
 	}

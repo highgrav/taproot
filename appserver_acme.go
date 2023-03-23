@@ -31,6 +31,6 @@ func (srv *AppServer) acmeHostPolicy(ctx context.Context, host string) error {
 			return nil
 		}
 	}
-	logging.LogToDeck("warning", "ACME/talert/tInvalid attempt to generate ACME cert for "+host)
+	logging.LogToDeck(ctx, "warning", "ACME", "alert", "invalid attempt to generate ACME cert for "+host)
 	return errors.New("invalid attempt to generate ACME cert for " + host)
 }

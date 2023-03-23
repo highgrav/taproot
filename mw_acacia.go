@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/highgrav/taproot/v1/acacia"
 	"github.com/highgrav/taproot/v1/authn"
+	"github.com/highgrav/taproot/v1/constants"
 	"github.com/highgrav/taproot/v1/logging"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -24,18 +25,18 @@ func (srv *AppServer) handleAcacia(next http.Handler) http.Handler {
 		var realm string
 		var dom string
 		var usr authn.User = authn.User{}
-		if r.Context().Value(HTTP_CONTEXT_REALM_KEY) != nil {
-			realm = r.Context().Value(HTTP_CONTEXT_REALM_KEY).(string)
+		if r.Context().Value(constants.HTTP_CONTEXT_REALM_KEY) != nil {
+			realm = r.Context().Value(constants.HTTP_CONTEXT_REALM_KEY).(string)
 		}
-		if r.Context().Value(HTTP_CONTEXT_DOMAIN_KEY) != nil {
-			dom = r.Context().Value(HTTP_CONTEXT_DOMAIN_KEY).(string)
+		if r.Context().Value(constants.HTTP_CONTEXT_DOMAIN_KEY) != nil {
+			dom = r.Context().Value(constants.HTTP_CONTEXT_DOMAIN_KEY).(string)
 		}
-		if r.Context().Value(HTTP_CONTEXT_USER_KEY) != nil {
-			usr = r.Context().Value(HTTP_CONTEXT_USER_KEY).(authn.User)
+		if r.Context().Value(constants.HTTP_CONTEXT_USER_KEY) != nil {
+			usr = r.Context().Value(constants.HTTP_CONTEXT_USER_KEY).(authn.User)
 		}
 
 		if realm == "" || dom == "" {
-			logging.LogToDeck("error", "ACAC/terror/tMissing domain "+dom+" or realm "+realm)
+			logging.LogToDeck(r.Context(), "error", "ACAC", "error", "Missing domain "+dom+" or realm "+realm)
 			srv.ErrorResponse(w, r, 500, "failed to apply security policy")
 			return
 		}
@@ -52,19 +53,19 @@ func (srv *AppServer) handleAcacia(next http.Handler) http.Handler {
 
 		// If we have a response, that takes priority
 		if rights.Type == acacia.RESP_TYPE_RESPONSE {
-			logging.LogToDeck("info", "ACAC\tinfo\tReceived a short-circuit response from Acacia")
+			logging.LogToDeck(r.Context(), "info", "ACAC", "info", "received a short-circuit response from Acacia")
 			srv.ErrorResponse(w, r, rights.Response.ReturnCode, rights.Response.ReturnMsg)
 			return
 		}
 		// If we have a redirect, that takes secondary priority
 		if rights.Type == acacia.RESP_TYPE_REDIRECT {
-			logging.LogToDeck("info", "ACAC\tinfo\tReceived a redirect from Acacia")
+			logging.LogToDeck(r.Context(), "info", "ACAC", "info", "received a redirect from Acacia")
 			http.Redirect(w, r, rights.Redirect, http.StatusSeeOther)
 			return
 		}
 
 		// Add rights into the context
-		ctx := context.WithValue(r.Context(), HTTP_CONTEXT_ACACIA_RIGHTS_KEY, rights.Rights)
+		ctx := context.WithValue(r.Context(), constants.HTTP_CONTEXT_ACACIA_RIGHTS_KEY, rights.Rights)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

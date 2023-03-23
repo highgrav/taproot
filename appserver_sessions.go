@@ -29,7 +29,7 @@ AuthenticateUser() returns an authenticated user, if applicable, returning the u
 func (svr *AppServer) AuthenticateUser(authReq authn.UserAuth) (authn.User, error) {
 	user, err := svr.users.GetUserByAuth(authReq)
 	if err != nil {
-		logging.LogToDeck("error", "SESS\terror\tError getting user: "+err.Error())
+		logging.LogToDeck(context.Background(), "error", "SESS", "error", "error getting user: "+err.Error())
 		return authn.Anonymous(), err
 	}
 	return user, nil
@@ -44,12 +44,12 @@ func (svr *AppServer) RegisterUser(authReq authn.UserAuth) (authn.User, string, 
 	}
 	user, err := svr.users.GetUserByAuth(authReq)
 	if err != nil {
-		logging.LogToDeck("error", "SESS\terror\tError getting user: "+err.Error())
+		logging.LogToDeck(context.Background(), "error", "SESS", "error", "error getting user: "+err.Error())
 		return authn.Anonymous(), "", err
 	}
 	key, err := svr.AddUserToSession(user)
 	if err != nil {
-		logging.LogToDeck("error", "SESS\terror\tError adding user to session: "+err.Error())
+		logging.LogToDeck(context.Background(), "error", "SESS", "error", "Error adding user to session: "+err.Error())
 		return authn.Anonymous(), "", err
 	}
 
@@ -140,7 +140,7 @@ func (svr *AppServer) AddSession(key string, t any) error {
 	if svr.Session.Exists(key) {
 		return ErrSessionKeyExists
 	}
-	logging.LogToDeck("info", "SESS\tinfo\tAdding new session with ID "+key)
+	logging.LogToDeck(context.Background(), "info", "SESS", "info", "adding new session with ID "+key)
 	err := svr.Session.Put(key, t)
 	if err != nil {
 		return err
@@ -152,7 +152,7 @@ func (svr *AppServer) AddOrReplaceSession(key string, t any) error {
 	if svr.Session == nil {
 		return ErrSessionManagerNotInitialized
 	}
-	logging.LogToDeck("info", "SESS\tinfo\tAdding or removing new session with ID "+key)
+	logging.LogToDeck(context.Background(), "info", "SESS", "info", "adding or removing new session with ID "+key)
 	svr.Session.Put(key, t)
 	return nil
 }
@@ -169,6 +169,6 @@ func (svr *AppServer) ReplaceSession(key string, t any) error {
 }
 
 func (srv *AppServer) handleSessionError(w http.ResponseWriter, r *http.Request, err error) {
-	logging.LogToDeck("error", "SESS\terror\t"+err.Error())
+	logging.LogToDeck(context.Background(), "error", "SESS", "error", err.Error())
 	srv.ErrorResponse(w, r, 500, "session error encountered")
 }

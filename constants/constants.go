@@ -1,4 +1,4 @@
-package taproot
+package constants
 
 const (
 	// Context key for the tracing correlation ID

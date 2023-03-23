@@ -1,6 +1,7 @@
 package taproot
 
 import (
+	"context"
 	"database/sql"
 	"encoding/gob"
 	"expvar"
@@ -66,19 +67,19 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 	}
 	s.SignatureMgr = authn.NewAuthSignerManager(keyDur, graceDur)
 
-	logging.LogToDeck("info", "Setting up async work hub")
+	logging.LogToDeck(context.Background(), "info", "TAPROOT", "startup", "Setting up async work hub")
 	wh, err := workers.New(cfg.WorkHub.Name, cfg.WorkHub.StorageDir, cfg.WorkHub.SegmentSize)
 	if err != nil {
-		logging.LogToDeck("fatal", err.Error())
+		logging.LogToDeck(context.Background(), "fatal", "TAPROOT", "startup", err.Error())
 		panic(err)
 	}
 	s.WorkHub = wh
 
-	logging.LogToDeck("info", "Setting up cron hub")
+	logging.LogToDeck(context.Background(), "info", "TAPROOT", "startup", "Setting up cron hub")
 	s.CronHub = cron.New()
 
 	// Set up IP filter
-	logging.LogToDeck("info", "Setting up IP filtering")
+	logging.LogToDeck(context.Background(), "info", "TAPROOT", "startup", "Setting up IP filtering")
 	s.httpIpFilter = newIpFilter(cfg.HttpServer.IPFilter)
 
 	// Set up our feature flags
@@ -103,7 +104,7 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 	}
 
 	// set up sessions
-	logging.LogToDeck("info", "Setting up sessions...")
+	logging.LogToDeck(context.Background(), "info", "TAPROOT", "startup", "Setting up sessions...")
 	s.Session = session.NewSessionManager(sessionStore)
 	s.Session.Lifetime = (time.Duration(s.Config.Sessions.LifetimeInMins) * time.Minute)
 	s.Session.ErrorFunc = s.handleSessionError
@@ -113,14 +114,14 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 	s.Acacia = sa
 	err = s.Acacia.LoadAllFrom(cfg.SecurityPolicyDir)
 	if err != nil {
-		logging.LogToDeck("fatal", err.Error())
+		logging.LogToDeck(context.Background(), "fatal", "TAPROOT", "startup", err.Error())
 		panic(err)
 	}
 
 	if s.Config.UseJSML {
 		err = s.compileJSMLFiles(s.Config.JSMLFilePath, s.Config.JSMLCompiledFilePath)
 		if err != nil {
-			logging.LogToDeck("fatal", err.Error())
+			logging.LogToDeck(context.Background(), "fatal", "TAPROOT", "startup", err.Error())
 			os.Exit(-1)
 		}
 		// Start monitoring of JSML files (we feed in the JSML file path to monitor, and the script->JSML compilation path for file deletion)
@@ -130,7 +131,7 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 	// set up our JS manager
 	js, err := jsrun.New(cfg.ScriptFilePath)
 	if err != nil {
-		logging.LogToDeck("fatal", err.Error())
+		logging.LogToDeck(context.Background(), "fatal", "TAPROOT", "startup", err.Error())
 		os.Exit(-1)
 	}
 	s.js = js

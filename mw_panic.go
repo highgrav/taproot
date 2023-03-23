@@ -11,8 +11,8 @@ func (srv *AppServer) HandlePanic(next http.Handler) http.Handler {
 		defer func() {
 			if err := recover(); err != nil {
 				// can't recover, so fail gracefully and close the connection
-				logging.LogToDeck("fatal", "PANIC\tCatching panic() on "+r.URL.String())
-				logging.LogToDeck("fatal", err.(error).Error())
+				logging.LogToDeck(r.Context(), "fatal", "TAPROOT", "panic", "catching panic() on "+r.URL.String())
+				logging.LogToDeck(r.Context(), "fatal", "TAPROOT", "panic", err.(error).Error())
 				w.Header().Set("Connection", "close")
 				srv.ErrorResponse(w, r, http.StatusInternalServerError, fmt.Errorf("%s", err))
 			}

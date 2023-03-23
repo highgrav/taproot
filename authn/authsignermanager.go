@@ -1,6 +1,7 @@
 package authn
 
 import (
+	"context"
 	"github.com/highgrav/taproot/v1/logging"
 	"strings"
 	"time"
@@ -50,7 +51,7 @@ func (asm *AuthSignerManager) rotate() {
 			if t.After(asm.currentSigner.ExpiresAt.Add(time.Duration(-1) * asm.GracePeriod)) {
 				currSig := asm.currentSigner.ID
 				asm.AddSigner()
-				logging.LogToDeck("info", "Rotating session signer from "+currSig+" to "+asm.currentSigner.ID)
+				logging.LogToDeck(context.Background(), "info", "AUTH", "info", "rotating session signer from "+currSig+" to "+asm.currentSigner.ID)
 			}
 			go asm.RemoveSigners()
 		}
@@ -60,7 +61,7 @@ func (asm *AuthSignerManager) rotate() {
 func (asm *AuthSignerManager) AddSigner() {
 	asgn, err := NewAuthSigner(asm.ExpiresAfter)
 	if err != nil {
-		logging.LogToDeck("error", "AUTH\terror\t"+err.Error())
+		logging.LogToDeck(context.Background(), "error", "AUTH", "error", "error adding signer: "+err.Error())
 		return
 	}
 	asm.signers[asgn.ID] = &asgn

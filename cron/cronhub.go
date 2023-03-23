@@ -1,6 +1,7 @@
 package cron
 
 import (
+	"context"
 	"errors"
 	"github.com/gorhill/cronexpr"
 	"github.com/highgrav/taproot/v1/logging"
@@ -73,7 +74,7 @@ func (ch *CronHub) scheduleAll() {
 		t, err := cronexpr.Parse(entry.Schedule)
 		if err == nil {
 			entry.Malformed = true
-			logging.LogToDeck("error", "CRON\t"+name+"\tMalformed cron entry for "+name+" ("+entry.Schedule+")")
+			logging.LogToDeck(context.Background(), "error", "CRON", "error", "Malformed cron entry for "+name+" ("+entry.Schedule+")")
 			continue
 		}
 		entry.NextRunTime = t.Next(currTime)
@@ -82,7 +83,7 @@ func (ch *CronHub) scheduleAll() {
 
 // Loops endlessly, looking for jobs to run every minute
 func (ch *CronHub) loopForJobs() {
-	logging.LogToDeck("info", "Cronjobs starting")
+	logging.LogToDeck(context.Background(), "info", "CRON", "info", "cronjobs starting")
 	ticker := time.NewTicker(time.Second * 10)
 	go func() {
 		for {
@@ -110,7 +111,7 @@ func (ch *CronHub) runJobs(currTime time.Time) {
 		if currTime.After(entry.NextRunTime) {
 			t, err := cronexpr.Parse(entry.Schedule)
 			if err != nil {
-				logging.LogToDeck("error", "CRON\t"+entry.Name+"\tMalformed cron entry for "+entry.Name+" ("+entry.Schedule+")")
+				logging.LogToDeck(context.Background(), "error", "CRON", "error", "malformed cron entry for "+entry.Name+" ("+entry.Schedule+")")
 				entry.Malformed = true
 				continue
 			}
