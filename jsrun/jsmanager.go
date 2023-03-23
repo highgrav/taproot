@@ -182,7 +182,7 @@ func (jsm *JSManager) watchDirAndRecompile() {
 	// populate with initial subdirectories
 	subdirs, err := jsm.getDirs(jsm.fileDir)
 	if err != nil {
-		deck.Error(err.Error())
+		deck.Error("JS\terror\tjs monitoring could not be started: " + err.Error())
 		return
 	}
 	dirList = append(dirList, subdirs...)
@@ -196,7 +196,7 @@ func (jsm *JSManager) watchDirAndRecompile() {
 	for _, v := range dirList {
 		err = watcher.Add(v)
 		if err != nil {
-			deck.Error(err.Error())
+			deck.Error("JS\terror\terror watching directory " + v + ": " + err.Error())
 			return
 		}
 	}

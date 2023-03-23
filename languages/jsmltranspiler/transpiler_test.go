@@ -14,6 +14,10 @@ func (sa testScriptAccessor) GetJSScriptByID(id string) (string, error) {
 	return "<h1>THIS IS AN INCLUDE TEST</h1>", nil
 }
 
+func (sa testScriptAccessor) GetJSMLScriptByID(id string) (string, error) {
+	return "<h1>THIS IS AN INCLUDE TEST</h1>", nil
+}
+
 func TestParse(t *testing.T) {
 	const input string = `<html lang="en">
 	<head display=true>

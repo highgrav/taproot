@@ -122,6 +122,7 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 			logging.LogToDeck("fatal", err.Error())
 			os.Exit(-1)
 		}
+		go s.monitorJSMLDirectories(s.Config.JSMLFilePath, s.Config.JSMLCompiledFilePath)
 	}
 
 	// set up our JS manager
