@@ -3,6 +3,7 @@ package session
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 )
 
 type DefaultCodec struct {
@@ -19,13 +20,13 @@ func (codec DefaultCodec) Encode(obj any) ([]byte, error) {
 }
 
 /*
-Decode() decodes a byte array to an object. Note that decodedObj must be a pointer to a variable
+Decode() decodes a byte array to an object. decodedObj *must* be a pointer to an object
 */
 func (codec DefaultCodec) Decode(encodedObj []byte, decodedObj any) (any, error) {
 	p := bytes.NewBuffer(encodedObj)
-	dec := gob.NewDecoder(p)
-	err := dec.Decode(decodedObj)
+	err := gob.NewDecoder(p).Decode(decodedObj)
 	if err != nil {
+		fmt.Println("ERROR DECODING")
 		return decodedObj, err
 	}
 	return decodedObj, nil

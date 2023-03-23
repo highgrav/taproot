@@ -79,13 +79,18 @@ func GetFromStore[T any](ses *SessionManager, key string) (T, error) {
 	if err != nil {
 		return t, err
 	}
-	dec, err := ses.Codec.Decode(res, &t)
+	t, err = DecodeAs[T](ses.Codec, res)
 	if err != nil {
 		return t, err
 	}
-	t, ok := dec.(T)
-	if !ok {
-		return t, ErrTypeCoercionFailure
+	return t, nil
+}
+
+func DecodeAs[T any](codec ICodec, encodedObj []byte) (T, error) {
+	var t T
+	_, err := codec.Decode(encodedObj, &t)
+	if err != nil {
+		return t, err
 	}
 	return t, nil
 }
