@@ -20,6 +20,7 @@ import (
 	"github.com/thomaspoignant/go-feature-flag/retriever"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -122,7 +123,8 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 			logging.LogToDeck("fatal", err.Error())
 			os.Exit(-1)
 		}
-		go s.monitorJSMLDirectories(s.Config.JSMLFilePath, s.Config.JSMLCompiledFilePath)
+		// Start monitoring of JSML files (we feed in the JSML file path to monitor, and the script->JSML compilation path for file deletion)
+		go s.monitorJSMLDirectories(s.Config.JSMLFilePath, filepath.Join(s.Config.ScriptFilePath, s.Config.JSMLCompiledFilePath))
 	}
 
 	// set up our JS manager

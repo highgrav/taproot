@@ -4,6 +4,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/google/deck"
 	"github.com/highgrav/taproot/v1/common"
+	"github.com/highgrav/taproot/v1/logging"
 	"os"
 	"strings"
 )
@@ -34,7 +35,7 @@ func (srv *AppServer) monitorJSMLDirectories(srcDirName, dstDirName string) {
 			return
 		}
 	}
-	deck.Info("Watching script file directories")
+	deck.Info("Watching script file directories from " + srcDirName + " to " + dstDirName)
 
 	for {
 		select {
@@ -80,14 +81,52 @@ func (srv *AppServer) monitorJSMLDirectories(srcDirName, dstDirName string) {
 				// Try to remove watcher from directory
 				watcher.Remove(event.Name)
 				// Try to delete the filename from destination directory
-
+				fileName, err := common.FindRelocatedFile(dstDirName, event.Name[:len(event.Name)-2])
+				if err != nil {
+					logging.LogToDeck("error", "JSML\terror\tcould not locate file "+event.Name[:len(event.Name)-2])
+					return
+				}
+				st, err := os.Stat(fileName)
+				if err != nil {
+					logging.LogToDeck("error", "JSML\terror\tcould not stat file "+event.Name[:len(event.Name)-2])
+					return
+				}
+				if st.IsDir() {
+					logging.LogToDeck("error", "JSML\terror\ttried to recompile directory "+event.Name[:len(event.Name)-2])
+					return
+				}
+				logging.LogToDeck("info", "JSML\tinfo\tdeleting file "+fileName)
+				err = os.Remove(fileName)
+				if err != nil {
+					logging.LogToDeck("error", "JSML\terror\tcould not delete "+event.Name[:len(event.Name)-2]+": "+err.Error())
+					return
+				}
 			}
 			if event.Op&fsnotify.Rename == fsnotify.Rename {
 				// We can't fstat a renamed file either, so...
 				// Try to remove watcher from directory
 				watcher.Remove(event.Name)
 				// Try to delete the filename from destination
-
+				fileName, err := common.FindRelocatedFile(dstDirName, event.Name[:len(event.Name)-2])
+				if err != nil {
+					logging.LogToDeck("error", "JSML\terror\tcould not locate file "+event.Name[:len(event.Name)-2])
+					return
+				}
+				st, err := os.Stat(fileName)
+				if err != nil {
+					logging.LogToDeck("error", "JSML\terror\tcould not stat file "+event.Name[:len(event.Name)-2])
+					return
+				}
+				if st.IsDir() {
+					logging.LogToDeck("error", "JSML\terror\ttried to recompile directory "+event.Name[:len(event.Name)-2])
+					return
+				}
+				logging.LogToDeck("info", "JSML\tinfo\tdeleting file "+fileName)
+				err = os.Remove(fileName)
+				if err != nil {
+					logging.LogToDeck("error", "JSML\terror\tcould not delete "+event.Name[:len(event.Name)-2]+": "+err.Error())
+					return
+				}
 				// A rename fires off a create event also, so it'll handle
 				// watcher/compilation in that block
 			}

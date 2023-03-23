@@ -50,10 +50,10 @@ func SliceDirectory(basePath string) []string {
 
 // For use primarily to find the original source of compiled and moved JSML files.
 // Takes the base path to search, then
-func FindRelocatedFile(basePath string, relocatedPath string) (string, error) {
-	elems := SliceDirectory(relocatedPath)
+func FindRelocatedFile(toPath string, fromPath string) (string, error) {
+	elems := SliceDirectory(fromPath)
 	for x := 0; x < len(elems); x++ {
-		fPath := basePath + string(os.PathSeparator) + strings.Join(elems[x:], string(os.PathSeparator))
+		fPath := toPath + string(os.PathSeparator) + strings.Join(elems[x:], string(os.PathSeparator))
 		_, err := os.Stat(fPath)
 		if err == nil {
 			return fPath, nil

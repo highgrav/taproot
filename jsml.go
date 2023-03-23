@@ -27,7 +27,7 @@ func (sa ScriptAccessor) GetJSMLScriptByID(id string) (string, error) {
 	// use the common.FindRelocatedFile() to try to locate the errant uncompiled JSML file
 	fileName, err := common.FindRelocatedFile(basePath, id)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 	script, err := os.ReadFile(fileName)
 	if err != nil {
