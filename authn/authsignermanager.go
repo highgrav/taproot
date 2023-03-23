@@ -2,7 +2,7 @@ package authn
 
 import (
 	"fmt"
-	"highgrav/taproot/v1/logging"
+	"github.com/highgrav/taproot/v1/logging"
 	"strings"
 	"time"
 )

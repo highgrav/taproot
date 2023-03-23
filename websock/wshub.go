@@ -1,7 +1,7 @@
 package websock
 
 import (
-	"highgrav/taproot/v1/authn"
+	"github.com/highgrav/taproot/v1/authn"
 	"net"
 )
 

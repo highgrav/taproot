@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"highgrav/taproot/v1/authn"
-	"highgrav/taproot/v1/common"
-	"highgrav/taproot/v1/logging"
-	"highgrav/taproot/v1/session"
+	"github.com/highgrav/taproot/v1/authn"
+	"github.com/highgrav/taproot/v1/common"
+	"github.com/highgrav/taproot/v1/logging"
+	"github.com/highgrav/taproot/v1/session"
 	"net/http"
 )
 

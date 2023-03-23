@@ -2,10 +2,10 @@ package taproot
 
 import (
 	"context"
+	"github.com/highgrav/taproot/v1/acacia"
+	"github.com/highgrav/taproot/v1/authn"
+	"github.com/highgrav/taproot/v1/logging"
 	"github.com/julienschmidt/httprouter"
-	"highgrav/taproot/v1/acacia"
-	"highgrav/taproot/v1/authn"
-	"highgrav/taproot/v1/logging"
 	"net/http"
 )
 

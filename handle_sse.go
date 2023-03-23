@@ -1,7 +1,7 @@
 package taproot
 
 import (
-	"highgrav/taproot/v1/sse"
+	"github.com/highgrav/taproot/v1/sse"
 	"net/http"
 	"time"
 )

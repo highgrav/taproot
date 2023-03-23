@@ -3,9 +3,9 @@ package jsmltranspiler
 import (
 	"errors"
 	"fmt"
-	"highgrav/taproot/v1/common"
-	"highgrav/taproot/v1/languages/jsmlparser"
-	"highgrav/taproot/v1/languages/lexer"
+	"github.com/highgrav/taproot/v1/common"
+	"github.com/highgrav/taproot/v1/languages/jsmlparser"
+	"github.com/highgrav/taproot/v1/languages/lexer"
 	"strings"
 )
 

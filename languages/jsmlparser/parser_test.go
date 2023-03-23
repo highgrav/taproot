@@ -1,8 +1,7 @@
 package jsmlparser
 
 import (
-	"highgrav/taproot/v1/languages/jsmltranspiler"
-	"highgrav/taproot/v1/languages/lexer"
+	"github.com/highgrav/taproot/v1/languages/lexer"
 	"testing"
 )
 
@@ -44,6 +43,4 @@ func TestParse(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	tr := jsmltranspiler.NewWithNode(parse.tree, true)
-	tr.ToString()
 }

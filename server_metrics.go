@@ -3,7 +3,7 @@ package taproot
 import (
 	"expvar"
 	"github.com/google/deck"
-	"highgrav/taproot/v1/common"
+	"github.com/highgrav/taproot/v1/common"
 	"net/http"
 	"net/http/pprof"
 	"runtime"

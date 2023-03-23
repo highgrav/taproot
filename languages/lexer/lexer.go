@@ -3,8 +3,8 @@ package lexer
 import (
 	"errors"
 	"fmt"
-	"highgrav/taproot/v1/common"
-	"highgrav/taproot/v1/languages/token"
+	"github.com/highgrav/taproot/v1/common"
+	"github.com/highgrav/taproot/v1/languages/token"
 )
 
 const (

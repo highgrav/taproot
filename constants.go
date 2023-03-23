@@ -18,4 +18,6 @@ const (
 
 	// Context key for holding any permissions returned from an Acacia policy application
 	HTTP_CONTEXT_ACACIA_RIGHTS_KEY string = "taproot--rights"
+
+	HTTP_CONTEXT_SESSION_KEY string = "taproot--skey"
 )

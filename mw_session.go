@@ -3,10 +3,10 @@ package taproot
 import (
 	"context"
 	"fmt"
+	"github.com/highgrav/taproot/v1/authn"
+	"github.com/highgrav/taproot/v1/common"
+	"github.com/highgrav/taproot/v1/logging"
 	"github.com/justinas/alice"
-	"highgrav/taproot/v1/authn"
-	"highgrav/taproot/v1/common"
-	"highgrav/taproot/v1/logging"
 	"net/http"
 	"time"
 )
@@ -41,6 +41,7 @@ func (srv *AppServer) CreateHandleSession(encryptTokens bool) alice.Constructor 
 				ctx = context.WithValue(r.Context(), HTTP_CONTEXT_USER_KEY, authn.Anonymous())
 				ctx = context.WithValue(ctx, HTTP_CONTEXT_REALM_KEY, srv.Config.DefaultRealm)
 				ctx = context.WithValue(ctx, HTTP_CONTEXT_DOMAIN_KEY, srv.Config.DefaultDomain)
+				ctx = context.WithValue(ctx, HTTP_CONTEXT_SESSION_KEY, "")
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
@@ -59,6 +60,7 @@ func (srv *AppServer) CreateHandleSession(encryptTokens bool) alice.Constructor 
 					ctx = context.WithValue(r.Context(), HTTP_CONTEXT_USER_KEY, authn.Anonymous())
 					ctx = context.WithValue(ctx, HTTP_CONTEXT_REALM_KEY, srv.Config.DefaultRealm)
 					ctx = context.WithValue(ctx, HTTP_CONTEXT_DOMAIN_KEY, srv.Config.DefaultDomain)
+					ctx = context.WithValue(ctx, HTTP_CONTEXT_SESSION_KEY, "")
 					next.ServeHTTP(w, r.WithContext(ctx))
 					return
 				}
@@ -69,6 +71,7 @@ func (srv *AppServer) CreateHandleSession(encryptTokens bool) alice.Constructor 
 					ctx = context.WithValue(r.Context(), HTTP_CONTEXT_USER_KEY, authn.Anonymous())
 					ctx = context.WithValue(ctx, HTTP_CONTEXT_REALM_KEY, srv.Config.DefaultRealm)
 					ctx = context.WithValue(ctx, HTTP_CONTEXT_DOMAIN_KEY, srv.Config.DefaultDomain)
+					ctx = context.WithValue(ctx, HTTP_CONTEXT_SESSION_KEY, "")
 					next.ServeHTTP(w, r.WithContext(ctx))
 					return
 				}
@@ -79,6 +82,7 @@ func (srv *AppServer) CreateHandleSession(encryptTokens bool) alice.Constructor 
 				ctx = context.WithValue(r.Context(), HTTP_CONTEXT_USER_KEY, authn.Anonymous())
 				ctx = context.WithValue(ctx, HTTP_CONTEXT_REALM_KEY, srv.Config.DefaultRealm)
 				ctx = context.WithValue(ctx, HTTP_CONTEXT_DOMAIN_KEY, srv.Config.DefaultDomain)
+				ctx = context.WithValue(ctx, HTTP_CONTEXT_SESSION_KEY, "")
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
@@ -91,9 +95,11 @@ func (srv *AppServer) CreateHandleSession(encryptTokens bool) alice.Constructor 
 				ctx = context.WithValue(r.Context(), HTTP_CONTEXT_USER_KEY, authn.Anonymous())
 				ctx = context.WithValue(ctx, HTTP_CONTEXT_REALM_KEY, srv.Config.DefaultRealm)
 				ctx = context.WithValue(ctx, HTTP_CONTEXT_DOMAIN_KEY, srv.Config.DefaultDomain)
+				ctx = context.WithValue(ctx, HTTP_CONTEXT_SESSION_KEY, "")
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
+			ctx = context.WithValue(ctx, HTTP_CONTEXT_SESSION_KEY, token.Token)
 			ctx = context.WithValue(ctx, HTTP_CONTEXT_USER_KEY, user)
 			realmId := user.RealmID
 			if realmId == "" {

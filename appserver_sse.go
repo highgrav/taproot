@@ -1,6 +1,6 @@
 package taproot
 
-import "highgrav/taproot/v1/sse"
+import "github.com/highgrav/taproot/v1/sse"
 
 /*
 Adds a new Server-Sent Events Hub that the application can write to. Note that, unlike WebSocket Hubs, SSE Hubs are write-only.

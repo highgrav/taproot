@@ -2,7 +2,7 @@ package taproot
 
 import (
 	"fmt"
-	"highgrav/taproot/v1/validation"
+	"github.com/highgrav/taproot/v1/validation"
 	"net/http"
 )
 

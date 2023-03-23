@@ -2,8 +2,8 @@ package acacia
 
 import (
 	"errors"
-	"highgrav/taproot/v1/languages/lexer"
-	"highgrav/taproot/v1/languages/token"
+	"github.com/highgrav/taproot/v1/languages/lexer"
+	"github.com/highgrav/taproot/v1/languages/token"
 	"strconv"
 	"strings"
 )

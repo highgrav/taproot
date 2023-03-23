@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/deck"
-	"highgrav/taproot/v1/common"
+	"github.com/highgrav/taproot/v1/common"
 	"os"
 	"path/filepath"
 	"quamina.net/go/quamina"

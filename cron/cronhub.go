@@ -3,7 +3,7 @@ package cron
 import (
 	"errors"
 	"github.com/gorhill/cronexpr"
-	"highgrav/taproot/v1/logging"
+	"github.com/highgrav/taproot/v1/logging"
 	"sync"
 	"time"
 )

@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/dop251/goja"
-	"highgrav/taproot/v1/common"
+	"github.com/highgrav/taproot/v1/common"
 	"reflect"
 )
 

@@ -2,8 +2,8 @@ package taproot
 
 import (
 	"github.com/felixge/httpsnoop"
+	"github.com/highgrav/taproot/v1/logging"
 	"github.com/tomasen/realip"
-	"highgrav/taproot/v1/logging"
 	"net/http"
 	"time"
 )

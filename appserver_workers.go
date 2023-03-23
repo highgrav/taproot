@@ -2,7 +2,7 @@ package taproot
 
 import (
 	"errors"
-	"highgrav/taproot/v1/workers"
+	"github.com/highgrav/taproot/v1/workers"
 )
 
 func (srv *AppServer) AddWorkHandler(workType string, fn workers.WorkHandler) error {
