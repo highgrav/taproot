@@ -20,4 +20,6 @@ const (
 	HTTP_CONTEXT_ACACIA_RIGHTS_KEY string = "taproot--rights"
 
 	HTTP_CONTEXT_SESSION_KEY string = "taproot--skey"
+
+	HTTP_CONTEXT_FFLAG_KEY string = "taproot--fflags"
 )

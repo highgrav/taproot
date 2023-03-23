@@ -36,6 +36,7 @@ func (srv *AppServer) bindRoutes() http.Handler {
 		srv.HandleGlobalMetrics,
 		srv.HandleTracing,
 		srv.CreateHandleSession(srv.Config.UseEncryptedSessionTokens),
+		srv.HandleFeatureFlags,
 	}
 	// Add any additional custom middleware
 	mw := alice.New(append(defaultMiddleware, srv.Middleware...)...) // We always filter

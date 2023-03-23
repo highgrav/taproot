@@ -21,7 +21,12 @@ func InjectJSHttpFunctor(w http.ResponseWriter, r *http.Request, vm *goja.Runtim
 		w.WriteHeader(int(val.ToInteger()))
 	}
 
+	redirect := func(val goja.Value) {
+		http.Redirect(w, r, val.String(), http.StatusSeeOther)
+	}
+
 	obj.Set("write", writeToHttp)
+	obj.Set("redirect", redirect)
 	obj.Set("responseCode", writeRespCode)
 	obj.Set("isLoaded", true)
 	vm.Set("http", obj)

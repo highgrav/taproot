@@ -1,19 +1,11 @@
 
-- Some kind of startup race condition where JSML files aren't always locatable after first compilation.
-  - Maybe corrected now?
 - Feature flags
-- IP filtering
-  - Done!
-- Directory monitoring for changed JSML files
-  - This is having issues managing changes
-  - Might also have problems with JS filewatching, too!
 - VIPER config
 - HTTP redirect server
   - Needs work
   - Needs IP filtering
 - Admin server
 - Metrics server
-  - Done, mostly
   - Needs IP filtering
 - Determine if the Worker Hub should be able to use a centralized message queue
 - Determine if cronjobs should manage their own timers rather than using a single loop
@@ -21,3 +13,4 @@
   - Done, should move middleware to internal functions
 - Remove STDOUT deck logging and place the responsibility on the embedding app?
 - Re-encrypt session keys for headers and cookies in order to prevent time-outs (this can be handled in the middleware code)
+- Websockets

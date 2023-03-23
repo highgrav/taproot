@@ -216,7 +216,6 @@ func userFromEntry(u DigestUserEntry) User {
 		Domains:                []string{u.Domain},
 		Workgroups:             WorkgroupMembership{},
 		Labels:                 DomainAssertions{},
-		FFlags:                 nil,
 		Keys:                   nil,
 	}
 	for k, v := range u.Workgroups {
