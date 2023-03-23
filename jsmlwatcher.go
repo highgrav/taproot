@@ -1,11 +1,9 @@
 package taproot
 
 import (
-	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/google/deck"
 	"github.com/highgrav/taproot/v1/common"
-	"github.com/highgrav/taproot/v1/logging"
 	"os"
 	"strings"
 )
@@ -13,99 +11,90 @@ import (
 // Starts monitoring of the JSML file directories to catch any updates and recompile accordingly.
 // TODO -- this is having issues detecting changes
 func (srv *AppServer) monitorJSMLDirectories(srcDirName, dstDirName string) {
-	logging.LogToDeck("info", "JSML\tinfo\tmonitoring directory from "+srcDirName)
 	dirList := []string{srcDirName}
+
+	// populate with initial subdirectories
 	subdirs, err := common.GetDirs(srcDirName)
 	if err != nil {
-		deck.Error("JSML\terror\tjsml file monitoring cannot be started: " + err.Error())
+		deck.Error("JSML\terror\tjs monitoring could not be started: " + err.Error())
 		return
 	}
 	dirList = append(dirList, subdirs...)
+
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		deck.Error("JSML\terror\tjsml file monitoring cannot be started: " + err.Error())
+		deck.Error(err.Error())
 		return
 	}
 	defer watcher.Close()
-	for _, d := range dirList {
-		err := watcher.Add(d)
+	for _, v := range dirList {
+		err = watcher.Add(v)
 		if err != nil {
-			deck.Error("JSML\terror\terror watching directory " + d + ": " + err.Error())
+			deck.Error("JSML\terror\terror watching directory " + v + ": " + err.Error())
 			return
 		}
-		logging.LogToDeck("info", "JSML\tinfo\twatching directory "+d)
 	}
+	deck.Info("Watching script file directories")
+
 	for {
 		select {
-		case exitFlag := <-srv.ExitServerCh:
-			if exitFlag {
-				deck.Info("JSML\tinfo\tshutting down jsml filewatcher")
-				return
-			}
-		case err := <-watcher.Errors:
-			deck.Error("JSML\terror\terror in jsml filewatcher")
-			deck.Error(err.Error())
-			return
 		case event := <-watcher.Events:
-			fmt.Println("CAUGHT EVENT " + event.Name)
 			if event.Op&fsnotify.Write == fsnotify.Write {
-				fmt.Println("CAUGHT WRITE " + event.Name)
 				if strings.HasSuffix(event.Name, ".jsml") {
-					fmt.Println("CAUGHT WRITE " + event.Name)
+					deck.Info("Recompiling " + event.Name)
 					err := srv.compileOne(event.Name, srcDirName, dstDirName)
 					if err != nil {
 						deck.Error("JSML\terror\tjsml error transpiling " + event.Name + ": " + err.Error())
 					}
 				}
 			}
+
 			if event.Op&fsnotify.Create == fsnotify.Create {
-				// TODO
-				s, err := os.Stat(event.Name)
+				// Directory or file?
+				// Check to see if this is a directory. If so, need to add watcher to directory
+				fileInfo, err := os.Stat(event.Name)
 				if err != nil {
-					deck.Error("JSML\terror\tjsml error handling created file " + event.Name + ": " + err.Error())
+					deck.Error("Error when reading created file " + event.Name + ": " + err.Error())
 				} else {
-					if s.IsDir() {
-						// if a directory, add a watcher
-						deck.Info("JSML\tinfo\tCaught create event on JSML directory " + event.Name)
-						watcher.Add(event.Name)
-					} else {
-						// if a file, compile it
-						if strings.HasSuffix(event.Name, ".jsml") {
-							deck.Info("JSML\tinfo\tCaught create event on JSML file " + event.Name)
-							err := srv.compileOne(event.Name, srcDirName, dstDirName)
-							if err != nil {
-								deck.Error("JSML\terror\tjsml error transpiling " + event.Name + ": " + err.Error())
-							}
+					if fileInfo.IsDir() {
+						deck.Info("Watching new directory " + event.Name)
+						err = watcher.Add(event.Name)
+						if err != nil {
+							deck.Error("Error when adding watcher to created dir " + event.Name + ": " + err.Error())
+						}
+					}
+
+					// It's a file, so try compiling it
+					if strings.HasSuffix(event.Name, ".jsml") {
+						deck.Info("Compiling " + event.Name)
+						err := srv.compileOne(event.Name, srcDirName, dstDirName)
+						if err != nil {
+							deck.Error("JSML\terror\tjsml error transpiling " + event.Name + ": " + err.Error())
 						}
 					}
 				}
 			}
+
 			if event.Op&fsnotify.Remove == fsnotify.Remove {
-				deck.Info("JSML\tinfo\tCaught remove event on JSML file " + event.Name)
+				// We can't fstat a removed file, so...
+				// Try to remove watcher from directory
 				watcher.Remove(event.Name)
-				// delete the compiled JS file
-				// TODO -- find relocated file and delete it
-				fileName, err := common.FindRelocatedFile(dstDirName, event.Name[:len(event.Name)-2])
-				if err != nil {
-					deck.Error("JSML\terror]tjsml error dealing with deleted file " + event.Name + ": " + err.Error())
-				} else {
-					// TODO
-					deck.Error("TODO: Delete " + fileName)
-				}
+				// Try to delete the filename from destination directory
+
 			}
 			if event.Op&fsnotify.Rename == fsnotify.Rename {
+				// We can't fstat a renamed file either, so...
+				// Try to remove watcher from directory
 				watcher.Remove(event.Name)
-				// TODO
-				// rename the compiled JS file
-				fileName, err := common.FindRelocatedFile(dstDirName, event.Name[:len(event.Name)-2])
-				if err != nil {
-					deck.Error("JSML\terror\tjsml error dealing with deleted file " + event.Name + ": " + err.Error())
-				} else {
-					// TODO
-					deck.Error("TODO: Delete " + fileName)
-				}
+				// Try to delete the filename from destination
+
+				// A rename fires off a create event also, so it'll handle
+				// watcher/compilation in that block
 			}
+			continue
+		case err := <-watcher.Errors:
+			deck.Error("Error in JSML filewatcher: " + err.Error())
+			continue
 		}
-		return
 	}
 }
