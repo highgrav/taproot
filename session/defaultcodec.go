@@ -3,7 +3,6 @@ package session
 import (
 	"bytes"
 	"encoding/gob"
-	"fmt"
 )
 
 type DefaultCodec struct {
@@ -26,7 +25,6 @@ func (codec DefaultCodec) Decode(encodedObj []byte, decodedObj any) (any, error)
 	p := bytes.NewBuffer(encodedObj)
 	err := gob.NewDecoder(p).Decode(decodedObj)
 	if err != nil {
-		fmt.Println("ERROR DECODING")
 		return decodedObj, err
 	}
 	return decodedObj, nil

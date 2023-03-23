@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"github.com/highgrav/taproot/v1/common"
 	"golang.org/x/crypto/blake2b"
 	"io"
@@ -62,10 +61,6 @@ func (asign *AuthSigner) NewSignedToken(tokenValue string) (string, error) {
 
 func (asign *AuthSigner) VerifySignedToken(signToken string) (AuthToken, error) {
 	elems := strings.SplitN(signToken, "||", 2)
-
-	fmt.Println("VERIFYING " + signToken)
-	fmt.Println("HASH " + elems[0])
-	fmt.Println("VAL " + elems[1])
 
 	if len(elems) < 2 {
 		return AuthToken{}, ErrMalformedToken

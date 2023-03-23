@@ -1,7 +1,6 @@
 package authn
 
 import (
-	"fmt"
 	"github.com/highgrav/taproot/v1/logging"
 	"strings"
 	"time"
@@ -112,12 +111,10 @@ func (asm *AuthSignerManager) DecryptToken(token string) (AuthToken, error) {
 	}
 	if s, ok := asm.signers[elems[0]]; ok {
 		if time.Now().After(s.ExpiresAt) {
-			fmt.Println("SIGNER EXPIRES AT " + s.ExpiresAt.String())
 			return AuthToken{}, ErrExpiredToken
 		}
 		atok, err := s.DecryptToken(elems[1])
 		return atok, err
 	}
-	fmt.Println("COULD NOT FIND SIGNER " + elems[0])
 	return AuthToken{}, ErrExpiredToken
 }

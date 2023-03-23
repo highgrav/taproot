@@ -3,7 +3,6 @@ package taproot
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/highgrav/taproot/v1/authn"
 	"github.com/highgrav/taproot/v1/common"
 	"github.com/highgrav/taproot/v1/logging"
@@ -49,7 +48,6 @@ func (svr *AppServer) RegisterUser(authReq authn.UserAuth) (authn.User, string, 
 		return authn.Anonymous(), "", err
 	}
 	key, err := svr.AddUserToSession(user)
-	fmt.Println("SESSION KEY: " + key)
 	if err != nil {
 		logging.LogToDeck("error", "SESS\terror\tError adding user to session: "+err.Error())
 		return authn.Anonymous(), "", err
