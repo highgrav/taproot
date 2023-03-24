@@ -1,8 +1,9 @@
 package taproot
 
 import (
+	"context"
 	"fmt"
-	"github.com/google/deck"
+	"github.com/highgrav/taproot/v1/logging"
 	"github.com/justinas/alice"
 	"net/http"
 )
@@ -21,11 +22,11 @@ func (srv *AppServer) bindRoutes() http.Handler {
 	x := 0
 	dmw := alice.New()
 	for _, rb := range srv.routes {
-		deck.Info("Setting route " + rb.Route)
+		logging.LogToDeck(context.Background(), "info", "TAPROOT", "startup", "Setting route "+rb.Route)
 		srv.Router.Handler(rb.Method, rb.Route, dmw.Then(srv.handleLocalMetrics(rb.Handler)))
 		x++
 	}
-	deck.Info(fmt.Sprintf("%d routes added", x))
+	logging.LogToDeck(context.Background(), "info", "TAPROOT", "startup", fmt.Sprintf("%d routes added", x))
 
 	// Standard middleware
 	defaultMiddleware := []alice.Constructor{

@@ -20,14 +20,11 @@ func (srv *AppServer) HandleLogging(next http.Handler) http.Handler {
 			userId = user.UserID
 		}
 
-		//		deck.Info(fmt.Sprintf("REQ\t%s\t%s\t-\t%s\t%s\t%s\t\t\t\n", clientIp, corrId, reqTime.Format(customTimeFormat), r.Method, r.URL))
 		logging.LogW3CRequest("info", reqTime, clientIp, r.Context(), r.Method, r.URL.String(), userId)
 
 		metrics := httpsnoop.CaptureMetrics(next, w, r)
 
 		// Everything below here will be executed on the way back up the chain
-
-		//	deck.Info(fmt.Sprintf("RES\t%s\t%s\t-\t%s\t%s\t%s\t%s\t%d\t%d\n", clientIp, corrId, time.Now().Format(customTimeFormat), time.Now().Sub(reqTime).String(), r.Method, r.URL, metrics.Code, metrics.Written))
 		logging.LogW3CResponse("info", reqTime, clientIp, r.Context(), r.Method, r.URL.String(), metrics.Code, int(metrics.Written), userId)
 	})
 }

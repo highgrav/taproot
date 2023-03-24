@@ -1,10 +1,11 @@
 package acacia
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
-	"github.com/google/deck"
 	"github.com/highgrav/taproot/v1/common"
+	"github.com/highgrav/taproot/v1/logging"
 	"os"
 	"path/filepath"
 	"quamina.net/go/quamina"
@@ -34,7 +35,7 @@ func (pm *PolicyManager) FlushAll() {
 }
 
 func (pm *PolicyManager) LoadAllFrom(dirName string) error {
-	deck.Info("Loading policy files from " + dirName)
+	logging.LogToDeck(context.Background(), "info", "ACAC", "info", "loading policy files from "+dirName)
 	s, err := os.Stat(dirName)
 	if err != nil {
 		return err
@@ -57,7 +58,7 @@ func (pm *PolicyManager) LoadAllFrom(dirName string) error {
 			if err != nil {
 				return err
 			}
-			deck.Info("Loading policy file " + info.Name())
+			logging.LogToDeck(context.Background(), "info", "ACAC", "info", "loading policy file "+info.Name())
 			err = pm.AddPolicy(path, policy)
 			if err != nil {
 				return err
@@ -80,14 +81,14 @@ func (pm *PolicyManager) AddPolicy(name string, policy Policy) error {
 			}
 			pm.patterns[route] = q
 		}
-		deck.Info("Adding policy to route " + route)
+		logging.LogToDeck(context.Background(), "info", "ACAC", "info", "adding policy to route "+route)
 		pm.policies[name] = policy
 		pm.patterns[route].AddPattern(name, policy.Match)
 	}
 	return nil
 }
 
-func (pm *PolicyManager) Apply(route string, request *RightsRequest) (RightResponse, error) {
+func (pm *PolicyManager) Apply(ctx context.Context, route string, request *RightsRequest) (RightResponse, error) {
 	rr := RightResponse{
 		Response: RightCodeResponse{
 			ReturnMsg:  "",
@@ -101,7 +102,7 @@ func (pm *PolicyManager) Apply(route string, request *RightsRequest) (RightRespo
 	// route not registered
 	q, ok := pm.patterns[route]
 	if !ok {
-		deck.Error("Attempted to call Acacia on unbound route " + route)
+		logging.LogToDeck(ctx, "error", "ACAC", "error", "attempted to call Acacia on unbound route "+route)
 		return rr, nil
 	}
 	js, err := json.Marshal(*request)

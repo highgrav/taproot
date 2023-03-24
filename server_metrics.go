@@ -2,8 +2,8 @@ package taproot
 
 import (
 	"expvar"
-	"github.com/google/deck"
 	"github.com/highgrav/taproot/v1/common"
+	"github.com/highgrav/taproot/v1/logging"
 	"net/http"
 	"net/http/pprof"
 	"runtime"
@@ -75,7 +75,7 @@ func (srv *AppServer) metrics_handle_global(w http.ResponseWriter, r *http.Reque
 	env["stats"] = st2
 	err := srv.WriteJSON(w, true, 200, env, nil)
 	if err != nil {
-		deck.Error("metrics server global stats: " + err.Error())
+		logging.LogToDeck(r.Context(), "error", "METRICS", "error", "metrics server global stats: "+err.Error())
 	}
 }
 
@@ -90,7 +90,7 @@ func (srv *AppServer) metrics_handle_getpaths(w http.ResponseWriter, r *http.Req
 	env["paths"] = paths
 	err := srv.WriteJSON(w, true, 200, env, nil)
 	if err != nil {
-		deck.Error("metrics server get paths: " + err.Error())
+		logging.LogToDeck(r.Context(), "error", "METRICS", "error", "error getting paths: "+err.Error())
 	}
 }
 
@@ -132,6 +132,6 @@ func (srv *AppServer) metrics_handle_path(w http.ResponseWriter, r *http.Request
 	env["stats"] = st2
 	err := srv.WriteJSON(w, true, 200, env, nil)
 	if err != nil {
-		deck.Error("metrics server path '" + path + "' stats: " + err.Error())
+		logging.LogToDeck(r.Context(), "error", "METRICS", "error", "metrics server path '"+path+"' stats: "+err.Error())
 	}
 }

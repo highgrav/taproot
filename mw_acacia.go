@@ -45,7 +45,7 @@ func (srv *AppServer) handleAcacia(next http.Handler) http.Handler {
 
 		params := httprouter.ParamsFromContext(r.Context())
 
-		rights, err := srv.Acacia.Apply(params.MatchedRoutePath(), rr)
+		rights, err := srv.Acacia.Apply(r.Context(), params.MatchedRoutePath(), rr)
 		if err != nil {
 			srv.ErrorResponse(w, r, 500, err.Error())
 			return

@@ -3,7 +3,6 @@ package taproot
 import (
 	"context"
 	"github.com/fsnotify/fsnotify"
-	"github.com/google/deck"
 	"github.com/highgrav/taproot/v1/common"
 	"github.com/highgrav/taproot/v1/logging"
 	"os"
@@ -18,35 +17,35 @@ func (srv *AppServer) monitorJSMLDirectories(srcDirName, dstDirName string) {
 	// populate with initial subdirectories
 	subdirs, err := common.GetDirs(srcDirName)
 	if err != nil {
-		deck.Error("JSML\terror\tjs monitoring could not be started: " + err.Error())
+		logging.LogToDeck(context.Background(), "error", "JSML", "error", "JSML\terror\tjs monitoring could not be started: "+err.Error())
 		return
 	}
 	dirList = append(dirList, subdirs...)
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		deck.Error(err.Error())
+		logging.LogToDeck(context.Background(), "error", "JSML", "error", "error creating JSML watcher: "+err.Error())
 		return
 	}
 	defer watcher.Close()
 	for _, v := range dirList {
 		err = watcher.Add(v)
 		if err != nil {
-			deck.Error("JSML\terror\terror watching directory " + v + ": " + err.Error())
+			logging.LogToDeck(context.Background(), "error", "JSML", "error", "error watching directory "+v+": "+err.Error())
 			return
 		}
 	}
-	deck.Info("Watching script file directories from " + srcDirName + " to " + dstDirName)
+	logging.LogToDeck(context.Background(), "info", "JSML", "info", "watching script file directories from "+srcDirName+" to "+dstDirName)
 
 	for {
 		select {
 		case event := <-watcher.Events:
 			if event.Op&fsnotify.Write == fsnotify.Write {
 				if strings.HasSuffix(event.Name, ".jsml") {
-					deck.Info("Recompiling " + event.Name)
+					logging.LogToDeck(context.Background(), "info", "JSML", "info", "recompiling "+event.Name)
 					err := srv.compileOne(event.Name, srcDirName, dstDirName)
 					if err != nil {
-						deck.Error("JSML\terror\tjsml error transpiling " + event.Name + ": " + err.Error())
+						logging.LogToDeck(context.Background(), "error", "JSML", "error", "JSML error transpiling "+event.Name+": "+err.Error())
 					}
 				}
 			}
@@ -56,22 +55,22 @@ func (srv *AppServer) monitorJSMLDirectories(srcDirName, dstDirName string) {
 				// Check to see if this is a directory. If so, need to add watcher to directory
 				fileInfo, err := os.Stat(event.Name)
 				if err != nil {
-					deck.Error("Error when reading created file " + event.Name + ": " + err.Error())
+					logging.LogToDeck(context.Background(), "error", "JSML", "error", "error when reading created file "+event.Name+": "+err.Error())
 				} else {
 					if fileInfo.IsDir() {
-						deck.Info("Watching new directory " + event.Name)
+						logging.LogToDeck(context.Background(), "info", "JSML", "info", "watching new directory "+event.Name)
 						err = watcher.Add(event.Name)
 						if err != nil {
-							deck.Error("Error when adding watcher to created dir " + event.Name + ": " + err.Error())
+							logging.LogToDeck(context.Background(), "info", "JSML", "error", "error when adding watcher to created dir "+event.Name+": "+err.Error())
 						}
 					}
 
 					// It's a file, so try compiling it
 					if strings.HasSuffix(event.Name, ".jsml") {
-						deck.Info("Compiling " + event.Name)
+						logging.LogToDeck(context.Background(), "info", "JSML", "info", "compiling "+event.Name)
 						err := srv.compileOne(event.Name, srcDirName, dstDirName)
 						if err != nil {
-							deck.Error("JSML\terror\tjsml error transpiling " + event.Name + ": " + err.Error())
+							logging.LogToDeck(context.Background(), "error", "JSML", "error", "JSML error transpiling "+event.Name+": "+err.Error())
 						}
 					}
 				}

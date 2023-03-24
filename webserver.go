@@ -3,8 +3,8 @@ package taproot
 import (
 	"context"
 	"fmt"
-	"github.com/google/deck"
 	"github.com/highgrav/taproot/v1/authn"
+	"github.com/highgrav/taproot/v1/logging"
 	"github.com/jpillora/ipfilter"
 	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"
@@ -57,23 +57,23 @@ func (srv *WebServer) Close() error {
 }
 
 func (srv *WebServer) ListenAndServe() error {
-	deck.Info("Starting webserver '" + srv.Name + "'")
+	logging.LogToDeck(context.Background(), "info", "WEBSVR", "info", "starting webserver '"+srv.Name+"'")
 	srv.state.setState(SERVER_STATE_RUNNING)
 	return srv.Server.ListenAndServe()
 }
 
 func (srv *WebServer) ListenAndServeTLS(certFile, keyFile string) error {
-	deck.Info("Starting webserver '" + srv.Name + "'")
+	logging.LogToDeck(context.Background(), "info", "WEBSVR", "info", "starting webserver '"+srv.Name+"'")
 	srv.state.setState(SERVER_STATE_INITIALIZING)
 
 	if srv.Config.TLS.UseSelfSignedCert && !srv.Config.TLS.UseACME {
-		deck.Info("Generating self-signed certificate for serving...")
+		logging.LogToDeck(context.Background(), "info", "WEBSVR", "info", "generating self-signed certificate for serving...")
 		c, err := generateSelfSignedTlsCert()
 		if err != nil {
 			return err
 		}
 		srv.Server.TLSConfig = c
-		deck.Info("Serving self-signed TLS on port ", srv.Config.Port)
+		logging.LogToDeck(context.Background(), "info", "WEBSVR", "info", fmt.Sprintf("serving self-signed TLS on port %d", srv.Config.Port))
 		return srv.Server.ListenAndServeTLS(certFile, keyFile)
 	}
 
@@ -94,22 +94,22 @@ func (srv *WebServer) RegisterOnShutdown(f func()) {
 }
 
 func (srv *WebServer) Serve(l net.Listener) error {
-	deck.Info("Starting webserver '" + srv.Name + "'")
+	logging.LogToDeck(context.Background(), "info", "WEBSVR", "info", "starting webserver '"+srv.Name+"'")
 	srv.state.setState(SERVER_STATE_RUNNING)
 	return srv.Server.Serve(l)
 }
 
 func (srv *WebServer) ServeTLS(l net.Listener, certFile, keyFile string) error {
-	deck.Info("Starting webserver '" + srv.Name + "'")
+	logging.LogToDeck(context.Background(), "info", "WEBSVR", "info", "starting webserver '"+srv.Name+"'")
 	srv.state.setState(SERVER_STATE_INITIALIZING)
 
 	if srv.Config.TLS.UseSelfSignedCert && !srv.Config.TLS.UseACME {
-		deck.Info("Generating self-signed certificate for serving...")
+		logging.LogToDeck(context.Background(), "info", "WEBSVR", "info", "generating self-signed certificate for serving...")
 		c, err := generateSelfSignedTlsCert()
-		deck.Info(fmt.Sprintf("Cert count: %d\n", len(srv.Server.TLSConfig.Certificates)))
+		logging.LogToDeck(context.Background(), "info", "WEBSVR", "info", fmt.Sprintf("Cert count: %d\n", len(srv.Server.TLSConfig.Certificates)))
 
 		if err != nil {
-			deck.Fatal(err)
+			logging.LogToDeck(context.Background(), "fatal", "WEBSVR", "fatal", "webserver failed to start: "+err.Error())
 			os.Exit(-222)
 		}
 		srv.Server.TLSConfig = c

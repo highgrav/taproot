@@ -2,14 +2,14 @@ package taproot
 
 import (
 	"bytes"
-	"fmt"
+	"context"
 	"github.com/dop251/goja"
 	"github.com/dop251/goja_nodejs/console"
 	"github.com/dop251/goja_nodejs/require"
-	"github.com/google/deck"
 	"github.com/highgrav/taproot/v1/authn"
 	"github.com/highgrav/taproot/v1/constants"
 	"github.com/highgrav/taproot/v1/jsrun"
+	"github.com/highgrav/taproot/v1/logging"
 	"io"
 	"net/http"
 	"strings"
@@ -66,7 +66,7 @@ func addJSUtilFunctor(svr *AppServer, vm *goja.Runtime) {
 	obj := vm.NewObject()
 
 	printToStdout := func(val goja.Value) {
-		deck.Info("%s\n", val.String())
+		logging.LogToDeck(context.Background(), "info", "JS", "output", val.String())
 	}
 
 	obj.Set("print", printToStdout)
@@ -76,14 +76,13 @@ func addJSUtilFunctor(svr *AppServer, vm *goja.Runtime) {
 // An endpoint route that executes a compiled script identified by the path to the script, injecting various data and functions into the runtime.
 func (srv *AppServer) HandleScript(scriptKey string, customCtx *map[string]any) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var corrId string = r.Context().Value(constants.HTTP_CONTEXT_CORRELATION_KEY).(string)
 		// special case for when we have .jsml file names
 		if strings.HasSuffix(scriptKey, ".jsml") {
 			scriptKey = scriptKey[:len(scriptKey)-2]
 		}
 		script, err := srv.js.GetScript(scriptKey)
 		if err != nil {
-			deck.Error("JS\t" + corrId + "\t" + err.Error())
+			logging.LogToDeck(r.Context(), "info", "JS", "error", err.Error())
 			w.WriteHeader(http.StatusExpectationFailed)
 			return
 		}
@@ -140,18 +139,18 @@ func (srv *AppServer) HandleScript(scriptKey string, customCtx *map[string]any) 
 			v(vm)
 		}
 
-		deck.Info(fmt.Sprintf("JS\trun\t%s\t%s\n", corrId, scriptKey))
+		logging.LogToDeck(r.Context(), "info", "JS", "run", "running "+scriptKey)
 		injectHttpRequest(r, vm)
 		_, err = vm.RunProgram(script)
 
 		if jserr, ok := err.(*goja.Exception); ok {
-			deck.Error("JS\tfail\t" + corrId + "\tError running " + scriptKey + ": " + jserr.Error())
+			logging.LogToDeck(r.Context(), "error", "JS", "fail", "error running "+scriptKey+": "+jserr.Error())
 			srv.ErrorResponse(w, r, http.StatusInternalServerError, jserr.Error())
 		} else if err != nil {
-			deck.Error("JS\tfail\t" + corrId + "\tError running " + scriptKey + ": " + err.Error())
+			logging.LogToDeck(r.Context(), "error", "JS", "fail", "error running "+scriptKey+": "+err.Error())
 			srv.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
 		} else {
-			deck.Info(fmt.Sprintf("JS\tok\t%s\t%s\n", corrId, scriptKey))
+			logging.LogToDeck(r.Context(), "info", "JS", "done", "completed "+scriptKey)
 		}
 	}
 }

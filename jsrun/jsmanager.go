@@ -1,11 +1,12 @@
 package jsrun
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/dop251/goja"
 	"github.com/fsnotify/fsnotify"
-	"github.com/google/deck"
+	"github.com/highgrav/taproot/v1/logging"
 	"os"
 	"path/filepath"
 	"strings"
@@ -92,7 +93,7 @@ func (jsm *JSManager) CompileAll() error {
 func (jsm *JSManager) getDirs(dirName string) ([]string, error) {
 	fs, err := os.ReadDir(dirName)
 	if err != nil {
-		deck.Error("Error reading " + dirName)
+		logging.LogToDeck(context.Background(), "error", "JS", "error", "getDirs(): Error reading "+dirName)
 		return nil, err
 	}
 	ds := []string{}
@@ -122,23 +123,23 @@ func (jsm *JSManager) compileDir(dirName string) error {
 	// get scripts
 	scripts, err := filepath.Glob(filepath.Join(dirName, "*.js"))
 	if err != nil {
-		deck.Error("Error reading JS files: " + err.Error())
+		logging.LogToDeck(context.Background(), "fatal", "JS", "fatal", "error reading JS files: "+err.Error())
 		os.Exit(-310)
 	}
 	for _, script := range scripts {
 		src, err := os.ReadFile(script)
 
 		if err != nil {
-			deck.Error("Error reading JSScript " + script + ": " + err.Error())
+			logging.LogToDeck(context.Background(), "error", "JS", "error", "error reading JSScript "+script+": "+err.Error())
 			continue
 		}
 
 		comp, err := goja.Compile(filepath.Join(dirName, script), string(src), false)
 		if err != nil {
-			deck.Error("Error compiling JSScript " + script + ": " + err.Error())
+			logging.LogToDeck(context.Background(), "error", "JS", "error", "error compiling JSScript "+script+": "+err.Error())
 			continue
 		}
-		deck.Info(fmt.Sprintf("Loaded JSScript '%s'\n", script))
+		logging.LogToDeck(context.Background(), "info", "JS", "info", fmt.Sprintf("loaded JSScript '%s'\n", script))
 		jsm.compiledScripts[script] = comp
 		jsm.scripts[script] = string(src) // TODO -- make sure this preserves unicode
 	}
@@ -149,16 +150,16 @@ func (jsm *JSManager) CompileOne(script string) error {
 	src, err := os.ReadFile(script)
 
 	if err != nil {
-		deck.Error("Error reading JSScript " + script + ": " + err.Error())
+		logging.LogToDeck(context.Background(), "error", "JS", "error", "error reading JSScript "+script+": "+err.Error())
 		return err
 	}
 
 	comp, err := goja.Compile(filepath.Join(jsm.fileDir, script), string(src), false)
 	if err != nil {
-		deck.Error("Error compiling JSScript " + script + ": " + err.Error())
+		logging.LogToDeck(context.Background(), "error", "JS", "error", "error compiling JSScript "+script+": "+err.Error())
 		return err
 	}
-	deck.Info(fmt.Sprintf("Loaded JSScript '%s'\n", script))
+	logging.LogToDeck(context.Background(), "info", "JS", "info", fmt.Sprintf("loaded JSScript '%s'\n", script))
 	jsm.compiledScripts[script] = comp
 	jsm.scripts[script] = string(src)
 	return nil
@@ -167,10 +168,10 @@ func (jsm *JSManager) CompileOne(script string) error {
 func (jsm *JSManager) CompileOneAs(key string, script string) error {
 	comp, err := goja.Compile(key, script, false)
 	if err != nil {
-		deck.Error("Error compiling JSScript " + script + ": " + err.Error())
+		logging.LogToDeck(context.Background(), "error", "JS", "error", "error compiling JSScript "+script+": "+err.Error())
 		return err
 	}
-	deck.Info(fmt.Sprintf("Loaded JSScript '%s'\n", key))
+	logging.LogToDeck(context.Background(), "info", "JS", "info", fmt.Sprintf("loaded JSScript '%s'\n", key))
 	jsm.compiledScripts[key] = comp
 	jsm.scripts[key] = string(script)
 	return nil
@@ -182,25 +183,25 @@ func (jsm *JSManager) watchDirAndRecompile() {
 	// populate with initial subdirectories
 	subdirs, err := jsm.getDirs(jsm.fileDir)
 	if err != nil {
-		deck.Error("JS\terror\tjs monitoring could not be started: " + err.Error())
+		logging.LogToDeck(context.Background(), "error", "JS", "error", "JS file watcher could not be started: "+err.Error())
 		return
 	}
 	dirList = append(dirList, subdirs...)
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		deck.Error(err.Error())
+		logging.LogToDeck(context.Background(), "error", "JS", "error", "error creating JS filewatcher: "+err.Error())
 		return
 	}
 	defer watcher.Close()
 	for _, v := range dirList {
 		err = watcher.Add(v)
 		if err != nil {
-			deck.Error("JS\terror\terror watching directory " + v + ": " + err.Error())
+			logging.LogToDeck(context.Background(), "error", "JS", "error", "error watching directory "+v+": "+err.Error())
 			return
 		}
 	}
-	deck.Info("Watching script file directories")
+	logging.LogToDeck(context.Background(), "info", "JS", "info", "watching script file directories")
 
 	for {
 		select {
@@ -214,10 +215,10 @@ func (jsm *JSManager) watchDirAndRecompile() {
 				// TODO -- Error: Note that for some reason updating a file with 'vi' doesn't trigger an FS notification
 				// TODO -- Works as expected with other editors
 				if strings.HasSuffix(event.Name, ".js") {
-					deck.Info("Recompiling " + event.Name)
+					logging.LogToDeck(context.Background(), "info", "JS", "info", "recompiling "+event.Name)
 					err := jsm.CompileOne(event.Name)
 					if err != nil {
-						deck.Error("Error when recompiling " + event.Name + ": " + err.Error())
+						logging.LogToDeck(context.Background(), "error", "JS", "error", "error when recompiling "+event.Name+": "+err.Error())
 					}
 				}
 			}
@@ -227,22 +228,22 @@ func (jsm *JSManager) watchDirAndRecompile() {
 				// Check to see if this is a directory. If so, need to add watcher to directory
 				fileInfo, err := os.Stat(event.Name)
 				if err != nil {
-					deck.Error("Error when reading created file " + event.Name + ": " + err.Error())
+					logging.LogToDeck(context.Background(), "error", "JS", "error", "error when reading created file "+event.Name+": "+err.Error())
 				} else {
 					if fileInfo.IsDir() {
-						deck.Info("Watching new directory " + event.Name)
+						logging.LogToDeck(context.Background(), "info", "JS", "info", "watching new directory "+event.Name)
 						err = watcher.Add(event.Name)
 						if err != nil {
-							deck.Error("Error when adding watcher to created dir " + event.Name + ": " + err.Error())
+							logging.LogToDeck(context.Background(), "error", "JS", "error", "error when adding watcher to created dir "+event.Name+": "+err.Error())
 						}
 					}
 
 					// It's a file, so try compiling it
 					if strings.HasSuffix(event.Name, ".js") {
-						deck.Info("Recompiling " + event.Name)
+						logging.LogToDeck(context.Background(), "info", "JS", "info", "recompiling "+event.Name)
 						err := jsm.CompileOne(event.Name)
 						if err != nil {
-							deck.Error("Error when recompiling " + event.Name + ": " + err.Error())
+							logging.LogToDeck(context.Background(), "error", "JS", "error", "error when recompiling "+event.Name+": "+err.Error())
 						}
 					}
 				}
@@ -257,7 +258,7 @@ func (jsm *JSManager) watchDirAndRecompile() {
 				if ok {
 					delete(jsm.compiledScripts, event.Name)
 					delete(jsm.scripts, event.Name)
-					deck.Info("Removed compiled script " + event.Name)
+					logging.LogToDeck(context.Background(), "info", "JS", "info", "removed compiled script "+event.Name)
 				}
 
 			}
@@ -270,14 +271,14 @@ func (jsm *JSManager) watchDirAndRecompile() {
 				if ok {
 					delete(jsm.compiledScripts, event.Name)
 					delete(jsm.scripts, event.Name)
-					deck.Info("Removed compiled script " + event.Name)
+					logging.LogToDeck(context.Background(), "info", "JS", "info", "removed compiled script "+event.Name)
 				}
 				// A rename fires off a create event also, so it'll handle
 				// watcher/compilation in that block
 			}
 			continue
 		case err := <-watcher.Errors:
-			deck.Error("Error in JS filewatcher: " + err.Error())
+			logging.LogToDeck(context.Background(), "error", "JS", "error", "error in JS filewatcher: "+err.Error())
 			continue
 		}
 	}

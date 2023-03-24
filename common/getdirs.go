@@ -1,7 +1,8 @@
 package common
 
 import (
-	"github.com/google/deck"
+	"context"
+	"github.com/highgrav/taproot/v1/logging"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,7 +11,7 @@ import (
 func GetDirs(dirName string) ([]string, error) {
 	fs, err := os.ReadDir(dirName)
 	if err != nil {
-		deck.Error("Error reading " + dirName)
+		logging.LogToDeck(context.Background(), "info", "COMMON", "error", "GetDirs(): Error reading "+dirName)
 		return nil, err
 	}
 	ds := []string{}

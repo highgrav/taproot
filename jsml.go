@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/google/deck"
 	"github.com/highgrav/taproot/v1/common"
 	"github.com/highgrav/taproot/v1/languages/jsmltranspiler"
 	"github.com/highgrav/taproot/v1/logging"
@@ -68,7 +67,7 @@ func (srv *AppServer) compileOne(fileName string, srcDirName string, dstDirName 
 	relativeFileName := strings.TrimSuffix(strings.TrimPrefix(fileName, srcDirName), ".jsml") + ".js"
 	// TODO -- this is fragile if the user puts './' prefixes in their config file
 	jsFileName := filepath.Join(srv.Config.ScriptFilePath, dstDirName, relativeFileName)
-	deck.Info(fmt.Sprintf("Transpiled JSML %s, moving to %s\n", fileName, filepath.Dir(jsFileName)))
+	logging.LogToDeck(context.Background(), "info", "JSML", "info", fmt.Sprintf("transpiled JSML %s, moving to %s\n", fileName, filepath.Dir(jsFileName)))
 	// create directory path
 	err = os.MkdirAll(filepath.Dir(jsFileName), 0777) // TODO -- fileperm
 	if err != nil {
@@ -116,14 +115,14 @@ func (srv *AppServer) compileJSMLFiles(srcDirName, dstDirName string) error {
 		return nil
 	})
 	if err != nil {
-		deck.Error("Error finding JSML files: " + err.Error())
+		logging.LogToDeck(context.Background(), "error", "JSML", "error", "error finding JSML files: "+err.Error())
 		os.Exit(-310)
 	}
 	for _, script := range scripts {
 		gfSrc, err := os.ReadFile(script)
 
 		if err != nil {
-			deck.Error("Error reading JSML JSScript " + script + ": " + err.Error())
+			logging.LogToDeck(context.Background(), "error", "JSML", "error", "error reading JSML JSScript "+script+": "+err.Error())
 			if retainedError == nil {
 				retainedError = err
 			} else {
@@ -134,7 +133,7 @@ func (srv *AppServer) compileJSMLFiles(srcDirName, dstDirName string) error {
 
 		trans, err := jsmltranspiler.NewAndTranspile(sa, string(gfSrc), false)
 		if err != nil {
-			deck.Error("Error compiling JSML to JSScript " + script + ": " + err.Error())
+			logging.LogToDeck(context.Background(), "error", "JSML", "error", "error compiling JSML to JSScript "+script+": "+err.Error())
 			if retainedError == nil {
 				retainedError = err
 			} else {
@@ -144,7 +143,7 @@ func (srv *AppServer) compileJSMLFiles(srcDirName, dstDirName string) error {
 		}
 		err = trans.ToJS()
 		if err != nil {
-			deck.Error("Error compiling JSML to JSScript " + script + ": " + err.Error())
+			logging.LogToDeck(context.Background(), "error", "JSML", "error", "error compiling JSML to JSScript "+script+": "+err.Error())
 			if retainedError == nil {
 				retainedError = err
 			} else {
@@ -159,7 +158,7 @@ func (srv *AppServer) compileJSMLFiles(srcDirName, dstDirName string) error {
 		relativeFileName := strings.TrimSuffix(strings.TrimPrefix(script, srcDirName), ".jsml") + ".js"
 		// TODO -- this is fragile if the user puts './' prefixes in their config file
 		jsFileName := filepath.Join(srv.Config.ScriptFilePath, dstDirName, relativeFileName)
-		deck.Info(fmt.Sprintf("Transpiled JSML %s, moving to %s\n", script, filepath.Dir(jsFileName)))
+		logging.LogToDeck(context.Background(), "info", "JSML", "info", fmt.Sprintf("transpiled JSML %s, moving to %s\n", script, filepath.Dir(jsFileName)))
 		// create directory path
 		err = os.MkdirAll(filepath.Dir(jsFileName), 0777) // TODO -- fileperm
 		if err != nil {

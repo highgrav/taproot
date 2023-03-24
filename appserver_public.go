@@ -3,8 +3,8 @@ package taproot
 import (
 	"context"
 	"fmt"
-	"github.com/google/deck"
 	"github.com/highgrav/taproot/v1/jsrun"
+	"github.com/highgrav/taproot/v1/logging"
 	"github.com/justinas/alice"
 	"net"
 	"net/http"
@@ -69,13 +69,13 @@ func (srv *AppServer) ListenAndServeTLS(certFile, keyFile string) error {
 	srv.state.setState(SERVER_STATE_INITIALIZING)
 
 	if srv.Config.HttpServer.TLS.UseSelfSignedCert && !srv.Config.HttpServer.TLS.UseACME {
-		deck.Info("Generating self-signed certificate for serving...")
+		logging.LogToDeck(context.Background(), "info", "TAPROOT", "info", "generating self-signed certificate for serving...")
 		c, err := generateSelfSignedTlsCert()
 		if err != nil {
 			return err
 		}
 		srv.Server.Server.TLSConfig = c
-		deck.Info("Serving self-signed TLS on port ", srv.Config.HttpServer.Port)
+		logging.LogToDeck(context.Background(), "info", "TAPROOT", "info", fmt.Sprintf("serving self-signed TLS on port %d", srv.Config.HttpServer.Port))
 		srv.state.setState(SERVER_STATE_RUNNING)
 		return srv.Server.ListenAndServeTLS(certFile, keyFile)
 	}
@@ -130,12 +130,12 @@ func (srv *AppServer) ServeTLS(l net.Listener, certFile, keyFile string) error {
 	srv.state.setState(SERVER_STATE_INITIALIZING)
 
 	if srv.Config.HttpServer.TLS.UseSelfSignedCert && !srv.Config.HttpServer.TLS.UseACME {
-		deck.Info("Generating self-signed certificate for serving...")
+		logging.LogToDeck(context.Background(), "info", "TAPROOT", "info", "generating self-signed certificate for serving...")
 		c, err := generateSelfSignedTlsCert()
 		fmt.Printf("Cert count: %d\n", len(srv.Server.Server.TLSConfig.Certificates))
 
 		if err != nil {
-			deck.Fatal(err)
+			logging.LogToDeck(context.Background(), "fatal", "TAPROOT", "fatal", "tls startup failed: "+err.Error())
 			os.Exit(-222)
 		}
 		srv.Server.Server.TLSConfig = c
