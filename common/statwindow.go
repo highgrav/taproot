@@ -19,7 +19,9 @@ type StatHistogramEntry struct {
 Xile() takes a slice of time.Duration values and partition them into x number of bins, where each bin represents a range of values within the data. The function then calculates statistical information for each bin, including the minimum, maximum, and average values, as well as the number of values in each bin.
 */
 func (h StatHistogram) Xile(x int) *[]StatHistogramEntry {
-
+	if len(h) < x {
+		return &([]StatHistogramEntry{})
+	}
 	firstValidVal := -1
 	for i, v := range h {
 		if v > 0 {
@@ -28,6 +30,9 @@ func (h StatHistogram) Xile(x int) *[]StatHistogramEntry {
 		}
 	}
 	totalValid := len(h) - firstValidVal
+	if totalValid < x {
+		return &([]StatHistogramEntry{})
+	}
 	binSize := int(totalValid / x)
 	arrPtr := firstValidVal
 	if x > int(totalValid/binSize) {
