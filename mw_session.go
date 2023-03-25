@@ -120,6 +120,8 @@ func (srv *AppServer) CreateHandleSession(encryptTokens bool) alice.Constructor 
 
 			// TODO -- if a cookie or header token is expired, re-encrypt
 
+			// Reset timer on the session so it doesn't expire
+			srv.Session.KeepAlive(token.Token)
 			// Inject cookie or header data if necessary (we use the buffered response writer so we can inject headers prior to writing the response)
 			if headerVal != "" {
 				w.Header().Add(SESSION_HEADER_KEY, headerVal)

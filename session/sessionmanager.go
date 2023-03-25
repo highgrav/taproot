@@ -35,11 +35,21 @@ func (ses *SessionManager) Put(key string, val any) error {
 	if err != nil {
 		return err
 	}
-	err = ses.Store.Commit(key, encodedVal, time.Now().Add(30*time.Second))
+	err = ses.Store.Commit(key, encodedVal, time.Now().Add(ses.Lifetime))
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+/*
+KeepAlive() simply reads and writes a key back to the session store, which has the effect of resetting the session's lifetime.
+*/
+func (ses *SessionManager) KeepAlive(key string) {
+	b, err := ses.GetBytes(key)
+	if err != nil {
+		ses.Store.Commit(key, b, time.Now().Add(ses.Lifetime))
+	}
 }
 
 func (ses *SessionManager) GetBytes(key string) ([]byte, error) {

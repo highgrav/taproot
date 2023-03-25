@@ -1,5 +1,7 @@
 package authn
 
+import "time"
+
 type DomainAssertions map[string][]string
 
 type WorkgroupMembership map[string]map[string]string
@@ -40,6 +42,8 @@ type User struct {
 	RealmID                string              `json:"realmId"`
 	DomainID               string              `json:"domainId"`
 	UserID                 string              `json:"userId"`
+	SessionID              string              `json:"sessionId"`
+	SessionCreatedOn       time.Time           `json:"SessionCreatedOn"`
 	Username               string              `json:"username"`
 	DisplayName            string              `json:"displayName"`
 	Emails                 []string            `json:"emails"`
@@ -57,5 +61,7 @@ type User struct {
 }
 
 func Anonymous() User {
-	return User{}
+	return User{
+		SessionCreatedOn: time.Now(),
+	}
 }

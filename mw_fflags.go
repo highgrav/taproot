@@ -3,7 +3,6 @@ package taproot
 import (
 	"github.com/highgrav/taproot/v1/authn"
 	"github.com/highgrav/taproot/v1/constants"
-	"github.com/highgrav/taproot/v1/logging"
 	"github.com/thomaspoignant/go-feature-flag/ffuser"
 	"net/http"
 )
@@ -23,7 +22,6 @@ func (srv *AppServer) HandleFeatureFlags(next http.Handler) http.Handler {
 			ffuser.NewAnonymousUser(sessKey)
 		} else {
 			// we have a user, so let's replace their flags
-			logging.LogToDeck(ctx, "info", "FFLAG", "info", "upgrading flags from "+sessKey+" for user "+user.UserID)
 			ffuserbuilder := ffuser.NewUserBuilder(user.UserID)
 			ffuserbuilder.AddCustom("userId", user.UserID)
 			ffuserbuilder.AddCustom("realmId", user.RealmID)

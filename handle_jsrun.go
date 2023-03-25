@@ -11,6 +11,8 @@ import (
 	"github.com/highgrav/taproot/v1/constants"
 	"github.com/highgrav/taproot/v1/jsrun"
 	"github.com/highgrav/taproot/v1/logging"
+	ffclient "github.com/thomaspoignant/go-feature-flag"
+	"github.com/thomaspoignant/go-feature-flag/ffuser"
 	"io"
 	"net/http"
 	"strings"
@@ -29,6 +31,20 @@ func injectHttpRequest(r *http.Request, vm *goja.Runtime) {
 	if r.Context().Value(constants.HTTP_CONTEXT_CSP_NONCE_KEY) != nil {
 		corrID = r.Context().Value(constants.HTTP_CONTEXT_CSP_NONCE_KEY).(string)
 	}
+
+	sessionKey := ""
+	if r.Context().Value(constants.HTTP_CONTEXT_SESSION_KEY) != nil {
+		sessionKey = r.Context().Value(constants.HTTP_CONTEXT_SESSION_KEY).(string)
+	}
+
+	userKey := ""
+	if r.Context().Value(constants.HTTP_CONTEXT_USER_KEY) != nil {
+		user, ok := r.Context().Value(constants.HTTP_CONTEXT_USER_KEY).(authn.User)
+		if ok {
+			userKey = user.UserID
+		}
+	}
+
 	type requestData struct {
 		Host        string              `json:"host"`
 		Method      string              `json:"method"`
@@ -57,8 +73,25 @@ func injectHttpRequest(r *http.Request, vm *goja.Runtime) {
 	// reset the body so we're polite to the next middleware that needs to read it (there shouldn't be any!)
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyData))
 
+	flaglist := make(map[string]any)
+	if userKey != "" || sessionKey != "" {
+		var flaguser ffuser.User
+		if userKey != "" {
+			flaguser = ffuser.NewUser(userKey)
+		} else if sessionKey != "" {
+			flaguser = ffuser.NewUser(sessionKey)
+		}
+		allFlags := ffclient.AllFlagsState(flaguser)
+		for k, v := range allFlags.GetFlags() {
+			flaglist[k] = v
+		}
+	}
+
 	vm.Set("correlationId", corrID)
 	vm.Set("cspNonce", cspNonce)
+	vm.Set("sessionId", sessionKey)
+	vm.Set("userId", userKey)
+	vm.Set("flags", flaglist)
 	vm.Set("req", reqData)
 }
 
