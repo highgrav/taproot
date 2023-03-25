@@ -7,6 +7,7 @@ import (
 	"github.com/dop251/goja_nodejs/console"
 	"github.com/dop251/goja_nodejs/require"
 	"github.com/highgrav/taproot/v1/authn"
+	"github.com/highgrav/taproot/v1/common"
 	"github.com/highgrav/taproot/v1/constants"
 	"github.com/highgrav/taproot/v1/jsrun"
 	"github.com/highgrav/taproot/v1/logging"
@@ -74,12 +75,24 @@ func addJSUtilFunctor(svr *AppServer, vm *goja.Runtime) {
 }
 
 // An endpoint route that executes a compiled script identified by the path to the script, injecting various data and functions into the runtime.
-func (srv *AppServer) HandleScript(scriptKey string, customCtx *map[string]any) http.HandlerFunc {
+func (srv *AppServer) HandleScript(scriptKey string, cachedDuration int, customCtx *map[string]any) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// special case for when we have .jsml file names
 		if strings.HasSuffix(scriptKey, ".jsml") {
 			scriptKey = scriptKey[:len(scriptKey)-2]
 		}
+
+		if cachedDuration > 0 {
+			// get cached version
+			// Note that we are caching based on the JS name, not the path
+			cachedStr, ok := srv.PageCache.Get(scriptKey)
+			if ok {
+				w.WriteHeader(200)
+				w.Write([]byte(cachedStr))
+				return
+			}
+		}
+
 		script, err := srv.js.GetScript(scriptKey)
 		if err != nil {
 			logging.LogToDeck(r.Context(), "info", "JS", "error", err.Error())
@@ -131,7 +144,9 @@ func (srv *AppServer) HandleScript(scriptKey string, customCtx *map[string]any) 
 			jsrun.InjectContextDataFunctor(*customCtx, "data", vm)
 		}
 
-		jsrun.InjectJSHttpFunctor(w, r, vm)
+		bufwriter := common.NewBufferedHttpResponseWriter(w)
+
+		jsrun.InjectJSHttpFunctor(w, r, bufwriter, vm)
 		jsrun.InjectJSDBFunctor(srv.DBs, vm)
 		addJSUtilFunctor(srv, vm)
 
@@ -152,5 +167,18 @@ func (srv *AppServer) HandleScript(scriptKey string, customCtx *map[string]any) 
 		} else {
 			logging.LogToDeck(r.Context(), "info", "JS", "done", "completed "+scriptKey)
 		}
+
+		// flush bufwriter
+		if !bufwriter.IsClosed {
+			bufwriter.Flush()
+		}
+
+		if cachedDuration > 0 {
+			// cache result
+			if bufwriter.Code == 200 {
+				srv.PageCache.Put(scriptKey, bufwriter.Result.String(), cachedDuration)
+			}
+		}
+
 	}
 }

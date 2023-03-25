@@ -6,6 +6,7 @@ import (
 	"github.com/highgrav/taproot/v1/authn"
 	"github.com/highgrav/taproot/v1/cron"
 	"github.com/highgrav/taproot/v1/jsrun"
+	"github.com/highgrav/taproot/v1/pagecache"
 	"github.com/highgrav/taproot/v1/session"
 	"github.com/highgrav/taproot/v1/sse"
 	"github.com/highgrav/taproot/v1/websock"
@@ -42,6 +43,7 @@ type AppServer struct {
 	WorkHub      *workers.WorkQueue
 	CronHub      *cron.CronHub
 	SignatureMgr *authn.AuthSignerManager
+	PageCache    *pagecache.PageCache
 
 	Server *WebServer
 	// These are embedded mini-servers for various admin tasks

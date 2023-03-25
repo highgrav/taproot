@@ -2,23 +2,30 @@ package jsrun
 
 import (
 	"github.com/dop251/goja"
+	"github.com/highgrav/taproot/v1/common"
 	"net/http"
 )
 
-func InjectJSHttpFunctor(w http.ResponseWriter, r *http.Request, vm *goja.Runtime) {
+func InjectJSHttpFunctor(w http.ResponseWriter, r *http.Request, bufwriter *common.BufferedHttpResponseWriter, vm *goja.Runtime) {
 	obj := vm.NewObject()
 
 	writeToHttp := func(val goja.Value) {
 		exp := val.String()
 
-		_, err := w.Write([]byte(exp))
+		_, err := bufwriter.Write([]byte(exp))
 		if err != nil {
 			// TODO
 		}
 	}
 
 	writeRespCode := func(val goja.Value) {
+		// TODO -- handle error
+		bufwriter.Code = int(val.ToInteger())
 		w.WriteHeader(int(val.ToInteger()))
+	}
+
+	flush := func() {
+		bufwriter.Flush()
 	}
 
 	redirect := func(val goja.Value) {
@@ -26,6 +33,7 @@ func InjectJSHttpFunctor(w http.ResponseWriter, r *http.Request, vm *goja.Runtim
 	}
 
 	obj.Set("write", writeToHttp)
+	obj.Set("flush", flush)
 	obj.Set("redirect", redirect)
 	obj.Set("responseCode", writeRespCode)
 	obj.Set("isLoaded", true)

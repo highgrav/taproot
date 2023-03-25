@@ -14,3 +14,4 @@
 - Remove STDOUT deck logging and place the responsibility on the embedding app?
 - Re-encrypt session keys for headers and cookies in order to prevent time-outs (this can be handled in the middleware code)
 - Websockets
+- Flush the static page cache when a watched JS file is recompiled

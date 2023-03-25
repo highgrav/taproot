@@ -17,13 +17,17 @@ var (
 	ErrScriptNotFound = errors.New("Script not found!")
 )
 
+type JSRunOnFileEventFn func(string)
+
 type JSManager struct {
-	watchDir        chan bool
-	fileDir         string
-	fileDirs        []string
-	compileMu       sync.Mutex
-	scripts         map[string]string
-	compiledScripts map[string]*goja.Program
+	watchDir         chan bool
+	fileDir          string
+	fileDirs         []string
+	compileMu        sync.Mutex
+	scripts          map[string]string
+	compiledScripts  map[string]*goja.Program
+	fnRunOnRecompile JSRunOnFileEventFn
+	fnRunOnDelete    JSRunOnFileEventFn
 }
 
 func (jsm *JSManager) GetScriptText(key string) (string, error) {
@@ -50,7 +54,7 @@ func (jsm *JSManager) GetScript(key string) (*goja.Program, error) {
 	return v, nil
 }
 
-func New(dir string) (*JSManager, error) {
+func New(dir string, runOnRecompile, runOnDelete JSRunOnFileEventFn) (*JSManager, error) {
 	s, err := os.Stat(dir)
 	if err != nil {
 		return nil, err
@@ -60,6 +64,8 @@ func New(dir string) (*JSManager, error) {
 	}
 
 	jsm := &JSManager{}
+	jsm.fnRunOnDelete = runOnDelete
+	jsm.fnRunOnRecompile = runOnRecompile
 	jsm.fileDir = dir
 	jsm.watchDir = make(chan bool)
 	jsm.compiledScripts = make(map[string]*goja.Program)
@@ -220,6 +226,7 @@ func (jsm *JSManager) watchDirAndRecompile() {
 					if err != nil {
 						logging.LogToDeck(context.Background(), "error", "JS", "error", "error when recompiling "+event.Name+": "+err.Error())
 					}
+					jsm.fnRunOnRecompile(event.Name)
 				}
 			}
 
@@ -245,6 +252,7 @@ func (jsm *JSManager) watchDirAndRecompile() {
 						if err != nil {
 							logging.LogToDeck(context.Background(), "error", "JS", "error", "error when recompiling "+event.Name+": "+err.Error())
 						}
+						jsm.fnRunOnRecompile(event.Name)
 					}
 				}
 			}
@@ -259,6 +267,7 @@ func (jsm *JSManager) watchDirAndRecompile() {
 					delete(jsm.compiledScripts, event.Name)
 					delete(jsm.scripts, event.Name)
 					logging.LogToDeck(context.Background(), "info", "JS", "info", "removed compiled script "+event.Name)
+					jsm.fnRunOnDelete(event.Name)
 				}
 
 			}
@@ -272,6 +281,7 @@ func (jsm *JSManager) watchDirAndRecompile() {
 					delete(jsm.compiledScripts, event.Name)
 					delete(jsm.scripts, event.Name)
 					logging.LogToDeck(context.Background(), "info", "JS", "info", "removed compiled script "+event.Name)
+					jsm.fnRunOnDelete(event.Name)
 				}
 				// A rename fires off a create event also, so it'll handle
 				// watcher/compilation in that block

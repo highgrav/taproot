@@ -13,6 +13,7 @@ import (
 	"github.com/highgrav/taproot/v1/cron"
 	"github.com/highgrav/taproot/v1/jsrun"
 	"github.com/highgrav/taproot/v1/logging"
+	"github.com/highgrav/taproot/v1/pagecache"
 	"github.com/highgrav/taproot/v1/session"
 	"github.com/highgrav/taproot/v1/workers"
 	"github.com/julienschmidt/httprouter"
@@ -109,6 +110,9 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 	s.Session.Lifetime = (time.Duration(s.Config.Sessions.LifetimeInMins) * time.Minute)
 	s.Session.ErrorFunc = s.handleSessionError
 
+	//set up page cache
+	s.PageCache = pagecache.NewPageCache()
+
 	// Set up our security policy authorizer
 	sa := acacia.NewPolicyManager()
 	s.Acacia = sa
@@ -129,7 +133,7 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 	}
 
 	// set up our JS manager
-	js, err := jsrun.New(cfg.ScriptFilePath)
+	js, err := jsrun.New(cfg.ScriptFilePath, s.removePageCacheEntry, s.removePageCacheEntry)
 	if err != nil {
 		logging.LogToDeck(context.Background(), "fatal", "TAPROOT", "startup", err.Error())
 		os.Exit(-1)
@@ -137,7 +141,7 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 	s.js = js
 
 	s.Router = httprouter.New()
-	s.Router.SaveMatchedRoutePath = true // necessary to get the matched path back for Acacia Acacia
+	s.Router.SaveMatchedRoutePath = true // necessary to get the matched path back for Acacia
 	s.Server = &WebServer{}
 	s.Server.Server = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", cfg.HttpServer.ServerName, cfg.HttpServer.Port),

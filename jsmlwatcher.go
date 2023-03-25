@@ -80,55 +80,63 @@ func (srv *AppServer) monitorJSMLDirectories(srcDirName, dstDirName string) {
 				// We can't fstat a removed file, so...
 				// Try to remove watcher from directory
 				watcher.Remove(event.Name)
-				// Try to delete the filename from destination directory
-				fileName, err := common.FindRelocatedFile(dstDirName, event.Name[:len(event.Name)-2])
-				if err != nil {
-					logging.LogToDeck(context.Background(), "error", "JSML", "error", "could not locate file "+event.Name[:len(event.Name)-2])
-					return
-				}
-				st, err := os.Stat(fileName)
-				if err != nil {
-					logging.LogToDeck(context.Background(), "error", "JSML", "error", "could not stat file "+event.Name[:len(event.Name)-2])
-					return
-				}
-				if st.IsDir() {
-					logging.LogToDeck(context.Background(), "error", "JSML", "error", "tried to recompile directory "+event.Name[:len(event.Name)-2])
-					return
-				}
-				logging.LogToDeck(context.Background(), "info", "JSML", "info", "deleting file "+fileName)
-				err = os.Remove(fileName)
-				if err != nil {
-					logging.LogToDeck(context.Background(), "error", "JSML", "error", "could not delete "+event.Name[:len(event.Name)-2]+": "+err.Error())
-					return
+				// TODO handle directories
+
+				if strings.HasSuffix(event.Name, ".jsml") {
+					// Try to delete the filename from destination directory
+					fileName, err := common.FindRelocatedFile(dstDirName, event.Name[:len(event.Name)-2])
+					if err != nil {
+						logging.LogToDeck(context.Background(), "error", "JSML", "error", "could not locate file to delete "+event.Name[:len(event.Name)-2])
+						return
+					}
+					st, err := os.Stat(fileName)
+					if err != nil {
+						logging.LogToDeck(context.Background(), "error", "JSML", "error", "could not stat file "+event.Name[:len(event.Name)-2])
+						return
+					}
+					if st.IsDir() {
+						logging.LogToDeck(context.Background(), "error", "JSML", "error", "tried to recompile directory "+event.Name[:len(event.Name)-2])
+						return
+					}
+					logging.LogToDeck(context.Background(), "info", "JSML", "info", "deleting file "+fileName)
+					err = os.Remove(fileName)
+					if err != nil {
+						logging.LogToDeck(context.Background(), "error", "JSML", "error", "could not delete "+event.Name[:len(event.Name)-2]+": "+err.Error())
+						return
+					}
 				}
 			}
 			if event.Op&fsnotify.Rename == fsnotify.Rename {
 				// We can't fstat a renamed file either, so...
 				// Try to remove watcher from directory
 				watcher.Remove(event.Name)
-				// Try to delete the filename from destination
-				fileName, err := common.FindRelocatedFile(dstDirName, event.Name[:len(event.Name)-2])
-				if err != nil {
-					logging.LogToDeck(context.Background(), "error", "JSML", "error", "could not locate file "+event.Name[:len(event.Name)-2])
-					return
+				// TODO -- handle directory
+
+				if strings.HasSuffix(event.Name, ".jsml") {
+					// Try to delete the filename from destination
+					fileName, err := common.FindRelocatedFile(dstDirName, event.Name[:len(event.Name)-2])
+					if err != nil {
+						logging.LogToDeck(context.Background(), "error", "JSML", "error", "could not locate file to delete for rename "+event.Name[:len(event.Name)-2])
+						return
+					}
+					st, err := os.Stat(fileName)
+					if err != nil {
+						logging.LogToDeck(context.Background(), "error", "JSML", "error", "could not stat file "+event.Name[:len(event.Name)-2])
+						return
+					}
+					if st.IsDir() {
+						logging.LogToDeck(context.Background(), "error", "JSML", "error", "tried to recompile directory "+event.Name[:len(event.Name)-2])
+						return
+					}
+					logging.LogToDeck(context.Background(), "info", "JSML", "info", "deleting file "+fileName)
+					err = os.Remove(fileName)
+					if err != nil {
+						logging.LogToDeck(context.Background(), "error", "JSML", "error", "could not delete "+event.Name[:len(event.Name)-2]+": "+err.Error())
+						return
+					}
+					// A rename fires off a create event also, so it'll handle
+					// watcher/compilation in that block
 				}
-				st, err := os.Stat(fileName)
-				if err != nil {
-					logging.LogToDeck(context.Background(), "error", "JSML", "error", "could not stat file "+event.Name[:len(event.Name)-2])
-					return
-				}
-				if st.IsDir() {
-					logging.LogToDeck(context.Background(), "error", "JSML", "error", "tried to recompile directory "+event.Name[:len(event.Name)-2])
-					return
-				}
-				logging.LogToDeck(context.Background(), "info", "JSML", "info", "deleting file "+fileName)
-				err = os.Remove(fileName)
-				if err != nil {
-					logging.LogToDeck(context.Background(), "error", "JSML", "error", "could not delete "+event.Name[:len(event.Name)-2]+": "+err.Error())
-					return
-				}
-				// A rename fires off a create event also, so it'll handle
-				// watcher/compilation in that block
 			}
 			continue
 		case err := <-watcher.Errors:

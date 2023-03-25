@@ -66,7 +66,8 @@ func (srv *AppServer) compileOne(fileName string, srcDirName string, dstDirName 
 	// Output the compiled file
 	relativeFileName := strings.TrimSuffix(strings.TrimPrefix(fileName, srcDirName), ".jsml") + ".js"
 	// TODO -- this is fragile if the user puts './' prefixes in their config file
-	jsFileName := filepath.Join(srv.Config.ScriptFilePath, dstDirName, relativeFileName)
+	// TODO srv.Config.ScriptFilePath,
+	jsFileName := filepath.Join(dstDirName, relativeFileName)
 	logging.LogToDeck(context.Background(), "info", "JSML", "info", fmt.Sprintf("transpiled JSML %s, moving to %s\n", fileName, filepath.Dir(jsFileName)))
 	// create directory path
 	err = os.MkdirAll(filepath.Dir(jsFileName), 0777) // TODO -- fileperm
@@ -157,7 +158,8 @@ func (srv *AppServer) compileJSMLFiles(srcDirName, dstDirName string) error {
 		// Output the compiled file
 		relativeFileName := strings.TrimSuffix(strings.TrimPrefix(script, srcDirName), ".jsml") + ".js"
 		// TODO -- this is fragile if the user puts './' prefixes in their config file
-		jsFileName := filepath.Join(srv.Config.ScriptFilePath, dstDirName, relativeFileName)
+		// TODO srv.Config.ScriptFilePath,
+		jsFileName := filepath.Join(dstDirName, relativeFileName)
 		logging.LogToDeck(context.Background(), "info", "JSML", "info", fmt.Sprintf("transpiled JSML %s, moving to %s\n", script, filepath.Dir(jsFileName)))
 		// create directory path
 		err = os.MkdirAll(filepath.Dir(jsFileName), 0777) // TODO -- fileperm
