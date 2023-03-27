@@ -107,7 +107,8 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 	// set up sessions
 	logging.LogToDeck(context.Background(), "info", "TAPROOT", "startup", "Setting up sessions...")
 	s.Session = session.NewSessionManager(sessionStore)
-	s.Session.Lifetime = (time.Duration(s.Config.Sessions.LifetimeInMins) * time.Minute)
+	s.Session.Lifetime = (time.Duration(s.Config.Sessions.IdleTimeoutInMins) * time.Minute)
+	s.Session.MaxLifetime = (time.Duration(s.Config.Sessions.LifetimeInMins) * time.Minute)
 	s.Session.ErrorFunc = s.handleSessionError
 
 	//set up page cache

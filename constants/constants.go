@@ -1,6 +1,9 @@
 package constants
 
 const (
+	// Context key for IP locations
+	HTTP_CONTEXT_IPCOUNTRY_KEY string = "taproot--app-ipcountryloc"
+
 	// Context key for the tracing correlation ID
 	HTTP_CONTEXT_CORRELATION_KEY string = "taproot--app-corr-id"
 

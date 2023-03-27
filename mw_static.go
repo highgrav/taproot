@@ -8,7 +8,6 @@ import (
 )
 
 func (srv *AppServer) HandleStaticFiles(next http.Handler) http.Handler {
-
 	s, err := os.Stat(srv.Config.StaticFilePath)
 	if err != nil {
 		panic(err)
@@ -25,12 +24,12 @@ func (srv *AppServer) HandleStaticFiles(next http.Handler) http.Handler {
 				http.NotFound(w, r)
 				return
 			}
-
 			spath := strings.TrimPrefix(r.URL.Path, srv.Config.StaticUrlPath)
 			surl, err := url.Parse(spath)
 			if err != nil {
 				panic(err)
 			}
+			// TODO -- cache access here
 			r2 := r.Clone(r.Context())
 			r2.URL = surl
 			http.FileServer(staticFs).ServeHTTP(w, r2)

@@ -37,6 +37,7 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/thomaspoignant/go-feature-flag v1.6.0 // indirect
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce // indirect
+	github.com/x-way/crawlerdetect v0.2.18 // indirect
 	golang.org/x/crypto v0.6.0 // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 	golang.org/x/net v0.8.0 // indirect

@@ -8,6 +8,9 @@ import (
 	"github.com/highgrav/taproot/v1/constants"
 	"github.com/highgrav/taproot/v1/logging"
 	"github.com/justinas/alice"
+	"github.com/phuslu/iploc"
+	"github.com/tomasen/realip"
+	"net"
 	"net/http"
 	"time"
 )
@@ -24,7 +27,9 @@ rehydrate the session from there.
 func (srv *AppServer) CreateHandleSession(encryptTokens bool) alice.Constructor {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			countryLoc := iploc.Country(net.ParseIP(realip.FromRequest(r)))
 			ctx := r.Context()
+			ctx = context.WithValue(ctx, constants.HTTP_CONTEXT_IPCOUNTRY_KEY, string(countryLoc))
 			var user authn.User
 			var cookieVal string
 			var headerVal string

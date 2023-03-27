@@ -99,20 +99,50 @@ func (pm *PolicyManager) Apply(ctx context.Context, route string, request *Right
 		Metadata: make(map[string]string),
 	}
 
+	// TODO -- check to see if any wildcard directories exist
+	var allQuams []*quamina.Quamina = make([]*quamina.Quamina, 0)
+	var allMatches []quamina.X = make([]quamina.X, 0)
+	var allPatterns []string = []string{route}
+	{
+		routeElems := strings.Split(route, "/")
+		// /foo/bar/123 == len(3)
+		for x := len(routeElems); x > 0; x-- {
+			subroute := (strings.Join(routeElems[:x-1], "/") + "/*")
+			// there's a more elegant way to do this, surely.
+			if subroute == "//*" {
+				subroute = "/*"
+			}
+			allPatterns = append(allPatterns, subroute)
+		}
+	}
+	var foundMatch bool
+
+	for x := 0; x < len(allPatterns); x++ {
+		routeQ, ok := pm.patterns[allPatterns[x]]
+		if ok {
+			allQuams = append(allQuams, routeQ)
+			foundMatch = true
+		}
+	}
 	// route not registered
-	q, ok := pm.patterns[route]
-	if !ok {
+	if !foundMatch {
 		logging.LogToDeck(ctx, "error", "ACAC", "error", "attempted to call Acacia on unbound route "+route)
 		return rr, nil
 	}
+
 	js, err := json.Marshal(*request)
 	if err != nil {
 		return rr, err
 	}
 
-	resps, err := q.MatchesForEvent(js)
-	if err != nil {
-		return rr, err
+	for _, q := range allQuams {
+		resps, err := q.MatchesForEvent(js)
+		if err != nil {
+			return rr, err
+		}
+		for _, r := range resps {
+			allMatches = append(allMatches, r)
+		}
 	}
 
 	responses := make(map[int]RightCodeResponse)
@@ -124,7 +154,7 @@ func (pm *PolicyManager) Apply(ctx context.Context, route string, request *Right
 	topRedirPri := -999999
 	topApprovalPri := -999999
 
-	for _, resp_id := range resps {
+	for _, resp_id := range allMatches {
 		resp, ok := pm.policies[resp_id.(string)]
 		if !ok {
 			return rr, errors.New("could not access policy ID " + resp_id.(string))

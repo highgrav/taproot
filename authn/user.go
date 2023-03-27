@@ -1,6 +1,10 @@
 package authn
 
-import "time"
+import (
+	"github.com/highgrav/taproot/v1/constants"
+	"net/http"
+	"time"
+)
 
 type DomainAssertions map[string][]string
 
@@ -64,4 +68,12 @@ func Anonymous() User {
 	return User{
 		SessionCreatedOn: time.Now(),
 	}
+}
+
+func GetUserFromRequest(r *http.Request) (User, error) {
+	user, ok := r.Context().Value(constants.HTTP_CONTEXT_USER_KEY).(User)
+	if !ok {
+		return Anonymous(), ErrUserNotAuthenticated
+	}
+	return user, nil
 }

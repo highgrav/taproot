@@ -10,11 +10,17 @@ import (
 )
 
 func LogToDeck(ctx context.Context, crit, app, level, msg string) {
+
 	corrId, ok := ctx.Value(constants.HTTP_CONTEXT_CORRELATION_KEY).(string)
 	if !ok {
 		corrId = "-"
 	}
-	val := fmt.Sprintf("%s\t%s\t%s\t%s", app, level, corrId, msg)
+	sessionId, ok := ctx.Value(constants.HTTP_CONTEXT_SESSION_KEY).(string)
+	if !ok {
+		sessionId = "-"
+	}
+
+	val := fmt.Sprintf("%s\t%s\t%s\t%s\t%s", app, level, corrId, sessionId, msg)
 	if strings.ToLower(crit) == "info" {
 		deck.Info(val)
 	} else if strings.ToLower(crit) == "error" {
@@ -26,6 +32,7 @@ func LogToDeck(ctx context.Context, crit, app, level, msg string) {
 	} else {
 		deck.Info(val)
 	}
+
 }
 
 func LogString(crit, msg string) {

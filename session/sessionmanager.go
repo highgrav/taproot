@@ -9,10 +9,11 @@ import (
 type SessionErrorFunc func(http.ResponseWriter, *http.Request, error)
 
 type SessionManager struct {
-	Lifetime  time.Duration
-	Store     IStore
-	ErrorFunc SessionErrorFunc
-	Codec     ICodec
+	Lifetime    time.Duration // max idle time
+	MaxLifetime time.Duration // absolute max session time
+	Store       IStore
+	ErrorFunc   SessionErrorFunc
+	Codec       ICodec
 }
 
 func NewSessionManager(store IStore) *SessionManager {

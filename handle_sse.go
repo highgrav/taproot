@@ -1,6 +1,7 @@
 package taproot
 
 import (
+	"github.com/highgrav/taproot/v1/authn"
 	"github.com/highgrav/taproot/v1/sse"
 	"net/http"
 	"time"
@@ -18,7 +19,8 @@ func (srv *AppServer) HandleSSE(brokerName string, autoTimeoutMinutes int) http.
 		}
 		timer := time.NewTimer(time.Duration(autoTimeoutMinutes) * time.Minute)
 		broker, ok := srv.SSEHubs[brokerName]
-		user := srv.GetUserFromRequest(r)
+		user, _ := authn.GetUserFromRequest(r)
+
 		if !ok {
 			// return error
 			srv.ErrorResponse(w, r, 500, "message source not available")
