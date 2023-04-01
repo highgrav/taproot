@@ -276,7 +276,8 @@ func (tr *Transpiler) dispatchGoOutCloseTag(node jsmlparser.ParseNode) error {
 
 // <go.val>
 func (tr *Transpiler) dispatchGoValOpenTag(node jsmlparser.ParseNode) error {
-	tr.modes = append(tr.modes, transpModeInterpolatedOutput)
+	tr.modes = append(tr.modes, transpModeDirectOutput)
+	tr.output.Write([]byte("out.write("))
 	for _, c := range node.Children {
 		err := tr.dispatchToJS(c)
 		if err != nil {
@@ -287,7 +288,8 @@ func (tr *Transpiler) dispatchGoValOpenTag(node jsmlparser.ParseNode) error {
 }
 
 func (tr *Transpiler) dispatchGoValCloseTag(node jsmlparser.ParseNode) error {
-	if tr.modes[len(tr.modes)-1] != transpModeInterpolatedOutput {
+	tr.output.Write([]byte(");\n"))
+	if tr.modes[len(tr.modes)-1] != transpModeDirectOutput {
 		return errors.New("attempted to close a <go.val/> tag while not processing output")
 	}
 	tr.modes = tr.modes[:len(tr.modes)-1]

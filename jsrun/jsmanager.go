@@ -28,6 +28,34 @@ type JSManager struct {
 	compiledScripts  map[string]*goja.Program
 	fnRunOnRecompile JSRunOnFileEventFn
 	fnRunOnDelete    JSRunOnFileEventFn
+	Dependencies     JSDependencies
+}
+
+func New(dir string, runOnRecompile, runOnDelete JSRunOnFileEventFn) (*JSManager, error) {
+	s, err := os.Stat(dir)
+	if err != nil {
+		return nil, err
+	}
+	if !s.IsDir() {
+		return nil, errors.New(dir + " is not a directory")
+	}
+
+	jsm := &JSManager{}
+	jsm.Dependencies = JSDependencies{
+		importingScripts: make(map[string][]string),
+	}
+	jsm.fnRunOnDelete = runOnDelete
+	jsm.fnRunOnRecompile = runOnRecompile
+	jsm.fileDir = dir
+	jsm.watchDir = make(chan bool)
+	jsm.compiledScripts = make(map[string]*goja.Program)
+	jsm.scripts = make(map[string]string)
+	err = jsm.CompileAll()
+	go jsm.watchDirAndRecompile()
+	if err != nil {
+		return nil, err
+	}
+	return jsm, nil
 }
 
 func (jsm *JSManager) GetScriptText(key string) (string, error) {
@@ -52,30 +80,6 @@ func (jsm *JSManager) GetScript(key string) (*goja.Program, error) {
 		return nil, errors.New("Script '" + key + "' not found for path " + fullKey + "!")
 	}
 	return v, nil
-}
-
-func New(dir string, runOnRecompile, runOnDelete JSRunOnFileEventFn) (*JSManager, error) {
-	s, err := os.Stat(dir)
-	if err != nil {
-		return nil, err
-	}
-	if !s.IsDir() {
-		return nil, errors.New(dir + " is not a directory")
-	}
-
-	jsm := &JSManager{}
-	jsm.fnRunOnDelete = runOnDelete
-	jsm.fnRunOnRecompile = runOnRecompile
-	jsm.fileDir = dir
-	jsm.watchDir = make(chan bool)
-	jsm.compiledScripts = make(map[string]*goja.Program)
-	jsm.scripts = make(map[string]string)
-	err = jsm.CompileAll()
-	go jsm.watchDirAndRecompile()
-	if err != nil {
-		return nil, err
-	}
-	return jsm, nil
 }
 
 // Compiles all the scripts under the source directory

@@ -24,6 +24,7 @@ const (
 )
 
 type Transpiler struct {
+	ID              string
 	scriptAccessor  IScriptAccessor
 	tree            *jsmlparser.ParseNode
 	output          strings.Builder
@@ -35,8 +36,17 @@ type Transpiler struct {
 	modes []transpMode
 }
 
-func NewAndTranspile(accessor IScriptAccessor, script string, displayComments bool) (Transpiler, error) {
+func (t *Transpiler) GetImports() []string {
+	re := make([]string, 0)
+	for k, _ := range t.imports {
+		re = append(re, k)
+	}
+	return re
+}
+
+func NewAndTranspile(scriptId string, accessor IScriptAccessor, script string, displayComments bool) (Transpiler, error) {
 	t := Transpiler{
+		ID:              scriptId,
 		DisplayComments: displayComments,
 		tree:            nil,
 		imports:         make(map[string]string),
@@ -183,7 +193,7 @@ func (tr *Transpiler) getInclude(id string, node jsmlparser.ParseNode) (string, 
 		newErr = errors.Join(newErr, err)
 		return "", newErr
 	}
-	compiledTr, err := NewAndTranspile(tr.scriptAccessor, script, tr.DisplayComments)
+	compiledTr, err := NewAndTranspile(id, tr.scriptAccessor, script, tr.DisplayComments)
 	if err != nil {
 		newErr := tr.throwError(node, "failed to compile included script '"+id+"'")
 		newErr = errors.Join(newErr, err)

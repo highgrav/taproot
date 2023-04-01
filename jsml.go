@@ -52,13 +52,18 @@ func (srv *AppServer) compileOne(fileName string, srcDirName string, dstDirName 
 		return err
 	}
 
-	trans, err := jsmltranspiler.NewAndTranspile(sa, string(gfSrc), false)
+	trans, err := jsmltranspiler.NewAndTranspile(strings.TrimPrefix(fileName, srcDirName), sa, string(gfSrc), false)
 	if err != nil {
 		return err
 	}
 	err = trans.ToJS()
 	if err != nil {
 		return err
+	}
+
+	// update the import list
+	for _, imp := range trans.GetImports() {
+		srv.js.Dependencies.AddDependency(imp, trans.ID)
 	}
 
 	jsSrc := trans.Builder().String()
@@ -132,7 +137,7 @@ func (srv *AppServer) compileJSMLFiles(srcDirName, dstDirName string) error {
 			continue
 		}
 
-		trans, err := jsmltranspiler.NewAndTranspile(sa, string(gfSrc), false)
+		trans, err := jsmltranspiler.NewAndTranspile(script, sa, string(gfSrc), false)
 		if err != nil {
 			logging.LogToDeck(context.Background(), "error", "JSML", "error", "error compiling JSML to JSScript "+script+": "+err.Error())
 			if retainedError == nil {
@@ -153,14 +158,19 @@ func (srv *AppServer) compileJSMLFiles(srcDirName, dstDirName string) error {
 			continue
 		}
 
+		// update the import list
+		for _, imp := range trans.GetImports() {
+			srv.js.Dependencies.AddDependency(imp, trans.ID)
+		}
+
 		jsSrc := trans.Builder().String()
 
 		// Output the compiled file
 		relativeFileName := strings.TrimSuffix(strings.TrimPrefix(script, srcDirName), ".jsml") + ".js"
 		// TODO -- this is fragile if the user puts './' prefixes in their config file
 		// TODO srv.Config.ScriptFilePath,
-		jsFileName := filepath.Join(dstDirName, relativeFileName)
-		logging.LogToDeck(context.Background(), "info", "JSML", "info", fmt.Sprintf("transpiled JSML %s, moving to %s\n", script, filepath.Dir(jsFileName)))
+		jsFileName := filepath.Join(srv.Config.ScriptFilePath, dstDirName, relativeFileName)
+		logging.LogToDeck(context.Background(), "info", "JSML", "info", fmt.Sprintf("transpiled initial JSML %s, moving to %s\n", script, filepath.Dir(jsFileName)))
 		// create directory path
 		err = os.MkdirAll(filepath.Dir(jsFileName), 0777) // TODO -- fileperm
 		if err != nil {

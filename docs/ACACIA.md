@@ -11,6 +11,37 @@ and JSON that will be matched against the HTTP request's context.
 
 Taproot uses `github.com/timbray/quamina` to handle high-speed JSON matching for policies.
 
+The `<allow/>` tag adds rights to the `http.Request.Context()`:
+~~~
+<allow>
+"crm.search.self"
+"crm.read"
+</allow>
+~~~
+
+The `<deny/>` tag removes rights that might have been injected from any lower-priority policy:
+~~~
+<deny>
+"crm.search.all"
+"crm.write"
+"crm.create"
+"crm.delete"
+"crm.admin"
+</deny>
+~~~
+
+The `<redirect/>` tag redirects the user to a specific page:
+~~~
+<redirect>"/user/read/crm/:id"</redirect>
+~~~
+
+The `<return/>` and `<returncode/>` tags send back an HTTP response:
+~~~
+<return>User not allowed</return>
+<returncode>300</returncode>
+~~~
+
+
 ### Sample Acacia Policies
 
 The following policy simply checks to see if a user is logged in, and redirects them to a login page if not:

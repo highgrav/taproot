@@ -32,11 +32,21 @@ func InjectJSHttpFunctor(w http.ResponseWriter, r *http.Request, bufwriter *comm
 		http.Redirect(w, r, val.String(), http.StatusSeeOther)
 	}
 
+	setHeader := func(name, value string) {
+		w.Header().Set(name, value)
+	}
+
+	getHeader := func(name string) string {
+		return r.Header.Get(name)
+	}
+
 	obj.Set("write", writeToHttp)
 	obj.Set("flush", flush)
 	obj.Set("redirect", redirect)
 	obj.Set("responseCode", writeRespCode)
 	obj.Set("isLoaded", true)
+	obj.Set("setHeader", setHeader)
+	obj.Set("getHeader", getHeader)
 	vm.Set("http", obj)
 
 	// The default output should always be accessible via out.write()

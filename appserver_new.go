@@ -10,6 +10,7 @@ import (
 	"github.com/google/deck/backends/logger"
 	"github.com/highgrav/taproot/v1/acacia"
 	"github.com/highgrav/taproot/v1/authn"
+	"github.com/highgrav/taproot/v1/authtoken"
 	"github.com/highgrav/taproot/v1/cron"
 	"github.com/highgrav/taproot/v1/jsrun"
 	"github.com/highgrav/taproot/v1/logging"
@@ -66,7 +67,7 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 	if graceDur == 0 {
 		graceDur = 1 * time.Hour
 	}
-	s.SignatureMgr = authn.NewAuthSignerManager(keyDur, graceDur)
+	s.SignatureMgr = authtoken.NewAuthSignerManager(keyDur, graceDur)
 
 	logging.LogToDeck(context.Background(), "info", "TAPROOT", "startup", "Setting up async work hub")
 	wh, err := workers.New(cfg.WorkHub.Name, cfg.WorkHub.StorageDir, cfg.WorkHub.SegmentSize)
@@ -123,6 +124,14 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 		panic(err)
 	}
 
+	// set up our JS manager
+	js, err := jsrun.New(cfg.ScriptFilePath, s.removePageCacheEntry, s.removePageCacheEntry)
+	if err != nil {
+		logging.LogToDeck(context.Background(), "fatal", "TAPROOT", "startup", err.Error())
+		os.Exit(-1)
+	}
+	s.js = js
+
 	if s.Config.UseJSML {
 		err = s.compileJSMLFiles(s.Config.JSMLFilePath, s.Config.JSMLCompiledFilePath)
 		if err != nil {
@@ -132,14 +141,6 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 		// Start monitoring of JSML files (we feed in the JSML file path to monitor, and the script->JSML compilation path for file deletion)
 		go s.monitorJSMLDirectories(s.Config.JSMLFilePath, filepath.Join(s.Config.ScriptFilePath, s.Config.JSMLCompiledFilePath))
 	}
-
-	// set up our JS manager
-	js, err := jsrun.New(cfg.ScriptFilePath, s.removePageCacheEntry, s.removePageCacheEntry)
-	if err != nil {
-		logging.LogToDeck(context.Background(), "fatal", "TAPROOT", "startup", err.Error())
-		os.Exit(-1)
-	}
-	s.js = js
 
 	s.Router = httprouter.New()
 	s.Router.SaveMatchedRoutePath = true // necessary to get the matched path back for Acacia

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"github.com/highgrav/taproot/v1/acacia"
 	"github.com/highgrav/taproot/v1/authn"
+	"github.com/highgrav/taproot/v1/authtoken"
 	"github.com/highgrav/taproot/v1/cron"
 	"github.com/highgrav/taproot/v1/jsrun"
 	"github.com/highgrav/taproot/v1/pagecache"
@@ -42,7 +43,7 @@ type AppServer struct {
 	WSHubs       map[string]*websock.WSHub
 	WorkHub      *workers.WorkQueue
 	CronHub      *cron.CronHub
-	SignatureMgr *authn.AuthSignerManager
+	SignatureMgr *authtoken.AuthSignerManager
 	PageCache    *pagecache.PageCache
 
 	Server *WebServer

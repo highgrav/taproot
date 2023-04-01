@@ -1,4 +1,4 @@
-package authn
+package authtoken
 
 import "time"
 

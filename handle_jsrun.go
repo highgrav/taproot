@@ -11,6 +11,7 @@ import (
 	"github.com/highgrav/taproot/v1/constants"
 	"github.com/highgrav/taproot/v1/jsrun"
 	"github.com/highgrav/taproot/v1/logging"
+	"github.com/julienschmidt/httprouter"
 	ffclient "github.com/thomaspoignant/go-feature-flag"
 	"github.com/thomaspoignant/go-feature-flag/ffuser"
 	"io"
@@ -49,11 +50,13 @@ func injectHttpRequest(r *http.Request, vm *goja.Runtime) {
 		Host        string              `json:"host"`
 		Method      string              `json:"method"`
 		URL         string              `json:"url"`
+		Params      map[string]string   `json:"params"`
 		QueryString string              `json:"query"`
 		Body        string              `json:"body"`
 		Form        map[string][]string `json:"form"`
 	}
 	reqData := requestData{}
+	reqData.Params = make(map[string]string)
 	r.ParseForm()
 	reqData.Host = r.Host
 	reqData.Method = r.Method
@@ -64,6 +67,12 @@ func injectHttpRequest(r *http.Request, vm *goja.Runtime) {
 		formElems[key] = val
 	}
 	reqData.Form = formElems
+
+	// get URL paramters
+	ps := httprouter.ParamsFromContext(r.Context())
+	for _, p := range ps {
+		reqData.Params[p.Key] = p.Value
+	}
 
 	// Get the body
 	bodyData, err := io.ReadAll(r.Body)
@@ -92,7 +101,7 @@ func injectHttpRequest(r *http.Request, vm *goja.Runtime) {
 	vm.Set("sessionId", sessionKey)
 	vm.Set("userId", userKey)
 	vm.Set("flags", flaglist)
-	vm.Set("req", reqData)
+	vm.Set("request", reqData)
 }
 
 // Injects some utility functions into the JS runtime

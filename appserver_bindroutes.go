@@ -23,7 +23,11 @@ func (srv *AppServer) bindRoutes() http.Handler {
 	dmw := alice.New()
 	for _, rb := range srv.routes {
 		logging.LogToDeck(context.Background(), "info", "TAPROOT", "startup", "Setting route "+rb.Route)
-		srv.Router.Handler(rb.Method, rb.Route, dmw.Then(srv.handleLocalMetrics(rb.Handler)))
+		if rb.Method != "" {
+			srv.Router.Handler(rb.Method, rb.Route, dmw.Then(srv.handleLocalMetrics(rb.Handler)))
+		} else {
+			// TODO
+		}
 		x++
 	}
 	logging.LogToDeck(context.Background(), "info", "TAPROOT", "startup", fmt.Sprintf("%d routes added", x))

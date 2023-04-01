@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/highgrav/taproot/v1/authn"
+	"github.com/highgrav/taproot/v1/authtoken"
 	"github.com/highgrav/taproot/v1/common"
 	"github.com/highgrav/taproot/v1/constants"
 	"github.com/highgrav/taproot/v1/logging"
@@ -33,7 +34,7 @@ func (srv *AppServer) CreateHandleSession(encryptTokens bool) alice.Constructor 
 			var user authn.User
 			var cookieVal string
 			var headerVal string
-			var token authn.AuthToken
+			var token authtoken.AuthToken
 			cookie, err := r.Cookie(SESSION_COOKIE_NAME)
 			if err != nil {
 				cookieVal = ""
