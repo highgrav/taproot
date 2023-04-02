@@ -14,6 +14,7 @@ type WSConn struct {
 	User      authn.User
 	Conn      net.Conn
 	Buf       *bufio.ReadWriter
+	closeChan chan bool
 	CloseChan chan bool
 	Reader    chan WSFrame
 	Writer    chan WSFrame
@@ -25,6 +26,7 @@ func NewWSConn(id string, user authn.User, conn net.Conn, buf *bufio.ReadWriter)
 		User:      user,
 		Conn:      conn,
 		Buf:       buf,
+		closeChan: make(chan bool),
 		CloseChan: make(chan bool),
 		Reader:    make(chan WSFrame),
 		Writer:    make(chan WSFrame),
@@ -34,35 +36,38 @@ func NewWSConn(id string, user authn.User, conn net.Conn, buf *bufio.ReadWriter)
 }
 
 func (wsc *WSConn) Close() {
-	if wsc.CloseChan != nil {
-		wsc.CloseChan <- true
+	if wsc.closeChan != nil {
+		wsc.closeChan <- true
 	}
 }
 
 func (wsc *WSConn) process() {
-
 	var isClosed bool = false
-
 	// write
 	go func() {
 		for {
 			select {
+			case closed := <-wsc.closeChan:
+				if closed {
+					isClosed = true
+					wsc.CloseChan <- true
+					return
+				}
 			case toWrite := <-wsc.Writer:
 				if isClosed {
 					return
 				}
 				err := wsutil.WriteServerMessage(wsc.Conn, toWrite.Op, toWrite.Data)
 				if err != nil {
-					wsc.Close()
 					logging.LogToDeck(context.Background(), "error", "WS", "error", "caught error writing ws client data in "+wsc.Key+": "+err.Error())
+					wsc.Close()
 					return
 				}
 			}
 		}
-		wsc.Conn.Close()
 	}()
 
-	// read
+	// read -- this should break as soon as the connection fails, so we don't need to clean up
 	go func() {
 		for {
 			msg, op, err := wsutil.ReadClientData(wsc.Conn)
@@ -79,24 +84,6 @@ func (wsc *WSConn) process() {
 				Data: msg,
 			}
 		}
-		wsc.Conn.Close()
-	}()
-
-	// wait for a close
-	go func() {
-		for {
-			select {
-			case closed := <-wsc.CloseChan:
-				if closed {
-					isClosed = true
-					close(wsc.Reader)
-					close(wsc.Writer)
-					wsc.Conn.Close()
-					return
-				}
-			}
-		}
-		wsc.Conn.Close()
 	}()
 
 }

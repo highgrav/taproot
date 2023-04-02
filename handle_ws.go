@@ -1,7 +1,6 @@
 package taproot
 
 import (
-	"fmt"
 	"github.com/gobwas/ws"
 	"github.com/highgrav/taproot/v1/authn"
 	"github.com/highgrav/taproot/v1/constants"
@@ -10,12 +9,13 @@ import (
 	"net/http"
 )
 
+type GenerateWSHandler func() websock.IWebSocketHandler
+
 /*
 HandleWS() is a simple handler for creating and running WS connections. Unlike SSEs, you probably want to create your own
-handler.
+handler. This should be considered a starting point for a more tailored approach.
 */
-func (srv *AppServer) HandleWS(brokerName string, wsHandler websock.WebSocketHandler, autoTimeoutMinutes int) http.HandlerFunc {
-	fmt.Println(">>>>>>>WEBSOCKET CALL")
+func (srv *AppServer) HandleWS(brokerName string, createHandler GenerateWSHandler) http.HandlerFunc {
 	if _, ok := srv.WSHubs[brokerName]; !ok {
 		panic("Attempted to register websocket handler with non-existent broker name " + brokerName)
 	}
@@ -25,9 +25,7 @@ func (srv *AppServer) HandleWS(brokerName string, wsHandler websock.WebSocketHan
 		if !ok {
 			sessid = ""
 		}
-		if autoTimeoutMinutes < 1 {
-			autoTimeoutMinutes = 525600
-		}
+
 		conn, rw, _, err := ws.UpgradeHTTP(r, w)
 		if err != nil {
 			logging.LogToDeck(r.Context(), "error", "ws", "error", "could not upgrade ws conn: "+err.Error())
@@ -37,14 +35,32 @@ func (srv *AppServer) HandleWS(brokerName string, wsHandler websock.WebSocketHan
 
 		u, err := authn.GetUserFromRequest(r)
 		if sessid == "" && u.UserID == "" {
-			// TODO -- not a great idea, need to revisit?
 			sessid = hub.GenerateNewId(16)
 		}
 		wsc := websock.NewWSConn(sessid, u, conn, rw)
-		srv.WSHubs[brokerName].AddClient(wsc)
+		srv.WSHubs[brokerName].AddClient(&wsc)
 		logging.LogToDeck(r.Context(), "info", "WS", "info", "opening WS handler")
+		defer srv.WSHubs[brokerName].RemoveClient(&wsc)
 
-		wsHandler(r, wsc, autoTimeoutMinutes)
-		logging.LogToDeck(r.Context(), "info", "WS", "info", "closing WS handler")
+		handler := createHandler()
+		defer handler.Cancel()
+		wsReaderChan, wsWriterChan, err := handler.Init(r)
+		if err != nil {
+			logging.LogToDeck(r.Context(), "error", "WS", "error", "error calling Init() on WS Handler: "+err.Error())
+			return
+		}
+		for {
+			select {
+			case isDone := <-wsc.CloseChan:
+				if isDone {
+					logging.LogToDeck(r.Context(), "info", "WS", "info", "closing WS handler")
+					return
+				}
+			case inc := <-wsc.Reader:
+				wsReaderChan <- inc
+			case outg := <-wsWriterChan:
+				wsc.Writer <- outg
+			}
+		}
 	}
 }
