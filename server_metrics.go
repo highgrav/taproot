@@ -14,6 +14,8 @@ import (
 func (srv *AppServer) NewMetricsServer(cfg HttpConfig, usePprof bool) *WebServer {
 	ws := NewWebServer(nil, cfg)
 	ws.Router.HandlerFunc(http.MethodGet, "/global", srv.metrics_handle_global)
+	ws.Router.HandlerFunc(http.MethodGet, "/sse", srv.metrics_handle_sse)
+	ws.Router.HandlerFunc(http.MethodGet, "/ws", srv.metrics_handle_ws)
 	ws.Router.HandlerFunc(http.MethodGet, "/stats", srv.metrics_handle_path)
 	ws.Router.HandlerFunc(http.MethodGet, "/", srv.metrics_handle_getpaths)
 
@@ -37,6 +39,42 @@ func (srv *AppServer) NewMetricsServer(cfg HttpConfig, usePprof bool) *WebServer
 	}
 
 	return ws
+}
+
+func (srv *AppServer) metrics_handle_sse(w http.ResponseWriter, r *http.Request) {
+	if srv.SSEHubs == nil {
+		srv.ErrorResponse(w, r, http.StatusOK, "No SSE hubs defined")
+		return
+	}
+	st := make(map[string]int32)
+	for key, val := range srv.SSEHubs {
+		st[key] = val.TotalConns
+	}
+	env := DataEnvelope{}
+	env["ok"] = true
+	env["hubs"] = st
+	err := srv.WriteJSON(w, true, 200, env, nil)
+	if err != nil {
+		logging.LogToDeck(r.Context(), "error", "METRICS", "error", "metrics server sse stats: "+err.Error())
+	}
+}
+
+func (srv *AppServer) metrics_handle_ws(w http.ResponseWriter, r *http.Request) {
+	if srv.WSHubs == nil {
+		srv.ErrorResponse(w, r, http.StatusOK, "No WS hubs defined")
+		return
+	}
+	st := make(map[string]int32)
+	for key, val := range srv.WSHubs {
+		st[key] = val.TotalConns
+	}
+	env := DataEnvelope{}
+	env["ok"] = true
+	env["hubs"] = st
+	err := srv.WriteJSON(w, true, 200, env, nil)
+	if err != nil {
+		logging.LogToDeck(r.Context(), "error", "METRICS", "error", "metrics server ws stats: "+err.Error())
+	}
 }
 
 // Dumps global stats

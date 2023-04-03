@@ -117,7 +117,7 @@ func addJSUtilFunctor(svr *AppServer, vm *goja.Runtime) {
 }
 
 // An endpoint route that executes a compiled script identified by the path to the script, injecting various data and functions into the runtime.
-func (srv *AppServer) HandleScript(scriptKey string, cachedDuration int, customCtx *map[string]any) http.HandlerFunc {
+func (srv *AppServer) HandleScript(scriptKey string, cachedDuration int, customInjectors []jsrun.InjectorFunc, customCtx *map[string]any) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// special case for when we have .jsml file names
 		if strings.HasSuffix(scriptKey, ".jsml") {
@@ -193,7 +193,10 @@ func (srv *AppServer) HandleScript(scriptKey string, cachedDuration int, customC
 		addJSUtilFunctor(srv, vm)
 
 		for _, v := range srv.jsinjections {
-			v(vm)
+			v(ctx, vm)
+		}
+		for _, v := range customInjectors {
+			v(ctx, vm)
 		}
 
 		logging.LogToDeck(r.Context(), "info", "JS", "run", "running "+scriptKey)

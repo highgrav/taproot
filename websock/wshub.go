@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/highgrav/taproot/v1/common"
 	"github.com/highgrav/taproot/v1/logging"
+	"sync"
+	"sync/atomic"
 )
 
 // TODO
@@ -18,18 +20,27 @@ const (
 	WS_HEADER_SEC_WEBSOCKET_VERSION    string = "Sec-WebSocket-Version"
 )
 
+type WSConnContainer struct {
+	sync.Mutex
+	Conns []*WSConn
+}
+
 type WSHub struct {
-	Name  string
-	conns map[string][]*WSConn
-	acts  chan func()
+	sync.Mutex
+	Name       string
+	conns      map[string]*WSConnContainer
+	acts       chan func()
+	TotalConns int32
 }
 
 func NewWSHub(id string) *WSHub {
 	hub := &WSHub{
-		Name:  id,
-		conns: make(map[string][]*WSConn),
-		acts:  make(chan func()),
+		Name:       id,
+		conns:      make(map[string]*WSConnContainer),
+		acts:       make(chan func()),
+		TotalConns: 0,
 	}
+
 	go hub.runInternalActions()
 	return hub
 }
@@ -37,9 +48,14 @@ func NewWSHub(id string) *WSHub {
 func (hub *WSHub) AddClient(wsconn *WSConn) {
 	hub.acts <- func() {
 		if _, ok := hub.conns[wsconn.Key]; !ok {
-			hub.conns[wsconn.Key] = []*WSConn{wsconn}
+			hub.conns[wsconn.Key] = &WSConnContainer{
+				Conns: []*WSConn{wsconn},
+			}
 		}
-		hub.conns[wsconn.Key] = append(hub.conns[wsconn.Key], wsconn)
+		hub.conns[wsconn.Key].Lock()
+		hub.conns[wsconn.Key].Conns = append(hub.conns[wsconn.Key].Conns, wsconn)
+		atomic.AddInt32(&hub.TotalConns, 1)
+		hub.conns[wsconn.Key].Unlock()
 		logging.LogToDeck(context.Background(), "info", "WS", "info", "Adding WS conn "+wsconn.Key)
 	}
 }
@@ -56,45 +72,58 @@ func (hub *WSHub) RemoveClient(wsconn *WSConn) {
 			return
 		}
 		vals, ok := hub.conns[wsconn.Key]
-		if ok {
-			wss := make([]*WSConn, 0)
-			for _, val := range vals {
-				if val != wsconn {
-					wss = append(wss, val)
-				} else {
-					logging.LogToDeck(context.Background(), "info", "WS", "info", "Closing WS conn "+wsconn.Key)
-					close(val.Reader)
-					close(val.Writer)
-					if val.Conn != nil {
-						val.Conn.Close()
-					}
-				}
-			}
-			hub.conns[wsconn.Key] = wss
+		if !ok {
+			return
 		}
+		vals.Lock()
+		wss := make([]*WSConn, 0)
+		for _, val := range vals.Conns {
+			if val != wsconn {
+				wss = append(wss, val)
+			} else {
+				logging.LogToDeck(context.Background(), "info", "WS", "info", "Closing WS conn "+wsconn.Key)
+				close(val.Reader)
+				close(val.Writer)
+				if val.Conn != nil {
+					val.Conn.Close()
+				}
+				atomic.AddInt32(&hub.TotalConns, -1)
+			}
+		}
+
+		hub.conns[wsconn.Key].Conns = wss
+		if len(wss) == 0 {
+			delete(hub.conns, wsconn.Key)
+		}
+		vals.Unlock()
 	}
 }
 
 func (hub *WSHub) RemoveClients(clientId string) {
 	hub.acts <- func() {
 		if vals, ok := hub.conns[clientId]; ok {
-			for _, val := range vals {
+			vals.Lock()
+			for _, val := range vals.Conns {
 				val.closeChan <- true
+				atomic.AddInt32(&hub.TotalConns, -1)
 			}
-			delete(hub.conns, clientId)
+			vals.Unlock()
 		}
+		delete(hub.conns, clientId)
 	}
 }
 
 func (hub *WSHub) GenerateNewId(len int) string {
+	hub.Lock()
 	id := common.CreateRandString(len)
 	_, ok := hub.conns[id]
 	for ok {
 		id = common.CreateRandString(len)
 		_, ok = hub.conns[id]
 	}
-	hub.conns[id] = []*WSConn{}
+	hub.conns[id] = &WSConnContainer{
+		Conns: make([]*WSConn, 0),
+	}
+	hub.Unlock()
 	return id
 }
-
-// TODO -- need to remove expired WSConns

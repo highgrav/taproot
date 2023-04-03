@@ -12,8 +12,8 @@ import (
 type GenerateWSHandler func() websock.IWebSocketHandler
 
 /*
-HandleWS() is a simple handler for creating and running WS connections. Unlike SSEs, you probably want to create your own
-handler. This should be considered a starting point for a more tailored approach.
+HandleWS() is a simple handler for creating and running WS connections. Unlike SSEs, you may want to create your own
+handler. This could be considered a starting point for a more tailored approach.
 */
 func (srv *AppServer) HandleWS(brokerName string, createHandler GenerateWSHandler) http.HandlerFunc {
 	if _, ok := srv.WSHubs[brokerName]; !ok {
@@ -26,7 +26,25 @@ func (srv *AppServer) HandleWS(brokerName string, createHandler GenerateWSHandle
 			sessid = ""
 		}
 
-		conn, rw, _, err := ws.UpgradeHTTP(r, w)
+		handler := createHandler()
+		defer handler.Cancel()
+		wsReaderChan, wsWriterChan, err := handler.Init(w, r)
+		if err != nil {
+			logging.LogToDeck(r.Context(), "error", "WS", "error", "error calling Init() on WS Handler: "+err.Error())
+			return
+		}
+
+		// We use the zero-copy upgrade approach so we can inject headers (and so on) that might be injected by the
+		// WS handler created previously
+		headerList := http.Header{}
+		for k, v := range w.Header() {
+			headerList[k] = v
+		}
+		upgrader := ws.HTTPUpgrader{
+			Header: headerList,
+		}
+		conn, rw, _, err := upgrader.Upgrade(r, w)
+
 		if err != nil {
 			logging.LogToDeck(r.Context(), "error", "ws", "error", "could not upgrade ws conn: "+err.Error())
 			srv.ErrorResponse(w, r, 500, "ws server error")
@@ -42,13 +60,6 @@ func (srv *AppServer) HandleWS(brokerName string, createHandler GenerateWSHandle
 		logging.LogToDeck(r.Context(), "info", "WS", "info", "opening WS handler")
 		defer srv.WSHubs[brokerName].RemoveClient(&wsc)
 
-		handler := createHandler()
-		defer handler.Cancel()
-		wsReaderChan, wsWriterChan, err := handler.Init(r)
-		if err != nil {
-			logging.LogToDeck(r.Context(), "error", "WS", "error", "error calling Init() on WS Handler: "+err.Error())
-			return
-		}
 		for {
 			select {
 			case isDone := <-wsc.CloseChan:

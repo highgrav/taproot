@@ -1,5 +1,8 @@
 package jsrun
 
-import "github.com/dop251/goja"
+import (
+	"context"
+	"github.com/dop251/goja"
+)
 
-type InjectorFunc func(vm *goja.Runtime)
+type InjectorFunc func(ctx context.Context, vm *goja.Runtime)

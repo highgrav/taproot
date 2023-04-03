@@ -25,6 +25,7 @@ func (pc *PageCache) Get(id string) (string, bool) {
 }
 
 func (pc *PageCache) expire(id string) {
+	// TODO -- flags as a race condition
 	delete(pc.cache, id)
 }
 

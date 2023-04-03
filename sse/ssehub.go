@@ -1,13 +1,16 @@
 package sse
 
+import "sync/atomic"
+
 const SSE_MIMETYPE string = "text/event-stream"
 const SSE_LAST_EVENT_SEEN_HEADER string = "Last-Event-ID"
 
 type SSEHub struct {
 	Name string
 	// We assume that a constant key (ideally user ID, persistent session ID, etc.) is used here
-	conns map[string][]chan SSEEvent
-	acts  chan func() // prevents logical conflicts by single-threading operations
+	conns      map[string][]chan SSEEvent
+	acts       chan func() // prevents logical conflicts by single-threading operations
+	TotalConns int32
 }
 
 func (hub *SSEHub) runInternalActions() {
@@ -22,6 +25,7 @@ func (hub *SSEHub) AddClient(clientId string, clientChan chan SSEEvent) {
 			hub.conns[clientId] = make([]chan SSEEvent, 0)
 		}
 		hub.conns[clientId] = append(hub.conns[clientId], clientChan)
+		atomic.AddInt32(&hub.TotalConns, 1)
 	}
 }
 
@@ -39,6 +43,8 @@ func (hub *SSEHub) RemoveClient(clientId string, clientChan chan SSEEvent) {
 		for _, c := range hub.conns[clientId] {
 			if c != clientChan {
 				tmpChs = append(tmpChs, c)
+			} else {
+				atomic.AddInt32(&hub.TotalConns, -1)
 			}
 		}
 		// clean up if necessary
@@ -87,9 +93,10 @@ func (broker *SSEHub) WriteAll(msg SSEEvent) {
 
 func New(name string) *SSEHub {
 	broker := &SSEHub{
-		Name:  name,
-		conns: make(map[string][]chan SSEEvent),
-		acts:  make(chan func()),
+		Name:       name,
+		conns:      make(map[string][]chan SSEEvent),
+		acts:       make(chan func()),
+		TotalConns: 0,
 	}
 	go broker.runInternalActions()
 	return broker
