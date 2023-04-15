@@ -173,3 +173,23 @@ func (srv *AppServer) metrics_handle_path(w http.ResponseWriter, r *http.Request
 		logging.LogToDeck(r.Context(), "error", "METRICS", "error", "metrics server path '"+path+"' stats: "+err.Error())
 	}
 }
+
+func (srv *AppServer) metrics_handle_workers(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (srv *AppServer) metrics_handle_cron(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (srv *AppServer) metrics_handle_js(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (srv *AppServer) metrics_handle_acacia(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (srv *AppServer) metrics_handle_push(w http.ResponseWriter, r *http.Request) {
+
+}

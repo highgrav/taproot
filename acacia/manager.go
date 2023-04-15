@@ -14,12 +14,14 @@ import (
 )
 
 type PolicyManager struct {
+	Metrics  *AcaciaMetrics
 	patterns map[string]*quamina.Quamina
 	policies map[string]Policy
 }
 
 func NewPolicyManager() *PolicyManager {
 	pm := &PolicyManager{
+		Metrics:  &AcaciaMetrics{},
 		patterns: make(map[string]*quamina.Quamina),
 		policies: make(map[string]Policy),
 	}

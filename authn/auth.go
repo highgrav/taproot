@@ -1,6 +1,10 @@
 package authn
 
-import "errors"
+import (
+	"encoding/base64"
+	"errors"
+	"strings"
+)
 
 const (
 	AUTH_BASIC          string = "basic"
@@ -38,4 +42,44 @@ type UserAuth struct {
 	UserIdentifier  string
 	PasswordOrToken string
 	ResetToken      string
+}
+
+func ParseAuthHeader(hdr string) (UserAuth, error) {
+	hdrElems := strings.Split(hdr, " ")
+	if len(hdrElems) < 2 {
+		return UserAuth{}, ErrMalformedAuthHeader
+	}
+
+	if hdrElems[0] != "Basic" && hdrElems[0] != "Bearer" && hdrElems[0] != "Digest" {
+		return UserAuth{}, ErrAuthUnknownScheme
+	}
+
+	if hdrElems[0] == "Basic" {
+		// try to decode
+		sDec, err := base64.StdEncoding.DecodeString(hdrElems[1])
+		if err != nil {
+			return UserAuth{}, err
+		}
+		basicElems := strings.Split(string(sDec), ":")
+		if len(basicElems) != 2 {
+			return UserAuth{}, ErrInvalidBasicCredentials
+		}
+		ua := UserAuth{
+			AuthType:        AUTH_BASIC,
+			UserIdentifier:  basicElems[0],
+			PasswordOrToken: basicElems[1],
+		}
+
+		return ua, nil
+	}
+
+	if hdrElems[0] == "Bearer" {
+		ua := UserAuth{
+			AuthType:        AUTH_BEARER,
+			PasswordOrToken: hdrElems[1],
+		}
+		return ua, nil
+	}
+
+	return UserAuth{}, ErrUnsupportedScheme
 }

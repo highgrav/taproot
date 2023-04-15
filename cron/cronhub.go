@@ -21,6 +21,7 @@ type CronHub struct {
 	Pause   chan bool
 	Done    chan bool
 	Paused  bool
+	Metrics *CronMetrics
 }
 
 func New() *CronHub {

@@ -6,7 +6,8 @@ const SSE_MIMETYPE string = "text/event-stream"
 const SSE_LAST_EVENT_SEEN_HEADER string = "Last-Event-ID"
 
 type SSEHub struct {
-	Name string
+	Name    string
+	Metrics *SSEMetrics
 	// We assume that a constant key (ideally user ID, persistent session ID, etc.) is used here
 	conns      map[string][]chan SSEEvent
 	acts       chan func() // prevents logical conflicts by single-threading operations
@@ -94,6 +95,7 @@ func (broker *SSEHub) WriteAll(msg SSEEvent) {
 func New(name string) *SSEHub {
 	broker := &SSEHub{
 		Name:       name,
+		Metrics:    &SSEMetrics{},
 		conns:      make(map[string][]chan SSEEvent),
 		acts:       make(chan func()),
 		TotalConns: 0,

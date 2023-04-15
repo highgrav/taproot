@@ -46,6 +46,8 @@ type AppServer struct {
 	SignatureMgr *authtoken.AuthSignerManager
 	PageCache    *pagecache.PageCache
 
+	Metrics *AppMetrics
+
 	Server *WebServer
 	// These are embedded mini-servers for various admin tasks
 	RedirectServer *WebServer // Port 80 Server to redirect to https, if not using TLS

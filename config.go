@@ -76,6 +76,7 @@ type FFlagConfig struct {
 type SessionConfig struct {
 	SessionStore        scs.Store
 	ContextSessionStore scs.CtxStore
+	SessionKeyPrefix    string
 	LifetimeInMins      int
 	IdleTimeoutInMins   int
 	UseCookies          bool

@@ -28,6 +28,7 @@ type WSConnContainer struct {
 type WSHub struct {
 	sync.Mutex
 	Name       string
+	Metrics    *WSMetrics
 	conns      map[string]*WSConnContainer
 	acts       chan func()
 	TotalConns int32
@@ -36,6 +37,7 @@ type WSHub struct {
 func NewWSHub(id string) *WSHub {
 	hub := &WSHub{
 		Name:       id,
+		Metrics:    &WSMetrics{},
 		conns:      make(map[string]*WSConnContainer),
 		acts:       make(chan func()),
 		TotalConns: 0,

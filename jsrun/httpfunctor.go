@@ -4,6 +4,7 @@ import (
 	"github.com/dop251/goja"
 	"github.com/highgrav/taproot/v1/common"
 	"net/http"
+	"strconv"
 )
 
 func InjectJSHttpFunctor(w http.ResponseWriter, r *http.Request, bufwriter *common.BufferedHttpResponseWriter, vm *goja.Runtime) {
@@ -11,17 +12,23 @@ func InjectJSHttpFunctor(w http.ResponseWriter, r *http.Request, bufwriter *comm
 
 	writeToHttp := func(val goja.Value) {
 		exp := val.String()
-
 		_, err := bufwriter.Write([]byte(exp))
 		if err != nil {
 			// TODO
 		}
 	}
 
-	writeRespCode := func(val goja.Value) {
-		// TODO -- handle error
-		bufwriter.Code = int(val.ToInteger())
-		w.WriteHeader(int(val.ToInteger()))
+	writeRespCode := func(val goja.Value) int {
+		i, err := strconv.Atoi(val.String())
+		if err != nil {
+			i = 500
+			bufwriter.Code = -1
+			w.WriteHeader(500)
+			return -1
+		}
+		bufwriter.Code = i
+		w.WriteHeader(i)
+		return i
 	}
 
 	flush := func() {

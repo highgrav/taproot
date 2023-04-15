@@ -52,6 +52,7 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 
 	s := &AppServer{}
 	s.Config = cfg
+	s.Metrics = &AppMetrics{}
 	s.users = userStore
 	s.DBs = make(map[string]*sql.DB)
 	s.Middleware = make([]alice.Constructor, 0)

@@ -10,6 +10,7 @@ Messages are serialized to disk and are durable between restarts, but currently 
 */
 type WorkQueue struct {
 	Status         chan WorkStatusReport
+	Metrics        *WorkMetrics
 	queue          *dque.DQue
 	workHandlers   map[string][]WorkHandler
 	resultHandlers map[string][]ResultHandler
@@ -84,6 +85,7 @@ func New(name string, saveDir string, segmentSz int) (*WorkQueue, error) {
 	}
 	wq := &WorkQueue{
 		Status:         make(chan WorkStatusReport),
+		Metrics:        &WorkMetrics{},
 		queue:          dq,
 		workHandlers:   make(map[string][]WorkHandler),
 		resultHandlers: make(map[string][]ResultHandler),

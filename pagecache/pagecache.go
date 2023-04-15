@@ -6,12 +6,14 @@ import (
 )
 
 type PageCache struct {
-	cache map[string]*PageCacheEntry
+	Metrics *PageCacheMetrics
+	cache   map[string]*PageCacheEntry
 }
 
 func NewPageCache() *PageCache {
 	pc := &PageCache{
-		cache: make(map[string]*PageCacheEntry),
+		Metrics: &PageCacheMetrics{},
+		cache:   make(map[string]*PageCacheEntry),
 	}
 	return pc
 }

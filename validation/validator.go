@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"net/mail"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -50,6 +51,13 @@ func (v *Validator) IsWebURL(val string, key, errmsg string) *Validator {
 	v.Check(u.Scheme != "", key, errmsg)
 	v.Check(u.Host != "", key, errmsg)
 	v.Check(u.Scheme == "http" || u.Scheme == "https", key, errmsg)
+	return v
+}
+
+func (v *Validator) IsEmail(val string, key, errmsg string) *Validator {
+	email, err := mail.ParseAddress(val)
+	v.Check(err == nil, key, errmsg)
+	v.Check(email.Address != "", key, errmsg)
 	return v
 }
 
