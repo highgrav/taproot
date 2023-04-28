@@ -77,15 +77,19 @@ func FromMap[T any](vals map[string][]string) (T, error) {
 	if reflect.ValueOf(t).Kind() != reflect.Struct {
 		return t, ErrTypeIsNotStruct
 	}
-	tTyp := reflect.TypeOf(&t)
-	tVal := reflect.ValueOf(&t)
+	tTyp := reflect.TypeOf(&t)  // get type
+	tVal := reflect.ValueOf(&t) // get value
+
 	for x := 0; x < tTyp.Elem().NumField(); x++ {
+		// get field and see if there's a json tag on it
 		field := tTyp.Elem().Field(x)
 		jt := strings.Split(field.Tag.Get("json"), ",")[0]
 		key := strings.ToLower(jt)
 		if key == "" {
 			key = strings.ToLower(field.Name)
 		}
+
+		// check to see if there's a matching key (we also accept lowercased names) on the map:
 		formVal := []string{}
 		if fv, ok := vals[key]; ok {
 			formVal = fv
@@ -97,20 +101,29 @@ func FromMap[T any](vals map[string][]string) (T, error) {
 			}
 		}
 
+		//
 		kind := field.Type.Kind()
-		res := tVal.Elem().Field(x)
+		res := tVal.Elem().FieldByName(field.Name)
 
 		if len(formVal) == 0 {
 			continue
+		}
+
+		if !res.IsValid() || !res.CanSet() {
+			return t, errors.New("cannot set or address field " + field.Name)
 		}
 
 		switch kind {
 		case reflect.String:
 			res.SetString(formVal[0])
 		case reflect.Uint:
+			fallthrough
 		case reflect.Uint16:
+			fallthrough
 		case reflect.Uint8:
+			fallthrough
 		case reflect.Uint32:
+			fallthrough
 		case reflect.Uint64:
 			resui, err := strconv.ParseUint(formVal[0], 10, 64)
 			if err != nil {
@@ -118,9 +131,13 @@ func FromMap[T any](vals map[string][]string) (T, error) {
 			}
 			res.SetUint(resui)
 		case reflect.Int:
+			fallthrough
 		case reflect.Int8:
+			fallthrough
 		case reflect.Int16:
+			fallthrough
 		case reflect.Int32:
+			fallthrough
 		case reflect.Int64:
 			resi, err := strconv.ParseInt(formVal[0], 10, 64)
 			if err != nil {
@@ -134,6 +151,7 @@ func FromMap[T any](vals map[string][]string) (T, error) {
 				res.SetBool(false)
 			}
 		case reflect.Float32:
+			fallthrough
 		case reflect.Float64:
 			resfloat, err := strconv.ParseFloat(formVal[0], 64)
 			if err != nil {
@@ -141,8 +159,11 @@ func FromMap[T any](vals map[string][]string) (T, error) {
 			}
 			res.SetFloat(resfloat)
 		case reflect.Array:
+			fallthrough
 		case reflect.Slice:
-			// TODO
+		// TODO
+		default:
+
 		}
 	}
 	return t, nil

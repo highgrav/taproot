@@ -25,6 +25,9 @@ type ServerConfig struct {
 	/* REDIRECT */
 	UseHttpsRedirectServer bool
 
+	/* PANICS */
+	PanicStackTraceDirectory string
+
 	/* HEADER/COOKIE SIGNING */
 	RotateSessionSigningKeysEvery time.Duration
 	GracePeriodForSigningKeys     time.Duration

@@ -1,10 +1,12 @@
 package jsrun
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/dop251/goja"
 	"github.com/highgrav/taproot/v1/common"
+	"github.com/highgrav/taproot/v1/logging"
 	"reflect"
 )
 
@@ -73,6 +75,14 @@ func InjectJSDBFunctor(dbs map[string]*sql.DB, vm *goja.Runtime) {
 			retval.Results = make(map[string]interface{})
 			return retval
 		}
+		if db == nil {
+			retval.OK = false
+			retval.ResultCode = -9126
+			retval.ResultDescription = "Error (see errors array)"
+			retval.Errors = []string{"DSN " + args[0].String() + " has a null reference"}
+			retval.Results = make(map[string]interface{})
+			return retval
+		}
 
 		var stmt = args[1].String()
 		var sqlArgs []any = make([]any, 0)
@@ -96,7 +106,7 @@ func InjectJSDBFunctor(dbs map[string]*sql.DB, vm *goja.Runtime) {
 		}
 
 		rows, err := db.Query(stmt, sqlArgs...)
-		defer rows.Close()
+
 		if err != nil {
 			retval.OK = false
 			retval.ResultCode = -9393
@@ -104,6 +114,17 @@ func InjectJSDBFunctor(dbs map[string]*sql.DB, vm *goja.Runtime) {
 			retval.Errors = []string{err.Error()}
 			retval.Results = make(map[string]interface{})
 			return retval
+		}
+
+		if rows == nil {
+			retval.OK = false
+			retval.ResultCode = -9393
+			retval.ResultDescription = "Errors (see errors array)"
+			retval.Errors = []string{"null result from query"}
+			retval.Results = make(map[string]interface{})
+			return retval
+		} else {
+			defer rows.Close()
 		}
 
 		rowset, err := common.RowsToMap(rows)
@@ -115,6 +136,14 @@ func InjectJSDBFunctor(dbs map[string]*sql.DB, vm *goja.Runtime) {
 			retval.Results = make(map[string]interface{})
 			return retval
 		}
+		if rowset == nil {
+			retval.OK = false
+			retval.ResultCode = -9642
+			retval.ResultDescription = "Errors (see errors array)"
+			retval.Errors = []string{"rowset is null"}
+			retval.Results = make(map[string]interface{})
+			return retval
+		}
 
 		retval.OK = true
 		retval.ResultCode = 200
@@ -122,6 +151,9 @@ func InjectJSDBFunctor(dbs map[string]*sql.DB, vm *goja.Runtime) {
 		retval.Errors = []string{}
 		retval.Results = make(map[string]interface{})
 		retval.Results["rows"] = rowset
+		if err != nil {
+			logging.LogToDeck(context.Background(), "error", "JS", "db", err.Error())
+		}
 		return retval
 	}
 
