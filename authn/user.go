@@ -15,19 +15,21 @@ type UserWorkgroup struct {
 
 type WorkgroupMembership map[string][]UserWorkgroup
 
-// (Defining a pointer receiver on this seems non-idiomatic)
-func (mem WorkgroupMembership) ByDomain(domainId string) []UserWorkgroup {
+// NOTE: We don't define methods on WorkgroupMembership{} because goja doesn't like to coerce
+// structs with receiver methods into JS-land.
+
+func ByDomain(mem WorkgroupMembership, domainId string) []UserWorkgroup {
 	return mem[domainId]
 }
 
-func (mem WorkgroupMembership) AddDomain(domainId string) {
+func AddDomain(mem WorkgroupMembership, domainId string) {
 	_, ok := mem[domainId]
 	if !ok {
 		mem[domainId] = make([]UserWorkgroup, 0)
 	}
 }
 
-func (mem WorkgroupMembership) AddWorkgroup(domainId, workgroupId, workgroupName string) {
+func AddWorkgroup(mem WorkgroupMembership, domainId, workgroupId, workgroupName string) {
 	_, ok := mem[domainId]
 	if !ok {
 		mem[domainId] = make([]UserWorkgroup, 0)
@@ -38,15 +40,15 @@ func (mem WorkgroupMembership) AddWorkgroup(domainId, workgroupId, workgroupName
 	})
 }
 
-func (mem WorkgroupMembership) RemoveDomain(domainId string) {
+func RemoveDomain(mem WorkgroupMembership, domainId string) {
 	delete(mem, domainId)
 }
 
-func (mem WorkgroupMembership) RemoveWorkgroupById(domainId, workgroupId string) {
+func RemoveWorkgroupById(mem WorkgroupMembership, domainId, workgroupId string) {
 	// TODO
 }
 
-func (mem WorkgroupMembership) RemoveWorkgroupByName(domainId, workgroupName string) {
+func RemoveWorkgroupByName(mem WorkgroupMembership, domainId, workgroupName string) {
 	// TODO
 }
 

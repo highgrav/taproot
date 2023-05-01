@@ -153,9 +153,7 @@ func (srv *AppServer) HandleScript(scriptKey string, cachedDuration int, customI
 			rehyUser := ctx.Value(constants.HTTP_CONTEXT_USER_KEY).(authn.User)
 
 			// TODO -- labels, too
-
 			ctxItems["user"] = rehyUser
-
 		} else {
 			ctxItems["user"] = authn.User{}
 		}

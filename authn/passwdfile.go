@@ -219,7 +219,7 @@ func userFromEntry(u DigestUserEntry) User {
 		Keys:                   nil,
 	}
 	for k, v := range u.Workgroups {
-		usr.Workgroups.AddWorkgroup(u.Domain, k, v)
+		AddWorkgroup(usr.Workgroups, u.Domain, k, v)
 	}
 	usr.Labels[u.Domain] = []string{}
 	for _, l := range u.Labels {
