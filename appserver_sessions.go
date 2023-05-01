@@ -2,7 +2,9 @@ package taproot
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/highgrav/taproot/v1/authn"
 	"github.com/highgrav/taproot/v1/common"
 	"github.com/highgrav/taproot/v1/logging"
@@ -100,7 +102,18 @@ func (svr *AppServer) GetUserFromSession(key string) (authn.User, error) {
 	if svr.Session == nil {
 		return authn.Anonymous(), ErrSessionManagerNotInitialized
 	}
-	return GetSessionItem[authn.User](svr.Session, key)
+	u, err := GetSessionItem[[]byte](svr.Session, key)
+	if err != nil {
+		return authn.Anonymous(), err
+	}
+	var user authn.User
+	fmt.Println(">>>>>>>>>GOT USER FROM SESSION")
+	fmt.Printf("\n%s\n", u)
+	err = json.Unmarshal(u, &user)
+	if err != nil {
+		return authn.Anonymous(), err
+	}
+	return user, nil
 }
 
 func (svr *AppServer) AddUserToSession(user authn.User) (string, error) {
@@ -112,8 +125,11 @@ func (svr *AppServer) AddUserToSession(user authn.User) (string, error) {
 	for svr.Session.Exists(key) {
 		key = common.CreateRandString(16)
 	}
-
-	err := svr.AddSession(key, user)
+	j, err := json.Marshal(user)
+	if err != nil {
+		return "", err
+	}
+	err = svr.AddSession(key, []byte(j))
 	if err != nil {
 		return "", err
 	}

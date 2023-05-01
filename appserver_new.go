@@ -48,6 +48,10 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 	deck.Add(logger.Init(os.Stdout, 0))
 
 	// Set up gob encoding for sessions
+	gob.Register(authn.WorkgroupMembership{})
+	gob.Register(map[string]map[string]string{})
+	gob.Register(map[string][]string{})
+	gob.Register(authn.DomainAssertions{})
 	gob.Register(authn.User{})
 
 	s := &AppServer{}

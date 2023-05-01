@@ -8,26 +8,34 @@ import (
 
 type DomainAssertions map[string][]string
 
-type WorkgroupMembership map[string]map[string]string
+type UserWorkgroup struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type WorkgroupMembership map[string][]UserWorkgroup
 
 // (Defining a pointer receiver on this seems non-idiomatic)
-func (mem WorkgroupMembership) ByDomain(domainId string) map[string]string {
+func (mem WorkgroupMembership) ByDomain(domainId string) []UserWorkgroup {
 	return mem[domainId]
 }
 
 func (mem WorkgroupMembership) AddDomain(domainId string) {
 	_, ok := mem[domainId]
 	if !ok {
-		mem[domainId] = make(map[string]string)
+		mem[domainId] = make([]UserWorkgroup, 0)
 	}
 }
 
 func (mem WorkgroupMembership) AddWorkgroup(domainId, workgroupId, workgroupName string) {
 	_, ok := mem[domainId]
 	if !ok {
-		mem[domainId] = make(map[string]string)
+		mem[domainId] = make([]UserWorkgroup, 0)
 	}
-	mem[domainId][workgroupId] = workgroupName
+	mem[domainId] = append(mem[domainId], UserWorkgroup{
+		ID:   workgroupId,
+		Name: workgroupName,
+	})
 }
 
 func (mem WorkgroupMembership) RemoveDomain(domainId string) {
@@ -58,8 +66,8 @@ type User struct {
 	IsDeleted              bool                `json:"IsDeleted"`
 	RequiresPasswordUpdate bool                `json:"requiresPasswordUpdate"`
 	Domains                []string            `json:"domains"`
-	Workgroups             WorkgroupMembership `json:"wgs"`    // maps Domains to WgIDs to unique names
-	Labels                 DomainAssertions    `json:"labels"` // maps Domains to labels
+	Workgroups             WorkgroupMembership `json:"wgs"`
+	Labels                 DomainAssertions    `json:"-"` // maps Domains to labels
 	Keys                   []string            `json:"keys"`
 	SessionData            map[string]string   `json:"sessionData"`
 }

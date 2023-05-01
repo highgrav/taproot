@@ -150,10 +150,16 @@ func (srv *AppServer) HandleScript(scriptKey string, cachedDuration int, customI
 		ctx := r.Context()
 		ctxItems := make(map[string]any)
 		if ctx.Value(constants.HTTP_CONTEXT_USER_KEY) != nil {
-			ctxItems["user"] = ctx.Value(constants.HTTP_CONTEXT_USER_KEY)
+			rehyUser := ctx.Value(constants.HTTP_CONTEXT_USER_KEY).(authn.User)
+
+			// TODO -- labels, too
+
+			ctxItems["user"] = rehyUser
+
 		} else {
 			ctxItems["user"] = authn.User{}
 		}
+
 		if ctx.Value(constants.HTTP_CONTEXT_REALM_KEY) != nil {
 			ctxItems["realm"] = ctx.Value(constants.HTTP_CONTEXT_REALM_KEY)
 		} else {

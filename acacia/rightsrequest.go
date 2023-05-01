@@ -34,20 +34,18 @@ type QueryRequest struct {
 }
 
 type UserRightRequest struct {
-	UserID                 string            `json:"userId"`
-	Username               string            `json:"username"`
-	DisplayName            string            `json:"displayName"`
-	Emails                 []string          `json:"emails"`
-	Phones                 []string          `json:"phones"`
-	IsVerified             bool              `json:"isVerified"`
-	IsBlocked              bool              `json:"isBlocked"`
-	IsActive               bool              `json:"isActive"`
-	IsDeleted              bool              `json:"IsDeleted"`
-	RequiresPasswordUpdate bool              `json:"requiresPasswordUpdate"`
-	Workgroups             map[string]string `json:"wgs"`
-	WorkgroupIds           []string          `json:"wgIds"`
-	WorkgroupNames         []string          `json:"wgNames"`
-	Labels                 []string          `json:"labels"`
+	UserID                 string                           `json:"userId"`
+	Username               string                           `json:"username"`
+	DisplayName            string                           `json:"displayName"`
+	Emails                 []string                         `json:"emails"`
+	Phones                 []string                         `json:"phones"`
+	IsVerified             bool                             `json:"isVerified"`
+	IsBlocked              bool                             `json:"isBlocked"`
+	IsActive               bool                             `json:"isActive"`
+	IsDeleted              bool                             `json:"IsDeleted"`
+	RequiresPasswordUpdate bool                             `json:"requiresPasswordUpdate"`
+	Workgroups             map[string][]authn.UserWorkgroup `json:"wgs"`
+	Labels                 []string                         `json:"labels"`
 }
 
 func NewRightsRequest(realm string, domain string, user authn.User, r *http.Request) *RightsRequest {
@@ -79,19 +77,21 @@ func NewRightsRequest(realm string, domain string, user authn.User, r *http.Requ
 			IsActive:               user.IsActive,
 			IsDeleted:              user.IsDeleted,
 			RequiresPasswordUpdate: user.RequiresPasswordUpdate,
-			Workgroups:             make(map[string]string),
-			WorkgroupIds:           make([]string, 0),
-			WorkgroupNames:         make([]string, 0),
+			Workgroups:             make(map[string][]authn.UserWorkgroup),
 			Labels:                 make([]string, 0),
 		},
 		Context: nil,
 	}
 
 	wgs := user.Workgroups[domain]
-	for k, v := range wgs {
-		rr.User.Workgroups[k] = v
-		rr.User.WorkgroupNames = append(rr.User.WorkgroupNames, v)
-		rr.User.WorkgroupIds = append(rr.User.WorkgroupIds, k)
+	for _, v := range wgs {
+		if rr.User.Workgroups[domain] == nil {
+			rr.User.Workgroups[domain] = make([]authn.UserWorkgroup, 0)
+		}
+		rr.User.Workgroups[domain] = append(rr.User.Workgroups[domain], authn.UserWorkgroup{
+			ID:   v.ID,
+			Name: v.Name,
+		})
 	}
 
 	lbls := user.Labels[domain]
