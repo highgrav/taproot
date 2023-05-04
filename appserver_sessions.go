@@ -117,10 +117,10 @@ func (svr *AppServer) AddUserToSession(user authn.User) (string, error) {
 	if svr.Session == nil {
 		return "", ErrSessionManagerNotInitialized
 	}
-	key := common.CreateRandString(16)
+	key := svr.Config.Sessions.SessionKeyPrefix + common.CreateRandString(16)
 
 	for svr.Session.Exists(key) {
-		key = common.CreateRandString(16)
+		key = svr.Config.Sessions.SessionKeyPrefix + common.CreateRandString(16)
 	}
 	j, err := json.Marshal(user)
 	if err != nil {
