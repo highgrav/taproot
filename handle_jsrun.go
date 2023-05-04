@@ -158,8 +158,8 @@ func (srv *AppServer) HandleScript(scriptKey string, cachedDuration int, customI
 			ctxItems["user"] = authn.User{}
 		}
 
-		checkUserRightFn := func(userId, domainId, itemType, userRight, itemId goja.Value) bool {
-			res, err := srv.users.CheckUserRight(userId.String(), domainId.String(), userRight.String(), itemType.String(), itemId.String())
+		checkUserRightFn := func(userId, domainId, userRight, itemId goja.Value) bool {
+			res, err := srv.users.CheckUserRight(userId.String(), domainId.String(), userRight.String(), itemId.String())
 			if err != nil {
 				logging.LogToDeck(ctx, "error", "JS", "authz", err.Error())
 			}
