@@ -138,6 +138,7 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 	s.js = js
 
 	if s.Config.UseJSML {
+
 		err = s.compileJSMLFiles(s.Config.JSMLFilePath, s.Config.JSMLCompiledFilePath)
 		if err != nil {
 			logging.LogToDeck(context.Background(), "fatal", "TAPROOT", "startup", err.Error())
@@ -147,6 +148,7 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 		go s.monitorJSMLDirectories(s.Config.JSMLFilePath, filepath.Join(s.Config.ScriptFilePath, s.Config.JSMLCompiledFilePath))
 	}
 
+	logging.LogToDeck(context.Background(), "info", "TAPROOT", "startup", "creating http servers")
 	s.Router = httprouter.New()
 	s.Router.SaveMatchedRoutePath = true // necessary to get the matched path back for Acacia
 	s.Server = &WebServer{}

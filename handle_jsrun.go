@@ -158,6 +158,15 @@ func (srv *AppServer) HandleScript(scriptKey string, cachedDuration int, customI
 			ctxItems["user"] = authn.User{}
 		}
 
+		checkUserRightFn := func(userId, domainId, itemType, userRight, itemId goja.Value) bool {
+			res, err := srv.users.CheckUserRight(userId.String(), domainId.String(), userRight.String(), itemType.String(), itemId.String())
+			if err != nil {
+				logging.LogToDeck(ctx, "error", "JS", "authz", err.Error())
+			}
+			return res
+		}
+		ctxItems["checkUserRight"] = checkUserRightFn
+
 		if ctx.Value(constants.HTTP_CONTEXT_REALM_KEY) != nil {
 			ctxItems["realm"] = ctx.Value(constants.HTTP_CONTEXT_REALM_KEY)
 		} else {
@@ -205,9 +214,12 @@ func (srv *AppServer) HandleScript(scriptKey string, cachedDuration int, customI
 
 		logging.LogToDeck(r.Context(), "info", "JS", "run", "running "+scriptKey)
 		injectHttpRequest(r, vm)
+		jsrun.InjectJSSysFunctor(vm)
 		_, err = vm.RunProgram(script)
 
-		if jserr, ok := err.(*goja.Exception); ok {
+		if err == nil || strings.HasPrefix(err.Error(), jsrun.JS_EXPECTED_INTERRUPT) {
+			logging.LogToDeck(r.Context(), "info", "JS", "done", "completed "+scriptKey)
+		} else if jserr, ok := err.(*goja.Exception); ok {
 			logging.LogToDeck(r.Context(), "error", "JS", "fail", "error running "+scriptKey+": "+jserr.Error())
 			srv.ErrorResponse(w, r, http.StatusInternalServerError, jserr.Error())
 		} else if err != nil {

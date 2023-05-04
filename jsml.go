@@ -93,6 +93,7 @@ func (srv *AppServer) compileOne(fileName string, srcDirName string, dstDirName 
 
 // This simply compiles all the JSML files at startup.
 func (srv *AppServer) compileJSMLFiles(srcDirName, dstDirName string) error {
+	logging.LogToDeck(context.Background(), "info", "JSML", "info", "beginning JSML compilation")
 	var sa ScriptAccessor = ScriptAccessor{
 		srv: srv,
 	}
@@ -186,5 +187,6 @@ func (srv *AppServer) compileJSMLFiles(srcDirName, dstDirName string) error {
 		}
 		newFile.Close()
 	}
+	logging.LogToDeck(context.Background(), "info", "JSML", "info", "completed JSML compilation")
 	return retainedError
 }

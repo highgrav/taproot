@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/highgrav/taproot/v1/authn"
 	"github.com/highgrav/taproot/v1/common"
 	"github.com/highgrav/taproot/v1/logging"
@@ -107,8 +106,6 @@ func (svr *AppServer) GetUserFromSession(key string) (authn.User, error) {
 		return authn.Anonymous(), err
 	}
 	var user authn.User
-	fmt.Println(">>>>>>>>>GOT USER FROM SESSION")
-	fmt.Printf("\n%s\n", u)
 	err = json.Unmarshal(u, &user)
 	if err != nil {
 		return authn.Anonymous(), err

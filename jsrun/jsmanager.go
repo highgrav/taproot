@@ -50,11 +50,18 @@ func New(dir string, runOnRecompile, runOnDelete JSRunOnFileEventFn) (*JSManager
 	jsm.watchDir = make(chan bool)
 	jsm.compiledScripts = make(map[string]*goja.Program)
 	jsm.scripts = make(map[string]string)
+	logging.LogToDeck(context.Background(), "info", "JS", "-", "jsmanager compiling scripts")
 	err = jsm.CompileAll()
+	if err != nil {
+		logging.LogToDeck(context.Background(), "error", "JS", "error", err.Error())
+		return nil, err
+	}
+	logging.LogToDeck(context.Background(), "info", "JS", "-", "jsmanager done compiling")
 	go jsm.watchDirAndRecompile()
 	if err != nil {
 		return nil, err
 	}
+	logging.LogToDeck(context.Background(), "info", "JS", "-", "jsmanager ready")
 	return jsm, nil
 }
 

@@ -33,6 +33,7 @@ type QueryRequest struct {
 	Context    map[string]any      `json:"context"`
 }
 
+// A UserRightRequest is a slimmed-down version of the user struct
 type UserRightRequest struct {
 	UserID                 string                           `json:"userId"`
 	Username               string                           `json:"username"`

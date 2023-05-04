@@ -31,6 +31,10 @@ func isLetter(ch rune) bool {
 	return rune('a') <= ch && ch <= rune('z') || rune('A') <= ch && ch <= rune('Z') || ch == rune('_')
 }
 
+func isParen(ch rune) bool {
+	return ch == rune('(') || ch == rune(')') || ch == rune('[') || ch == rune(']')
+}
+
 func isIDLetter(ch rune) bool {
 	return rune('a') <= ch && ch <= rune('z') || rune('A') <= ch && ch <= rune('Z') || ch == rune('_') || ch == rune('.') || ch == rune('-') || ch == rune('@')
 }
@@ -134,9 +138,10 @@ func (lex *Lexer) readChar() {
 	lex.readPosition += 1
 }
 
+// NOTE: 5/2/23: Added parentheses as IDs
 func (lex *Lexer) readIdentifier() string {
 	pos := lex.position
-	for (isIDLetter(lex.ch) && lex.ch != rune(0x0)) || (isNumber(lex.ch) && lex.position != pos) {
+	for ((isIDLetter(lex.ch) || isParen(lex.ch)) && lex.ch != rune(0x0)) || (isNumber(lex.ch) && lex.position != pos) {
 		lex.readChar()
 	}
 	return string(lex.input.Runes[pos:lex.position])

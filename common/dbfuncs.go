@@ -3,6 +3,7 @@ package common
 import (
 	"database/sql"
 	"reflect"
+	"strings"
 )
 
 type DBRowset struct {
@@ -67,7 +68,7 @@ func RowsToMap(rows *sql.Rows) ([]map[string]interface{}, error) {
 		}
 		results := make(map[string]interface{})
 		for i, val := range values {
-			results[cols[i]] = val
+			results[strings.ToLower(cols[i])] = val
 		}
 		rowset = append(rowset, results)
 	}
