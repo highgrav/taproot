@@ -1,6 +1,7 @@
 package taproot
 
 import (
+	"github.com/highgrav/taproot/v1/logging"
 	"github.com/x-way/crawlerdetect"
 	"net/http"
 )
@@ -17,6 +18,7 @@ func (srv *AppServer) HandleBotDetect(botFlag uint, redirectTo string, next http
 		if crawlerdetect.IsCrawler(r.UserAgent()) {
 			switch botFlag {
 			case BOT_DENY_BOT:
+				logging.LogToDeck(r.Context(), "info", "BOT", "info", "denied bot of type "+r.UserAgent())
 				srv.ErrorResponse(w, r, http.StatusForbidden, "denied")
 				return
 			case BOT_REDIRECT_CRAWLER:
