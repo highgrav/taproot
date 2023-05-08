@@ -30,11 +30,14 @@ The following objects are injected into JS and JSML runtimes:
   - `context.rights`: An array of rights, if an Acacia policy has been applied and matched to the route.
   - `context.correlationId`: The tracing correlation ID for this request, also available at `correlationId`
   - `context.cspNonce`: The content security policy nonce, also available at `cspNonce`
+  - `context.checkUserRight(userId, tenantId, rightId ,objectId)`: Checks to see if the stated user has a given right.
 - `db`: Database-specific functions
   - `query(string dbName, string query, params...)`: Queries `dbName` with `query`, using `params` as SQL parameters.
     - Returns a `JSCallReturnValue` in which `data.rows` contains an array of JS objects, each one representing a database row.
   - `print()`: Prints a string to standard output, for debugging.
-  - `dsns()`: Returns an array of strings, listing the various database IDs available
+  - `dsns()`: Returns an array of strings, listing the various database IDs available.
 - `data`: If any custom route-specific data is passed into this script, this is where it will appear.
 - `util`: Utility functions
   - `print()`: Prints a string to the `deck` info log
+  - `save(key, val)`: Saves a value to page storage. This and `export()` are useful to pass data to the JSML client side in a type-preserving way, particularly when using IDs (which overflow when not passed as a string).
+  - `export()`: Exports the values interned using `save(k,v)` into JSON, for consumption on the client-side.

@@ -3,6 +3,7 @@ package taproot
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"github.com/dop251/goja"
 	"github.com/dop251/goja_nodejs/console"
 	"github.com/dop251/goja_nodejs/require"
@@ -107,12 +108,25 @@ func injectHttpRequest(r *http.Request, vm *goja.Runtime) {
 // Injects some utility functions into the JS runtime
 func addJSUtilFunctor(svr *AppServer, vm *goja.Runtime) {
 	obj := vm.NewObject()
+	saved := make(map[string]any)
 
 	printToStdout := func(val goja.Value) {
 		logging.LogToDeck(context.Background(), "info", "JS", "output", val.String())
 	}
+	save := func(key string, val any) {
+		saved[key] = val
+	}
+	export := func(key string) string {
+		valmap, err := json.Marshal(saved)
+		if err != nil {
+			return ""
+		}
+		return string(valmap)
+	}
 
 	obj.Set("print", printToStdout)
+	obj.Set("save", save)
+	obj.Set("export", export)
 	vm.Set("util", obj)
 }
 
