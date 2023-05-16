@@ -86,7 +86,14 @@ func (srv *AppServer) ListenAndServeTLS(certFile, keyFile string) error {
 		return srv.Server.ListenAndServeTLS(certFile, keyFile)
 	} else {
 		// Ignore ACME, use the provided key files
-		// TODO
+		// NOTE: If we provide non-blank arguments to this function, it will
+		// override the config
+		if certFile == "" {
+			certFile = srv.Config.HttpServer.TLS.LocalCertFilePath
+		}
+		if keyFile == "" {
+			keyFile = srv.Config.HttpServer.TLS.LocalKeyFilePath
+		}
 	}
 
 	srv.state.setState(SERVER_STATE_RUNNING)
@@ -149,7 +156,14 @@ func (srv *AppServer) ServeTLS(l net.Listener, certFile, keyFile string) error {
 		return srv.Server.ServeTLS(l, "", "")
 	} else {
 		// Ignore ACME, use the provided key files
-		// TODO
+		// NOTE: If we provide non-blank arguments to this function, it will
+		// override the config
+		if certFile == "" {
+			certFile = srv.Config.HttpServer.TLS.LocalCertFilePath
+		}
+		if keyFile == "" {
+			keyFile = srv.Config.HttpServer.TLS.LocalKeyFilePath
+		}
 	}
 
 	srv.state.setState(SERVER_STATE_RUNNING)
