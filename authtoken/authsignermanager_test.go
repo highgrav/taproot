@@ -8,7 +8,7 @@ import (
 
 func TestAuthSignerManager(t *testing.T) {
 	token := "abcdef1234567890"
-	asm := NewAuthSignerManager(100 * time.Minute)
+	asm := NewAuthSignerManager(100*time.Minute, 100*time.Minute, DefaultAuthSecretRotator)
 	encToken := asm.NewEncryptedToken(token)
 	fmt.Println("Encrypted ASM Token: " + encToken)
 	authtoken, err := asm.DecryptToken(encToken)

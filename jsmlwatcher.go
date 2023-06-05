@@ -10,7 +10,6 @@ import (
 )
 
 // Starts monitoring of the JSML file directories to catch any updates and recompile accordingly.
-// TODO -- this is having issues detecting changes
 func (srv *AppServer) monitorJSMLDirectories(srcDirName, dstDirName string) {
 	dirList := []string{srcDirName}
 

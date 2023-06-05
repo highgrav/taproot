@@ -28,14 +28,9 @@ A Taproot-based server needs to do a few simple things to configure and start th
         add-user.jsml
         edit-user.jsml
         user-list.jsml
-  /scripts
+  /~scripts
     /views
       (Compiled JSML files go here)
-    /apis
-      /admin
-        add-user-api.js
-        edit-user-api.js
-        delete-user-api.js
   /static
     app.css
     logo.png

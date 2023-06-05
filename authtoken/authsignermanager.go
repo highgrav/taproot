@@ -2,10 +2,19 @@ package authtoken
 
 import (
 	"context"
+	"github.com/highgrav/taproot/v1/common"
 	"github.com/highgrav/taproot/v1/logging"
 	"strings"
 	"time"
 )
+
+type AuthSecretRotator func() (string, []byte, error)
+
+func DefaultAuthSecretRotator() (string, []byte, error) {
+	id := common.CreateRandString(8)
+	secret := common.CreateRandBytes(32)
+	return id, secret, nil
+}
 
 type AuthSignerManager struct {
 	ExpiresAfter time.Duration
@@ -16,9 +25,10 @@ type AuthSignerManager struct {
 	currentSigner              *AuthSigner
 	signers                    map[string]*AuthSigner
 	ticker                     *time.Ticker
+	rotator                    AuthSecretRotator
 }
 
-func NewAuthSignerManager(rotationTime time.Duration, gracePeriod time.Duration) *AuthSignerManager {
+func NewAuthSignerManager(rotationTime time.Duration, gracePeriod time.Duration, rotator AuthSecretRotator) *AuthSignerManager {
 	asm := &AuthSignerManager{
 		ExpiresAfter:  rotationTime + gracePeriod,
 		GracePeriod:   gracePeriod,
@@ -26,7 +36,7 @@ func NewAuthSignerManager(rotationTime time.Duration, gracePeriod time.Duration)
 		currentSigner: nil,
 		signers:       make(map[string]*AuthSigner),
 		ticker:        time.NewTicker(10 * time.Second), // TODO
-
+		rotator:       rotator,
 	}
 	asm.AddSigner()
 	asm.CurrentSignatureExpiration = asm.currentSigner.ExpiresAt
@@ -58,15 +68,20 @@ func (asm *AuthSignerManager) rotate() {
 	}
 }
 
-func (asm *AuthSignerManager) AddSigner() {
-	asgn, err := NewAuthSigner(asm.ExpiresAfter)
+func (asm *AuthSignerManager) AddSigner() error {
+	id, secret, err := asm.rotator()
+	if err != nil {
+		return err
+	}
+	asgn, err := NewAuthSigner(asm.ExpiresAfter, id, secret)
 	if err != nil {
 		logging.LogToDeck(context.Background(), "error", "AUTH", "error", "error adding signer: "+err.Error())
-		return
+		return err
 	}
 	asm.signers[asgn.ID] = &asgn
 	asm.currentSigner = &asgn
 	asm.CurrentSignatureExpiration = asm.currentSigner.ExpiresAt
+	return nil
 }
 
 func (asm *AuthSignerManager) RemoveSigners() {

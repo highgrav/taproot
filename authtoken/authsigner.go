@@ -24,10 +24,10 @@ type AuthSigner struct {
 }
 
 // NewAuthSigner() creates an AuthSigner with a password and expiration date
-func NewAuthSigner(expiresAfter time.Duration) (AuthSigner, error) {
+func NewAuthSigner(expiresAfter time.Duration, id string, secret []byte) (AuthSigner, error) {
 	asign := AuthSigner{
-		ID:        common.CreateRandString(8),
-		secret:    common.CreateRandBytes(32),
+		ID:        id,
+		secret:    secret,
 		StartsAt:  time.Now(),
 		ExpiresAt: time.Now().Add(expiresAfter),
 	}

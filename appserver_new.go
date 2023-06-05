@@ -32,18 +32,18 @@ Creates a new AppServer; uses Viper to populate the config from YAML files.
 Requires the user pass in an IUserStore and a fflag retriever, as well as
 the directories to search for default config files.
 */
-func New(userStore authn.IUserStore, sessionStore session.IStore, fflagretriever retriever.Retriever, cfgDirs []string) *AppServer {
+func New(userStore authn.IUserStore, sessionStore session.IStore, fflagretriever retriever.Retriever, cfgDirs []string, authTokenRotator authtoken.AuthSecretRotator) *AppServer {
 	cfg, err := loadConfig(cfgDirs)
 	if err != nil {
 		panic(err)
 	}
 	// TODO
-	svr := NewWithConfig(userStore, sessionStore, fflagretriever, cfg)
+	svr := NewWithConfig(userStore, sessionStore, fflagretriever, cfg, authTokenRotator)
 	return svr
 }
 
 // Creates a new AppServer using a ServerConfig struct.
-func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, fflagretriever retriever.Retriever, cfg ServerConfig) *AppServer {
+func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, fflagretriever retriever.Retriever, cfg ServerConfig, authTokenRotator authtoken.AuthSecretRotator) *AppServer {
 	// set up logging (we use stdout until the server is up and running)
 	deck.Add(logger.Init(os.Stdout, 0))
 
@@ -72,7 +72,7 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 	if graceDur == 0 {
 		graceDur = 1 * time.Hour
 	}
-	s.SignatureMgr = authtoken.NewAuthSignerManager(keyDur, graceDur)
+	s.SignatureMgr = authtoken.NewAuthSignerManager(keyDur, graceDur, authTokenRotator)
 
 	logging.LogToDeck(context.Background(), "info", "TAPROOT", "startup", "Setting up async work hub")
 	wh, err := workers.New(cfg.WorkHub.Name, cfg.WorkHub.StorageDir, cfg.WorkHub.SegmentSize)
