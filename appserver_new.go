@@ -6,8 +6,6 @@ import (
 	"encoding/gob"
 	"expvar"
 	"fmt"
-	"github.com/google/deck"
-	"github.com/google/deck/backends/logger"
 	"github.com/highgrav/taproot/v1/acacia"
 	"github.com/highgrav/taproot/v1/authn"
 	"github.com/highgrav/taproot/v1/authtoken"
@@ -44,8 +42,6 @@ func New(userStore authn.IUserStore, sessionStore session.IStore, fflagretriever
 
 // Creates a new AppServer using a ServerConfig struct.
 func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, fflagretriever retriever.Retriever, cfg ServerConfig, authTokenRotator authtoken.AuthSecretRotator) *AppServer {
-	// set up logging (we use stdout until the server is up and running)
-	deck.Add(logger.Init(os.Stdout, 0))
 
 	// Set up gob encoding for sessions
 	gob.Register(authn.WorkgroupMembership{})

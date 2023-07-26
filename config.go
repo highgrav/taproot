@@ -94,15 +94,16 @@ type SessionConfig struct {
 
 // Configuration for the various HTTP servers (web server, HTTP redirect server, metrics server, and admin server)
 type HttpConfig struct {
-	FriendlyName     string
-	ServerName       string
-	Port             int
-	TLS              TLSConfig
-	Timeouts         TimeoutConfig
-	GlobalRateLimits ApiRateLimitConfig
-	IpRateLimits     ApiRateLimitConfig
-	CorsDomains      []string
-	IPFilter         IPFilterConfig
+	FriendlyName           string
+	ServerName             string
+	Port                   int
+	TLS                    TLSConfig
+	Timeouts               TimeoutConfig
+	GlobalRateLimits       ApiRateLimitConfig
+	IpRateLimits           ApiRateLimitConfig
+	CorsDomains            []string
+	IPFilter               IPFilterConfig
+	LogHandshakeErrorsWith func(error)
 }
 
 // Configuration for HTTP server rate limiting (global and per-ip)

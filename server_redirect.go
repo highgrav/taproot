@@ -7,14 +7,14 @@ import "net/http"
 func (srv *AppServer) NewHttpRedirectServer(cfg HttpConfig) *WebServer {
 
 	ws := NewWebServer(nil, cfg)
-
 	handleRedirectToHttps := func(w http.ResponseWriter, r *http.Request) {
 		// TODO -- strip port from request and add in main webserver port
-		newURI := "https://" + r.Host + r.URL.String()
+		newURI := "https://" + r.Host + r.URL.EscapedPath()
 		http.Redirect(w, r, newURI, http.StatusFound)
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", handleRedirectToHttps)
 	ws.Handler = mux
+	ws.Server.Handler = mux
 	return ws
 }

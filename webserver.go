@@ -85,7 +85,6 @@ func (srv *WebServer) ListenAndServeTLS(certFile, keyFile string) error {
 	}
 
 	srv.state.setState(SERVER_STATE_RUNNING)
-
 	return srv.Server.ListenAndServeTLS(certFile, keyFile)
 }
 
