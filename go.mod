@@ -1,4 +1,4 @@
-module github.com/highgrav/taproot/v1
+module github.com/highgrav/taproot
 
 go 1.20
 
