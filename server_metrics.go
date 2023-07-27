@@ -2,8 +2,8 @@ package taproot
 
 import (
 	"expvar"
-	"github.com/highgrav/taproot/v1/common"
-	"github.com/highgrav/taproot/v1/logging"
+	"github.com/highgrav/taproot/common"
+	"github.com/highgrav/taproot/logging"
 	"net/http"
 	"net/http/pprof"
 	"runtime"

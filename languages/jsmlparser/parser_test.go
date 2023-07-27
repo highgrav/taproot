@@ -1,7 +1,7 @@
 package jsmlparser
 
 import (
-	"github.com/highgrav/taproot/v1/languages/lexer"
+	"github.com/highgrav/taproot/languages/lexer"
 	"testing"
 )
 

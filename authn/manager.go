@@ -1,6 +1,6 @@
 package authn
 
-import "github.com/highgrav/taproot/v1/common"
+import "github.com/highgrav/taproot/common"
 
 type UserManager struct {
 	UserStore IUserStore

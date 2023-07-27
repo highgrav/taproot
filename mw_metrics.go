@@ -3,7 +3,7 @@ package taproot
 import (
 	"expvar"
 	"github.com/felixge/httpsnoop"
-	"github.com/highgrav/taproot/v1/common"
+	"github.com/highgrav/taproot/common"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"strconv"

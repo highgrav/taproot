@@ -2,7 +2,7 @@ package common
 
 import (
 	"context"
-	"github.com/highgrav/taproot/v1/logging"
+	"github.com/highgrav/taproot/logging"
 	"os"
 	"path/filepath"
 	"strings"

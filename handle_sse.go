@@ -1,8 +1,8 @@
 package taproot
 
 import (
-	"github.com/highgrav/taproot/v1/authn"
-	"github.com/highgrav/taproot/v1/sse"
+	"github.com/highgrav/taproot/authn"
+	"github.com/highgrav/taproot/sse"
 	"net/http"
 	"time"
 )

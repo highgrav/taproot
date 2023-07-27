@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/dop251/goja"
 	"github.com/fsnotify/fsnotify"
-	"github.com/highgrav/taproot/v1/logging"
+	"github.com/highgrav/taproot/logging"
 	"os"
 	"path/filepath"
 	"strings"

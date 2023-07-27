@@ -2,7 +2,7 @@ package jsrun
 
 import (
 	"github.com/dop251/goja"
-	"github.com/highgrav/taproot/v1/common"
+	"github.com/highgrav/taproot/common"
 	"net/http"
 	"strconv"
 )

@@ -1,7 +1,7 @@
 package acacia
 
 import (
-	"github.com/highgrav/taproot/v1/authn"
+	"github.com/highgrav/taproot/authn"
 	"github.com/tomasen/realip"
 	"net/http"
 	"strings"

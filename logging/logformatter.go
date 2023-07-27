@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/deck"
-	"github.com/highgrav/taproot/v1/constants"
+	"github.com/highgrav/taproot/constants"
 	"strings"
 	"time"
 )

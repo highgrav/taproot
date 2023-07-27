@@ -1,6 +1,6 @@
 package jsmltranspiler
 
-import "github.com/highgrav/taproot/v1/languages/jsmlparser"
+import "github.com/highgrav/taproot/languages/jsmlparser"
 
 /* Writes a parse tree back out to something that should look like the original input. */
 func (tr *Transpiler) ToString() string {

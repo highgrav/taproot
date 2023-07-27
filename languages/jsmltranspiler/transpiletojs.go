@@ -2,7 +2,7 @@ package jsmltranspiler
 
 import (
 	"errors"
-	"github.com/highgrav/taproot/v1/languages/jsmlparser"
+	"github.com/highgrav/taproot/languages/jsmlparser"
 	"strings"
 )
 

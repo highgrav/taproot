@@ -1,6 +1,6 @@
 package workers
 
-import "github.com/highgrav/taproot/v1/common"
+import "github.com/highgrav/taproot/common"
 
 type WorkRequest struct {
 	Type string

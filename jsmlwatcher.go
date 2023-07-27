@@ -3,8 +3,8 @@ package taproot
 import (
 	"context"
 	"github.com/fsnotify/fsnotify"
-	"github.com/highgrav/taproot/v1/common"
-	"github.com/highgrav/taproot/v1/logging"
+	"github.com/highgrav/taproot/common"
+	"github.com/highgrav/taproot/logging"
 	"os"
 	"strings"
 )

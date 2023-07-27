@@ -3,7 +3,7 @@ package taproot
 import (
 	"context"
 	"fmt"
-	"github.com/highgrav/taproot/v1/logging"
+	"github.com/highgrav/taproot/logging"
 	"github.com/justinas/alice"
 	"net/http"
 )

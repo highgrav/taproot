@@ -1,7 +1,7 @@
 package taproot
 
 import (
-	"github.com/highgrav/taproot/v1/websock"
+	"github.com/highgrav/taproot/websock"
 )
 
 func (srv *AppServer) AddWSHub(name string) {

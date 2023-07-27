@@ -1,7 +1,7 @@
 package session
 
 import (
-	"github.com/highgrav/taproot/v1/authn"
+	"github.com/highgrav/taproot/authn"
 	"net/http"
 	"time"
 )

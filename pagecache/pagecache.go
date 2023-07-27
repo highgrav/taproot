@@ -2,7 +2,7 @@ package pagecache
 
 import (
 	"context"
-	"github.com/highgrav/taproot/v1/logging"
+	"github.com/highgrav/taproot/logging"
 )
 
 type PageCache struct {

@@ -3,8 +3,8 @@ package taproot
 import (
 	"context"
 	"fmt"
-	"github.com/highgrav/taproot/v1/authn"
-	"github.com/highgrav/taproot/v1/logging"
+	"github.com/highgrav/taproot/authn"
+	"github.com/highgrav/taproot/logging"
 	"github.com/jpillora/ipfilter"
 	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"

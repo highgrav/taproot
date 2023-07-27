@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/highgrav/taproot/v1/common"
+	"github.com/highgrav/taproot/common"
 	"reflect"
 	"strconv"
 	"strings"

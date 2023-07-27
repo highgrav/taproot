@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
-	"github.com/highgrav/taproot/v1/logging"
+	"github.com/highgrav/taproot/logging"
 	"golang.org/x/crypto/acme/autocert"
 	"net/http"
 	"strings"

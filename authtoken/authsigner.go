@@ -6,7 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
-	"github.com/highgrav/taproot/v1/common"
+	"github.com/highgrav/taproot/common"
 	"golang.org/x/crypto/blake2b"
 	"io"
 	"strconv"

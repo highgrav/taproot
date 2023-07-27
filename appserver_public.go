@@ -3,8 +3,8 @@ package taproot
 import (
 	"context"
 	"fmt"
-	"github.com/highgrav/taproot/v1/jsrun"
-	"github.com/highgrav/taproot/v1/logging"
+	"github.com/highgrav/taproot/jsrun"
+	"github.com/highgrav/taproot/logging"
 	"github.com/justinas/alice"
 	"net"
 	"net/http"

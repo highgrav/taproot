@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/gorhill/cronexpr"
-	"github.com/highgrav/taproot/v1/logging"
+	"github.com/highgrav/taproot/logging"
 	"sync"
 	"time"
 )

@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"context"
 	"github.com/gobwas/ws/wsutil"
-	"github.com/highgrav/taproot/v1/authn"
-	"github.com/highgrav/taproot/v1/logging"
+	"github.com/highgrav/taproot/authn"
+	"github.com/highgrav/taproot/logging"
 	"net"
 )
 

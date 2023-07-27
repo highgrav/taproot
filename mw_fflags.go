@@ -1,8 +1,8 @@
 package taproot
 
 import (
-	"github.com/highgrav/taproot/v1/authn"
-	"github.com/highgrav/taproot/v1/constants"
+	"github.com/highgrav/taproot/authn"
+	"github.com/highgrav/taproot/constants"
 	"github.com/thomaspoignant/go-feature-flag/ffuser"
 	"net/http"
 )

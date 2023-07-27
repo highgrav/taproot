@@ -1,7 +1,7 @@
 package authn
 
 import (
-	"github.com/highgrav/taproot/v1/constants"
+	"github.com/highgrav/taproot/constants"
 	"net/http"
 	"time"
 )

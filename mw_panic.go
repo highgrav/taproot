@@ -2,7 +2,7 @@ package taproot
 
 import (
 	"fmt"
-	"github.com/highgrav/taproot/v1/logging"
+	"github.com/highgrav/taproot/logging"
 	"net/http"
 	"runtime/debug"
 )

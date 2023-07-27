@@ -2,10 +2,10 @@ package taproot
 
 import (
 	"github.com/gobwas/ws"
-	"github.com/highgrav/taproot/v1/authn"
-	"github.com/highgrav/taproot/v1/constants"
-	"github.com/highgrav/taproot/v1/logging"
-	"github.com/highgrav/taproot/v1/websock"
+	"github.com/highgrav/taproot/authn"
+	"github.com/highgrav/taproot/constants"
+	"github.com/highgrav/taproot/logging"
+	"github.com/highgrav/taproot/websock"
 	"net/http"
 )
 

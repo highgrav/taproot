@@ -2,7 +2,7 @@ package taproot
 
 import (
 	"errors"
-	"github.com/highgrav/taproot/v1/common"
+	"github.com/highgrav/taproot/common"
 	"os"
 	"path/filepath"
 )

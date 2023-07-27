@@ -1,8 +1,8 @@
 package taproot
 
 import (
-	"github.com/highgrav/taproot/v1/common"
-	"github.com/highgrav/taproot/v1/constants"
+	"github.com/highgrav/taproot/common"
+	"github.com/highgrav/taproot/constants"
 	"golang.org/x/net/context"
 	"net/http"
 )

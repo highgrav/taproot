@@ -1,6 +1,6 @@
 package taproot
 
-import "github.com/highgrav/taproot/v1/cron"
+import "github.com/highgrav/taproot/cron"
 
 func (srv *AppServer) AddCronJob(name, schedule string, job cron.CronJob) error {
 	if srv.CronHub == nil {

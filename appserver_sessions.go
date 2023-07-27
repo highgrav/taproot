@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/highgrav/taproot/v1/authn"
-	"github.com/highgrav/taproot/v1/common"
-	"github.com/highgrav/taproot/v1/logging"
-	"github.com/highgrav/taproot/v1/session"
+	"github.com/highgrav/taproot/authn"
+	"github.com/highgrav/taproot/common"
+	"github.com/highgrav/taproot/logging"
+	"github.com/highgrav/taproot/session"
 	"net/http"
 )
 

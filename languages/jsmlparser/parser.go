@@ -3,8 +3,8 @@ package jsmlparser
 import (
 	"errors"
 	"fmt"
-	"github.com/highgrav/taproot/v1/common"
-	"github.com/highgrav/taproot/v1/languages/token"
+	"github.com/highgrav/taproot/common"
+	"github.com/highgrav/taproot/languages/token"
 	"strings"
 )
 

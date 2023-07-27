@@ -2,9 +2,9 @@ package taproot
 
 import (
 	"github.com/felixge/httpsnoop"
-	"github.com/highgrav/taproot/v1/authn"
-	"github.com/highgrav/taproot/v1/constants"
-	"github.com/highgrav/taproot/v1/logging"
+	"github.com/highgrav/taproot/authn"
+	"github.com/highgrav/taproot/constants"
+	"github.com/highgrav/taproot/logging"
 	"github.com/tomasen/realip"
 	"net/http"
 	"time"

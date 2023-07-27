@@ -1,7 +1,7 @@
 package taproot
 
 import (
-	"github.com/highgrav/taproot/v1/logging"
+	"github.com/highgrav/taproot/logging"
 	"github.com/tomasen/realip"
 	"net/http"
 )
