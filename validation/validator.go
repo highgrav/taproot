@@ -34,6 +34,17 @@ func (v *Validator) Check(ok bool, key, val string) {
 	}
 }
 
+func (v *Validator) IsHexColor(val string, key, errmsg string) *Validator {
+	v.Check(len(val) > 0, key, errmsg)
+	v.Check(len(val) == 7, key, errmsg)
+	v.Check(val[0] == '#', key, errmsg)
+	for x := 1; x < 7; x++ {
+		c := int(val[x]) // get rune as ASCII value
+		v.Check(((c >= 48 && c <= 57) || (c >= 65 && c <= 70) || (c >= 97 && c <= 102)), key, errmsg)
+	}
+	return v
+}
+
 func (v *Validator) IsDate(fmt, val string, key, errmsg string) *Validator {
 	_, err := time.Parse(fmt, val)
 	v.Check(err == nil, key, errmsg)

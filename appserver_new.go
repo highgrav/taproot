@@ -17,6 +17,7 @@ import (
 	"github.com/highgrav/taproot/workers"
 	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"
+	"github.com/microcosm-cc/bluemonday"
 	ffclient "github.com/thomaspoignant/go-feature-flag"
 	"github.com/thomaspoignant/go-feature-flag/retriever"
 	"net/http"
@@ -57,6 +58,11 @@ func NewWithConfig(userStore authn.IUserStore, sessionStore session.IStore, ffla
 	s.DBs = make(map[string]*sql.DB)
 	s.Middleware = make([]alice.Constructor, 0)
 	s.jsinjections = make([]jsrun.InjectorFunc, 0)
+
+	s.sanitizer = InputSanitizer{
+		StripHTML: bluemonday.StrictPolicy(),
+		SanitizeHTML: bluemonday.UGCPolicy(),
+	}
 
 	// Session Signing
 	keyDur := s.Config.RotateSessionSigningKeysEvery

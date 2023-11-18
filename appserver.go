@@ -15,6 +15,7 @@ import (
 	"github.com/jpillora/ipfilter"
 	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/thomaspoignant/go-feature-flag/retriever"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/time/rate"
@@ -27,6 +28,11 @@ type RouteBinding struct {
 	Method  string
 	Route   string
 	Handler http.Handler
+}
+
+type InputSanitizer struct {
+	StripHTML    *bluemonday.Policy
+	SanitizeHTML *bluemonday.Policy
 }
 
 // AppServer is the core data structure for the embedded application server.
@@ -68,4 +74,5 @@ type AppServer struct {
 	globalStats       stats
 	startedOn         time.Time
 	autocert          *autocert.Manager
+	sanitizer         InputSanitizer
 }
