@@ -1,7 +1,9 @@
 package taproot
 
 import (
+	"context"
 	"errors"
+	"github.com/highgrav/taproot/logging"
 	"github.com/highgrav/taproot/workers"
 )
 
@@ -38,8 +40,10 @@ func (srv *AppServer) StartWork(workType string, data any) (string, error) {
 		return "", errors.New("work hub is not initialized")
 	}
 	wr := workers.NewWorkRequest(workType, data)
-	srv.WorkHub.Enqueue(wr)
-
+	err := srv.WorkHub.Enqueue(wr)
+	if err != nil {
+		logging.LogToDeck(context.Background(), "error", "TAPROOT", "error", "Failed to enqueue work '" + workType + "': " + err.Error())
+	}
 	return wr.ID, nil
 	return "", nil
 }

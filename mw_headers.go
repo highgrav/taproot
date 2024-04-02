@@ -9,7 +9,11 @@ import (
 
 func (srv *AppServer) HandleAddCorsEverywhereHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		var src string = r.Header.Get("Origin")
+		w.Header().Set("Access-Control-Allow-Origin", src)
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Allow-Headers", "X-Session,Accept,Content-Type,Dnt,Referer,Sec-Ch-Ua,Sec-Ch-Ua-Mobile,Sec-Ch-Ua-Platform,User-Agent,Accept-Charset,Accept-Datetime,Accept-Encoding,Accept-Language,Authorization,Cache-Control,Cookie,Date,Expect,Forwarded,X-Forwarded-For,X-Forwarded-Host,X-Forwarded-Proto,Pragma")
+		w.Header().Set("Access-Control-Expose-Headers", "X-Session")
 		next.ServeHTTP(w, r)
 	})
 }
